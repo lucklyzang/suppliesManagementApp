@@ -24,6 +24,10 @@
             <div class="order-list-box">
 				<div class="order-list" v-for="(item,index) in orderList" :key="index" @click="enterOrderDetailsEvent(item,index)">
 					<div class="order-list-top">
+                        <div class="order-number-text">
+                            <span>单号</span>
+                            <span>1232</span>
+                        </div>
 						<div class="img-box">
                             <img :src="salesReturnIcon" />
                         </div>
@@ -702,6 +706,26 @@ export default {
                     height: 50px;
                     border-bottom: 1px solid rgba(0,0,0,0.23);
                     position: relative;
+                    padding-left: 6px;
+                    box-sizing: border-box;
+                    .order-number-text {
+                        height: 50px;
+                        width: calc(100% - 61px);
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        >span {
+                            display: inline-block;
+                            font-size: 16px;
+                            color: #3B9DF9;
+                            &:nth-child(1) {
+                            };
+                            &:nth-child(2) {
+                                word-break: break-all;
+                                flex: 1;
+                            }
+                        }
+                    };
                     .img-box {
                         position: absolute;
                         top: 0;
@@ -722,7 +746,7 @@ export default {
                         display: flex;
                         >span {
                             display: inline-block;
-                            font-size: 14px;
+                            font-size: 12px;
                             &:nth-child(1) {
                                 color: #9E9E9A;
                                 margin-right: 6px;

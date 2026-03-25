@@ -45,13 +45,9 @@
 						</div>
 						<div class="order-status"
 						:class="{
-							'noStartStyle ' : item.state == 1 || item.state == 2, 
-							'underwayStyle' : item.state == 3,
-							'waitRedivStyle' : item.state == 4,
-							'completeStyle' : item.state == 5,
-							'haveRedivStyle' : item.state == 6,
-							'cancelStyle' : item.state == 7,
-							'redivStyle' : item.state == 8
+							'stayDeliveryStyle ' : item.state == 1, 
+							'deliveryingStyle' : item.state == 2,
+                            'alreadyDeliveryStyle' : item.state == 3
 							}"
 						>
 							<span>{{ stateTransfer(item.status) }}</span>
@@ -245,9 +241,9 @@ export default {
       contactInformationValue: '',
       deliveryPersonList: [
             '全部状态',
-            '待确认',
-            '待审核',
-            '已审核'
+            '待送货',
+            '送货中',
+            '已送货'
       ],
       currentDeliveryPersonIndex: 0,
       orderStatusList: [
@@ -921,30 +917,18 @@ export default {
                             color: #E8CB51;
                         }
                     };
-                    .noStartStyle {
-                    background: #BBBBBB !important
+                    .stayDeliveryStyle {
+                        background: rgba(251,229,223,1) !important;
+                        color: #EB7D61 !important;
                     };
-                    .underwayStyle {
-                    background: #289E8E !important
+                    .deliveryingStyle {
+                        background: rgba(203,245,228,1) !important;
+                        color: #35D897 !important;
                     };
-                    .completeStyle {
-                    background: #242424 !important
+                    .alreadyDeliveryStyle {
+                        background: rgba(59,157,249,0.12) !important;
+                        color: #3B9DF9 !important;
                     };
-                    .redivStyle {
-                    background: #F2A15F !important
-                    };
-                    .haveRedivStyle {
-                    background: #9B7D31 !important
-                    };
-                    .waitRedivStyle {
-                    background: orange !important
-                    };
-                    .cancelStyle {
-                    background: #E8CB51 !important
-                    };
-                    .completeStyle {
-                    background: #101010 !important
-                    }
                 };
                 .order-list-center {
                     margin: 10px 0;
@@ -954,7 +938,7 @@ export default {
                         display: flex;
                         >span {
                             display: inline-block;
-                            font-size: 14px;
+                            font-size: 12px;
                             &:nth-child(1) {
                                 color: #9E9E9A;
                                 margin-right: 6px;

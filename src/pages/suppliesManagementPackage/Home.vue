@@ -53,6 +53,7 @@
         mapGetters,
         mapMutations
     } from 'vuex'
+    let windowTimer;
     export default {
         name: 'suppliesHome',
         components: {
@@ -105,19 +106,25 @@
         },
 
         beforeDestroy () {
+            if (this.suppliesHomeGlobalTimer) {
+                clearTimeout(this.suppliesHomeGlobalTimer);
+                windowTimer = null;
+                this.changeSuppliesHomeGlobalTimer(null)
+            }
         },
 
         mounted() {
-            // 控制设备物理返回按键
-            this.deviceReturn("/home");
-            // 二维码回调方法绑定到window下面,提供给外部调用
-            let me = this;
-            window['scanQRcodeCallback'] = (code) => {
-                me.scanQRcodeCallback(code);
-            };
-            window['scanQRcodeCallbackCanceled'] = () => {
-                me.scanQRcodeCallbackCanceled();
-            }
+            // 获取任务数量
+            // if (!this.suppliesHomeGlobalTimer) {
+            //     windowTimer = window.setInterval(() => {
+            //     if (this.isTimeoutContinue) {
+            //         setTimeout(this.getTaskCount(this.proId,this.workerId), 0);
+            //         this.changeSuppliesHomeGlobalTimer(windowTimer)
+            //     } else {
+            //         this.changeSuppliesHomeGlobalTimer(null)
+            //     }
+            //     }, 3000)
+            // }
         },
 
         watch: {},
@@ -127,6 +134,7 @@
                 'userInfo',
                 'isLogin',
                 'hospitalMessage',
+                'suppliesHomeGlobalTimer',
                 'isEnterGuestBookPageFromHomePage',
                 'lastMessageNumber',
                 'chooseHospitalArea'
@@ -159,18 +167,32 @@
                 "changeChooseProject",
                 'changeIsEnterGuestBookPageFromHomePage',
                 'changeLastMessageNumber',
-                'changeOverDueWay'
+                'changeOverDueWay',
+                'changeSuppliesHomeGlobalTimer'
             ]),
-
+            
+            // 查询任务数量
+            getTaskCount (proId,workerId) {
+                queryTaskCount(proId,workerId).then((res) => {
+                    if (res && res.data.code == 200) {
+                        const {bxTask, sxTask, kxTask} = res.data.data;
+                        this.repairsWorkerOrderCount = bxTask;
+                        this.deviceServiceCount = sxTask;
+                        this.departmentServieCount = kxTask
+                    }
+                })
+                .catch((err) => {
+                this.$dialog.alert({
+                    message: `${err.message}`,
+                    closeOnPopstate: true
+                }).then(() => {
+                })
+                })
+            },
 
             // 头像点击事件
             userInfoEvent () {
                 this.$router.push({path: '/myInfo'})
-            },
-            
-            // 扫描二维码方法
-            scanQRCode () {
-                window.android.scanQRcode()
             },
 
             // 功能区点击事件

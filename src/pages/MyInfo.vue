@@ -147,6 +147,8 @@
 					if ( res && res.data.code == 200) {
 						removeAllLocalStorage();
 						store.dispatch('resetLoginState');
+						store.dispatch('resetSuppliesManagementInfoState');
+						if(store.getters.suppliesHomeGlobalTimer) {window.clearInterval(store.getters.suppliesHomeGlobalTimer)};
 						this.$router.push({path: "/"});
 					} else {
             			this.modalShow = true;

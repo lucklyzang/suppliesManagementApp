@@ -15,18 +15,14 @@ export default {
 			state.capsuleMessage = getStore('capsuleMessage') ? getStore('capsuleMessage') : {};
 			return state.capsuleMessage
 		},
-		allOrderCancelReason:(state) => {
-			state.allOrderCancelReason = getStore('allOrderCancelReason') ? getStore('allOrderCancelReason') :  {
-				cancelReason: {},
-				environmentCancelReason: {},
-				projectCancelReason: {},
-				affairCancelReason: {}
-			};
-			return state.allOrderCancelReason
+		catch_components:(state) => {
+			return state.catch_components
 		},
-		currentIndex:(state) => {
-			state.currentIndex = getStore('currentIndex') ? getStore('currentIndex') : 0;
-			return state.currentIndex
+		currentElectronicSignature: (state) => {
+			return state.currentElectronicSignature
+		},
+		originalSignature: (state) => {
+			return state.originalSignature
 		},
 		baseURL:(state) => {
 			return state.baseURL
@@ -51,18 +47,21 @@ export default {
 				state.capsuleMessage = playLoad
 			}
 		},
-		storeAllOrderCancelReason (state,playLoad) {
+		storeCatchComponents (state,playLoad) {
 			if (playLoad && playLoad != 'null') {
-				setStore('allOrderCancelReason', playLoad);
-				state.allOrderCancelReason = playLoad
+				state.catch_components = playLoad
 			}
 		},
-		storeCurrentIndex (state,playLoad) {
-			if (playLoad != 'null') {
-				setStore('currentIndex', playLoad);
-				state.currentIndex = playLoad
+		// 改变当前电子签名状态
+		changeCurrentElectronicSignature (state,payLoad) {
+			if (payLoad && payLoad != 'null') {
+				state.currentElectronicSignature = payLoad.DtMsg
 			}
 		},
+		// 改变原始签名状态
+		changeSuppliesHomeGlobalTimer (state,payLoad) {
+			state.suppliesHomeGlobalTimer = payLoad
+    	},
 		//重置公共信息的状态
 		resetCommonInfoState(state) {
 				Object.assign(state, getDefaultCommonState())

@@ -42,7 +42,7 @@
         </div>
     </div>
     <div class="btn-box">
-        <div class="btn-left" @click="quitEvent">
+        <div class="btn-left" @click="cancelEvent">
             <span>取消</span>
         </div>
         <div class="btn-right" @click="submitEvent">
@@ -145,7 +145,7 @@ export default {
   },
 
   methods: {
-    ...mapMutations([]),
+    ...mapMutations(['changeCurrentElectronicSignature']),
 
     onClickLeft () {
         this.$router.push({path: '/suppliesDeliverGoodsList'})
@@ -252,83 +252,80 @@ export default {
 
     // 签名重写
     rewrite () {
-        this.$refs.mychild.overwrite()
+      this.$refs.mychild.overwrite()
     },
 
     // 签名取消
     cancel () {
-        this.$refs.mychild.overwrite();
+      this.$refs.mychild.overwrite();
     },
 
-    // 确认
-    sure () {
-    this.$refs.mychild.commitSure();
-    if (this.currentElectronicSignature == this.originalSignature || !this.currentElectronicSignature) {
-        return
-    };
-    this.$refs.contentTop.style.zIndex = 0;
-    this.loadinText = '上传中,请稍等···';
-    this.showLoadingHint = true;
-    this.overlayShow = true;
-    if (!this.isSingleDepartmentSignature) {
-        submitDepartMentServiceSignInfo({
-        taskId: this.taskId,
-        imgType: 0,
-        imgOrsign: this.currentElectronicSignature
-        }).then((res) => {
-            this.showLoadingHint = false;
-            this.overlayShow = false;
-            if (res && res.data.code == 200) {
-            this.updateTaskComplete(this.proId, this.taskId)
-            } else {
-            this.$toast(`${res.data.msg}`)
-            }
-        })
-        .catch((err) => {
-            this.$dialog.alert({
-            message: `${err.message}`,
-            closeOnPopstate: true
-            }).then(() => {
-            });
-            this.showLoadingHint = false;
-            this.overlayShow = false
-        })
-    } else {
-        submitSingleDepartMentServiceSignInfo({
-        proId: this.proId, //项目ID
-        taskId: this.taskId, //任务id
-        depId: this.currentDepartmentId, //部门ID
-        depNo: this.departmentServiceOfficeId, //部门编号
-        imgSign: this.currentElectronicSignature // 签名信息
-        }).then((res) => {
-            this.showLoadingHint = false;
-            this.overlayShow = false;
-            if (res && res.data.code == 200) {
-            this.$toast(`${res.data.data}`);
-            this.backTo()
-            } else {
-            this.$toast(`${res.data.msg}`)
-            }
-        })
-        .catch((err) => {
-            this.$dialog.alert({
-            message: `${err.message}`,
-            closeOnPopstate: true
-            }).then(() => {
-            });
-            this.showLoadingHint = false;
-            this.overlayShow = false
-        })
-    }
-    },
-
-    // 退出事件
-    quitEvent() {
+    // 取消事件
+    cancelEvent() {
       this.$router.push({path: '/suppliesDeliverGoodsList'});
     },
 
     // 提交事件
     submitEvent() {
+      this.$refs.mychild.commitSure();
+      if (this.currentElectronicSignature == this.originalSignature || !this.currentElectronicSignature) {
+          return
+      };
+      this.$refs.contentTop.style.zIndex = 0;
+      this.loadinText = '上传中,请稍等···';
+      this.showLoadingHint = true;
+      this.overlayShow = true;
+      if (!this.isSingleDepartmentSignature) {
+          submitDepartMentServiceSignInfo({
+          taskId: this.taskId,
+          imgType: 0,
+          imgOrsign: this.currentElectronicSignature
+          }).then((res) => {
+              this.showLoadingHint = false;
+              this.overlayShow = false;
+              if (res && res.data.code == 200) {
+                this.changeCurrentElectronicSignature({DtMsg: null});
+                this.updateTaskComplete(this.proId, this.taskId)
+              } else {
+              this.$toast(`${res.data.msg}`)
+              }
+          })
+          .catch((err) => {
+              this.$dialog.alert({
+              message: `${err.message}`,
+              closeOnPopstate: true
+              }).then(() => {
+              });
+              this.showLoadingHint = false;
+              this.overlayShow = false
+          })
+      } else {
+          submitSingleDepartMentServiceSignInfo({
+          proId: this.proId, //项目ID
+          taskId: this.taskId, //任务id
+          depId: this.currentDepartmentId, //部门ID
+          depNo: this.departmentServiceOfficeId, //部门编号
+          imgSign: this.currentElectronicSignature // 签名信息
+          }).then((res) => {
+              this.showLoadingHint = false;
+              this.overlayShow = false;
+              if (res && res.data.code == 200) {
+              this.$toast(`${res.data.data}`);
+              this.backTo()
+              } else {
+              this.$toast(`${res.data.msg}`)
+              }
+          })
+          .catch((err) => {
+              this.$dialog.alert({
+              message: `${err.message}`,
+              closeOnPopstate: true
+              }).then(() => {
+              });
+              this.showLoadingHint = false;
+              this.overlayShow = false
+          })
+      }
     }
   }
 };

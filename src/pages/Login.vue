@@ -192,11 +192,10 @@
 					return;
 				};
 				return new Promise((resolve,reject)=> {
-					let loginMessage = Qs.stringify({
+					let loginMessage ={
 						username: this.form.username,
-						password: this.form.password,
-						logType: 0
-					});
+						password: this.form.password
+					};
 					this.temporaryUsername = getStore('userName') ? getStore('userName') : '无';
 					this.showLoadingHint = true;
 					this.infoText = '登录中···';

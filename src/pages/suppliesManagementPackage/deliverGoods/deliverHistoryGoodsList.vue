@@ -437,29 +437,9 @@ export default {
                             color: #101010;
                         }
                     };
-                    .noStartStyle {
-                    background: #BBBBBB !important
-                    };
-                    .underwayStyle {
-                    background: #289E8E !important
-                    };
-                    .completeStyle {
-                    background: #242424 !important
-                    };
-                    .redivStyle {
-                    background: #F2A15F !important
-                    };
-                    .haveRedivStyle {
-                    background: #9B7D31 !important
-                    };
-                    .waitRedivStyle {
-                    background: orange !important
-                    };
-                    .cancelStyle {
-                    background: #E8CB51 !important
-                    };
-                    .completeStyle {
-                    background: #101010 !important
+                    .stayCompleteStyle {
+                      color: #101010 !important;
+                      background: rgba(158,161,182,1) !important
                     }
                 };
                 .order-list-center {
@@ -470,7 +450,7 @@ export default {
                         display: flex;
                         >span {
                             display: inline-block;
-                            font-size: 14px;
+                            font-size: 12px;
                             &:nth-child(1) {
                                 color: #9E9E9A;
                                 margin-right: 6px;

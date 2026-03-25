@@ -21,33 +21,11 @@ const service = axios.create({
 // request interceptor
 service.interceptors.request.use(
     config => {
-        if (config.method === 'get') {
-            config.data = {unused: 0}
-        };
-        config.headers['HTTP_REQUEST_TYPE'] = 'new';
-        if (config['url'] == 'nblink/auth/login') {
-            config.headers['Content-Type'] = 'application/x-www-form-urlencoded'
-        };
+        config.headers['tenant-id'] = 1;
         // 请求头添加token
         if (store.getters.token) {
             config.headers['Authorization'] = store.getters.token
         };
-        // 请求头添加模板信息
-        if (store.getters.templateType) {
-            config.headers['REQUEST_TEMPLATE'] = store.getters.templateType
-        };
-        // 请求头添加设备唯一标识号(IMEI)
-        if (!IsPC()) {
-            config.headers['MOBILE_MARK'] = ''
-                // try {
-                //   if (window.android.getImei()) {
-                //     config.headers['MOBILE_MARK'] = window.android.getImei()
-                //   } else {
-                //     config.headers['MOBILE_MARK'] = ''
-                //   }
-                // } catch (err) {
-                // }
-        }; 
         return config;
       }, function (error) {
         //处理请求错误
@@ -64,103 +42,135 @@ service.interceptors.response.use(
         return response
     },
     (error) => {
-        if (Object.prototype.toString.call(error.response) === '[object Object]') {
-            if (error.response.hasOwnProperty('status')) {
-                if (error.response.status === 401) {
-                    store.dispatch('resetLoginState');
-                    removeAllLocalStorage();
-                    if (!store.getters.overDueWay) { 
-                        Toast({
-                            message: 'token已过期,请重新登录',
-                            duration: 1000
-                        });
-                        setTimeout(() => {
+        if (error.response) {
+            if (Object.prototype.toString.call(error.response) === '[object Object]') {
+                if (error.response.hasOwnProperty('status')) {
+                    if (error.response.status === 401) {
+                        store.dispatch('resetLoginState');
+                        store.dispatch('resetSuppliesManagementInfoState');
+                        removeAllLocalStorage();
+                        if(store.getters.suppliesHomeGlobalTimer) {window.clearInterval(store.getters.suppliesHomeGlobalTimer)};
+                        if (!store.getters.overDueWay) { 
+                            Toast({
+                                message: 'token已过期,请重新登录',
+                                duration: 1000
+                            });
+                            setTimeout(() => {
+                                router.push({
+                                    path: "/"
+                                })
+                            },2000);
+                        } else {
                             router.push({
                                 path: "/"
                             })
-                        },2000);
-                     } else {
-                        router.push({
-                            path: "/"
-                        })
+                        }
                     }
                 }
             }
+        } else if (error.request) {
+            return Promise.reject(error.message)
+        } else {
+            return Promise.reject('请求配置错误')
         };		
       // 处理响应错误
         var config = error.config;
         // 判断是否配置了重试
         if(!config || !config.retry) {
-            if (Object.prototype.toString.call(error.response) === '[object Object]') {
-                if (error.response.hasOwnProperty('data')) {
-                    if (error.response.data.hasOwnProperty('msg')) {
-                        return Promise.reject(error.response.data.msg)
-                    } else if (error.response.data.hasOwnProperty('message')) {
-                        return Promise.reject(error.response.data.message)
+            if (error.response) {
+                if (Object.prototype.toString.call(error.response) === '[object Object]') {
+                    if (error.response.hasOwnProperty('data')) {
+                        if (error.response.data.hasOwnProperty('msg')) {
+                            return Promise.reject(error.response.data.msg)
+                        } else if (error.response.data.hasOwnProperty('message')) {
+                            return Promise.reject(error.response.data.message)
+                        } else {
+                            return Promise.reject(error.response.data)
+                        }
                     } else {
-                        return Promise.reject(error.response.data)
+                        return Promise.reject(error.response)
                     }
-                } else {
-                    return Promise.reject(error.response)
+                }	else {
+                    return Promise.reject(error)
                 }
-            }	else {
-                return Promise.reject(error)
-            }
+            }  else if (error.request) {
+                return Promise.reject(error.message)
+            } else {
+                return Promise.reject('请求配置错误')
+            }		  
         };
         if(!config.shouldRetry || typeof config.shouldRetry != 'function') {
-            if (Object.prototype.toString.call(error.response) === '[object Object]') {
-                if (error.response.hasOwnProperty('data')) {
-                    if (error.response.data.hasOwnProperty('msg')) {
-                        return Promise.reject(error.response.data.msg)
-                    } else if (error.response.data.hasOwnProperty('message')) {
-                        return Promise.reject(error.response.data.message)
+            if (error.response) {
+                if (Object.prototype.toString.call(error.response) === '[object Object]') {
+                    if (error.response.hasOwnProperty('data')) {
+                        if (error.response.data.hasOwnProperty('msg')) {
+                            return Promise.reject(error.response.data.msg)
+                        } else if (error.response.data.hasOwnProperty('message')) {
+                            return Promise.reject(error.response.data.message)
+                        } else {
+                            return Promise.reject(error.response.data)
+                        }
                     } else {
-                        return Promise.reject(error.response.data)
+                        return Promise.reject(error.response)
                     }
-                } else {
-                    return Promise.reject(error.response)
+                }	else {
+                    return Promise.reject(error)
                 }
-            }	else {
-                return Promise.reject(error)
-            }
+            }  else if (error.request) {
+                return Promise.reject(error.message)
+            } else {
+                return Promise.reject('请求配置错误')
+            }		  
         };
         //判断是否满足重试条件
         if(!config.shouldRetry(error)) {
-            if (Object.prototype.toString.call(error.response) === '[object Object]') {
-                if (error.response.hasOwnProperty('data')) {
-                    if (error.response.data.hasOwnProperty('msg')) {
-                        return Promise.reject(error.response.data.msg)
-                    } else if (error.response.data.hasOwnProperty('message')) {
-                        return Promise.reject(error.response.data.message)
+            if (error.response) {
+                if (Object.prototype.toString.call(error.response) === '[object Object]') {
+                    if (error.response.hasOwnProperty('data')) {
+                        if (error.response.data.hasOwnProperty('msg')) {
+                            return Promise.reject(error.response.data.msg)
+                        } else if (error.response.data.hasOwnProperty('message')) {
+                            return Promise.reject(error.response.data.message)
+                        } else {
+                            return Promise.reject(error.response.data)
+                        }
                     } else {
-                        return Promise.reject(error.response.data)
+                        return Promise.reject(error.response)
                     }
-                } else {
-                    return Promise.reject(error.response)
+                }	else {
+                    return Promise.reject(error)
                 }
-            }	else {
-                return Promise.reject(error)
-            }
+            }  else if (error.request) {
+                return Promise.reject(error.message)
+            } else {
+                return Promise.reject('请求配置错误')
+            }		  
         };
         // 设置重置次数，默认为0
         config.__retryCount = config.__retryCount || 0;
         // 判断是否超过了重试次数
          if(config.__retryCount > config.retry) {
-             if (Object.prototype.toString.call(error.response) === '[object Object]') {
-                 if (error.response.hasOwnProperty('data')) {
-                     if (error.response.data.hasOwnProperty('msg')) {
-                         return Promise.reject(error.response.data.msg)
-                     } else if (error.response.data.hasOwnProperty('message')) {
-                        return Promise.reject(error.response.data.message)
+            if (error.response) {
+                if (Object.prototype.toString.call(error.response) === '[object Object]') {
+                    if (error.response.hasOwnProperty('data')) {
+                        if (error.response.data.hasOwnProperty('msg')) {
+                            return Promise.reject(error.response.data.msg)
+                        } else if (error.response.data.hasOwnProperty('message')) {
+                            return Promise.reject(error.response.data.message)
+                        } else {
+                            return Promise.reject(error.response.data)
+                        }
                     } else {
-                         return Promise.reject(error.response.data)
-                     }
-                 } else {
-                     return Promise.reject(error.response)
-                 }
-             }	else {
-                 return Promise.reject(error)
-             }
+                        return Promise.reject(error.response)
+                    }
+                }	else {
+                    return Promise.reject(error)
+                }
+            }  else if (error.request) {
+                return Promise.reject(error.message)
+            } else {
+                return Promise.reject('请求配置错误')
+            }		  
          };
         //重试次数自增
         config.__retryCount += 1;

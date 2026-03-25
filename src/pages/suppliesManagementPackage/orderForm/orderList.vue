@@ -45,13 +45,8 @@
 						</div>
 						<div class="order-status"
 						:class="{
-							'noStartStyle ' : item.state == 1 || item.state == 2, 
-							'underwayStyle' : item.state == 3,
-							'waitRedivStyle' : item.state == 4,
-							'completeStyle' : item.state == 5,
-							'haveRedivStyle' : item.state == 6,
-							'cancelStyle' : item.state == 7,
-							'redivStyle' : item.state == 8
+							'staySureStyle ' : item.state == 1, 
+							'stayDeliveryStyle' : item.state == 2,
 							}"
 						>
 							<span>{{ stateTransfer(item.status) }}</span>
@@ -205,8 +200,7 @@ export default {
       orderStatusList: [
         '全部状态',
         '待确认',
-        '待审核',
-        '已审核'
+        '待送货'
       ],
       orderList: [
             {
@@ -815,30 +809,14 @@ export default {
                             color: #E8CB51;
                         }
                     };
-                    .noStartStyle {
-                    background: #BBBBBB !important
+                    .staySureStyle {
+                        background: rgba(232,203,81,0.16) !important;
+                        color: #E8CB51 !important;
                     };
-                    .underwayStyle {
-                    background: #289E8E !important
+                    .stayDeliveryStyle {
+                        background: #E7F3FE !important;
+                        color: #3B9DF9 !important;
                     };
-                    .completeStyle {
-                    background: #242424 !important
-                    };
-                    .redivStyle {
-                    background: #F2A15F !important
-                    };
-                    .haveRedivStyle {
-                    background: #9B7D31 !important
-                    };
-                    .waitRedivStyle {
-                    background: orange !important
-                    };
-                    .cancelStyle {
-                    background: #E8CB51 !important
-                    };
-                    .completeStyle {
-                    background: #101010 !important
-                    }
                 };
                 .order-list-center {
                     margin: 10px 0;
@@ -848,7 +826,7 @@ export default {
                         display: flex;
                         >span {
                             display: inline-block;
-                            font-size: 14px;
+                            font-size: 12px;
                             &:nth-child(1) {
                                 color: #9E9E9A;
                                 margin-right: 6px;
