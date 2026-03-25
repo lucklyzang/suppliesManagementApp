@@ -1,0 +1,852 @@
+import moment from 'moment'
+/**
+ * 格式化当前时间
+*/
+export const formatTime = (formatType) => {
+  return moment(new Date().getTime()).format(formatType)
+}
+
+/*
+ * 存储localStorage
+ * @param{String} name key值
+ * @param{String} content value值
+*/
+export const setStore = (name, content) => {
+  if (!name) return;
+  if (typeof content !== 'string') {
+    content = JSON.stringify(content);
+  };
+  window.localStorage.setItem(name, content);
+}
+
+/*
+ * 获取localStorage
+ * @param{String} name key值
+*/
+export const getStore = name => {
+  if (!name) return;
+  return window.localStorage.getItem(name);
+}
+
+/*
+ * 删除localStorage
+ * @param{String} name key值
+*/
+export const removeStore = name => {
+  if (!name) return;
+  window.localStorage.removeItem(name);
+}
+
+/** 
+ * 存储当前历史记录点,实现控制手机物理返回键的按钮事件
+*/
+export const pushHistory = () => {
+  let state = {
+    title: '',
+    url: ''
+  }
+  window.history.pushState(state, state.title, state.url)
+}
+
+/** 
+ * 判断设备的操作系统环境(区分pc和移动端)
+*/
+export const IsPC = () => {
+  let flag;
+　let system = {
+　　win: false,
+　　mac: false,
+　　xll: false,
+　　ipad: false
+  };
+　//检测平台
+　let p = navigator.platform;
+  　　system.win = p.indexOf("Win") == 0;
+  　　system.mac = p.indexOf("Mac") == 0;
+  　　system.x11 = (p == "X11") || (p.indexOf("Linux") == 0);
+  　　system.ipad = (navigator.userAgent.match(/iPad/i) != null) ? true : false;
+　if (system.win || system.mac || system.xll || system.ipad) {
+    flag = true
+　} else {
+    flag = false
+　}
+  return flag
+}
+
+/** 
+ * 判断是否是安卓环境还是ios环境  
+*/
+export const isAndroid_ios = () => {  
+  let u = navigator.userAgent;
+  let isAndroid = u.indexOf('Android') > -1 || u.indexOf('Linux') > -1 || u.indexOf('Adr') > -1 || u.indexOf('adr') > -1; //android终端或者uc浏览器  
+  let isiOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/); //ios终端
+  if (isAndroid) {
+    return true
+  } else if (isiOS) {
+    return false
+  } else {
+    return '非安卓或ios'
+  }
+} 
+
+/** 
+ * 判断是否在微信内置浏览器打开
+*/
+
+export const isWeiXin = () => {
+  let ua = window.navigator.userAgent.toLowerCase();
+  if((/MicroMessenger/i).test(ua)){
+    return true;
+  }else{
+    return false;
+  }
+}
+
+/*
+ * url地址栏获取指定参数的值
+ * @param{String} code 指定参数名
+*/
+
+export const getUrlParam = (code,search) => {
+  search = search ||  window.location.search.substr(1) || window.location.hash.split("?")[1];
+  let reg = new RegExp("(^|&)"+ code +"=([^&]*)(&|$)");
+  let r = search.match(reg);
+  if (r != null) return  unescape(r[2]); return null;
+}
+
+/*
+ * 扫码枪绑定方法
+ * @param{Function} callback 回调函数
+*/
+export const scanCode = (callback) => {
+  var code = '';
+  var lastTime, nextTime;
+  var lastCode, nextCode;
+  var that = this;
+  window.document.onkeypress = function(event) {
+    if (window.event) { // IE
+        nextCode = event.key;
+    } else if (event.which) { // Netscape/Firefox/Opera
+        nextCode = event.which
+    }
+    if (event.which === 13) {
+      if (code.length < 3) {// 手动输入的时间不会让code的长度大于2，所以这里只会对扫码枪有
+          return
+      }
+      // code = decodeURIComponent(code);
+      console.log('扫码结束: ' + code);
+      callback(code);
+      //TODO
+      code = '';
+      lastCode = '';
+      lastTime = '';
+      return
+    }
+    nextTime = new Date().getTime();
+    if (!lastTime && !lastCode) {
+      console.log('扫码开始。。。');
+      code += event.key;
+    }
+
+    if (lastCode && lastTime && nextTime - lastTime > 500) { // 当扫码前有keypress事件时,防止首字缺失
+      console.log('防止首字缺失。。。');
+      code = event.key
+    } else if (lastCode && lastTime) {
+      console.log('扫码中。。。');
+      code += event.key
+    }
+    lastCode = nextCode;
+    lastTime = nextTime;
+  }
+}
+
+/*
+ * 验证输入重量是否合法正则
+*/
+export const testWeight = /^[+]{0,1}(\d+)$|^[+]{0,1}(\d+\.\d+)$/
+
+/*
+ * 扫码后从字典中取值
+ * @param{Object} data 字典数据
+ * @param{String} key key值
+*/
+export const Dictionary = (data, key) => {
+  return data[key] ? data[key] : undefined
+}
+
+/*
+ * 判断数据是否为JSON类型
+ * @param{Object} data
+*/
+
+export const judgeDataType = (data) => {
+  var flag;
+  if (typeof(data) == "object" && Object.prototype.toString.call(data) == "[object Object]" && !data.length) {
+    flag = true
+  } else {
+    flag = false
+  }
+  return flag
+}
+
+/*
+ * 判断数组对象中每项某个key对应value是否相同
+ * @param{Array} data
+ * @param{String} key 
+*/
+
+export const judgeKeyEquail = (data,key) => {
+  var flag = true;
+  if (!(Object.prototype.toString.call(data) === '[object Array]')) {
+    return
+  };
+  if (data.length > 0) {
+    for (var i=1, len = data.length; i< len; i++) {
+      var assignItem = data[0][key];
+      if (data[i][key] !== assignItem) {
+        flag = false;
+        break
+      }
+    }
+  } else {
+    flag = true
+  }
+  return flag
+}
+
+/*
+ * 合并医废类型、重量、医废收集时间
+ * @param{Array} typeArr 医废类型
+ * @param{Array} weightArr 医废重量
+ * @param{Array} timeArr 收集时间
+*/
+
+export const dealMedicalWaste = (typeArr, weightArr, timeArr) => {
+  const typeTarget = [];
+  const weightTarget = [];
+  const timeTarget = [];
+  let index = 0;
+  const indexMap = {};
+
+  for (let i = 0, len = typeArr.length; i < len; i += 1) {
+    const type = typeArr[i];
+    let curTypeIndex = -1;
+    if (type in indexMap) {
+      curTypeIndex = indexMap[type]
+    } else {
+      curTypeIndex = indexMap[type] = index++;
+      typeTarget[curTypeIndex] = type;
+      weightTarget[curTypeIndex] = 0;
+      timeTarget[curTypeIndex] = null
+    };
+    weightTarget[curTypeIndex] = weightTarget[curTypeIndex] + weightArr[i];
+    timeTarget[curTypeIndex] = timeArr[i]
+  };
+  return [typeTarget, weightTarget, timeTarget]
+}
+
+/* 
+  * 合并医废类型、重量
+  * @param{Array} wasteType 医废类型
+  * @param{Array} wasteWeight 医废重量
+*/
+export const dealMedicalWast = (wasteType,wasteWeight) => {
+  let map = {};
+  wasteType.forEach((value, index) => {
+    Object.prototype.hasOwnProperty.call(map, value) || (map[value] = 0);
+    map[value] += Number(wasteWeight[index]);
+  });
+  return map
+}
+
+/* 
+  * 数组去重
+  * @param{Array} currentArr
+*/
+export const checkEmptyArray = (currentArr) => {
+  var arr = [];
+  currentArr.map(function(val, index) {
+    //过滤规则为，不为空串、不为null、不为undefined，也可自行修改
+    if (val !== "" && val != undefined) {
+      arr.push(val);
+    }
+  });
+  return arr;
+}
+
+/* 
+  * 引用类型数据深度克隆
+  * @param{Array || Object} obj
+*/
+export const deepClone = (obj) => {
+  let newObj=Array.isArray(obj)?[]:{}
+  if(obj&&typeof obj ==="object"){
+    for(let key in obj){
+      if(obj.hasOwnProperty(key)){
+        newObj[key]=(obj && typeof obj[key]==='object')?deepClone(obj[key]):obj[key];
+      }
+    }
+  }
+  return newObj
+}
+
+/* 
+  * 根据标本id查询标本名称
+  * @param{Array} sampleArray 标本信息对象数组
+  * @param{String} sampleId 标本ID值
+*/
+export const querySampleName = (sampleArray,sampleId) => {
+  if (!Array.isArray(sampleArray)) {return};
+  let targetSmple = sampleArray.filter((item) => {
+    return item.value == sampleId
+  });
+  return targetSmple[0].text
+}
+
+/* 
+  * 数组去重方法
+  * @param{Array} targetArray
+*/
+export const repeArray = (targetArray) => {
+  if (!Array.isArray(targetArray)) {return};
+  var result = [],
+  len = targetArray.length;
+  targetArray.forEach(function(v, i ,targetArray){  //这里利用map，filter方法也可以实现
+    var bool = targetArray.indexOf(v,i+1);  //从传入参数的下一个索引值开始寻找是否存在重复
+    if(bool === -1){
+      result.push(v);
+    }
+    });
+  return result;
+}
+
+/* 
+  * 数组去重方法(重复的对象)
+  * @param{Array} obj
+*/
+export const deteleObject = (obj) => {
+  var uniques = [];
+  var stringify = {};
+  for (var i = 0; i < obj.length; i++) {
+      var keys = Object.keys(obj[i]);
+      keys.sort(function(a, b) {
+          return (Number(a) - Number(b));
+      });
+      var str = '';
+      for (var j = 0; j < keys.length; j++) {
+          str += JSON.stringify(keys[j]);
+          str += JSON.stringify(obj[i][keys[j]]);
+      }
+      if (!stringify.hasOwnProperty(str)) {
+          uniques.push(obj[i]);
+          stringify[str] = true;
+      }
+  }
+  uniques = uniques;
+  return uniques;
+}
+
+/*
+ * 格式化当前日期
+ * 
+*/
+export const getDate = () => {
+	var date = new Date();
+	var year = date.getFullYear();        //年 ,从 Date 对象以四位数字返回年份
+	var month = date.getMonth() + 1;      //月 ,从 Date 对象返回月份 (0 ~ 11) ,date.getMonth()比实际月份少 1 个月
+	var day = date.getDate();             //日 ,从 Date 对象返回一个月中的某一天 (1 ~ 31)
+	
+	var hours = date.getHours();          //小时 ,返回 Date 对象的小时 (0 ~ 23)
+	var minutes = date.getMinutes();      //分钟 ,返回 Date 对象的分钟 (0 ~ 59)
+	var seconds = date.getSeconds();      //秒 ,返回 Date 对象的秒数 (0 ~ 59)   
+	//获取当前系统时间  
+	var currentDate = year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
+	//修改月份格式
+	if (month >= 1 && month <= 9) {
+		month = "0" + month;
+	}
+	//修改日期格式
+	if (day >= 0 && day <= 9) {
+		day = "0" + day;
+	}
+	//修改小时格式
+	if (hours >= 0 && hours <= 9) {
+		hours = "0" + hours;
+	}
+	//修改分钟格式
+	if (minutes >= 0 && minutes <= 9) {
+		minutes = "0" + minutes;
+	}
+	//修改秒格式
+	if (seconds >= 0 && seconds <= 9) {
+		seconds = "0" + seconds;
+	}
+	//获取当前系统时间  格式(yyyy-mm-dd hh:mm:ss)+ " " + hours + ":" + minutes + ":" + seconds
+	var currentFormatDate = year + "-" + month + "-" + day;
+	return currentFormatDate
+}
+
+/*
+  * 数组去重方法
+  * @param{Array} targetArray
+*/
+export const uniqueArray = (targetArray) => {
+  if (!Array.isArray(targetArray)) {return};
+  return Array.from(new Set(targetArray))
+}
+
+
+
+/*
+ * 合并重复的运送类型
+ * @param{Array}
+ * @return {Array}
+ *
+*/
+
+export const  mergeMethods =  (testData) => {
+  if (!Array.isArray(testData)) { return };
+  var mergeData = [];
+  for (var i = 0, len = testData.length; i < len; i++ ) {
+    var temporaryObj = {typeList:[]};
+    var temporaryParentTypeName = [];
+    temporaryObj['typeList'].push({
+      patientName: testData[i]['patientName'],
+      bedNumber: testData[i]['bedNumber'],
+      sex: testData[i]['sex'],
+      quarantine: testData[i]['quarantine'],
+      typeChildList: []
+    });
+    for (var innerI = 0, innerLen = testData[i]['typeList'].length; innerI < innerLen; innerI++ ) {
+      // 判断运送大类是否存在已有的数组元素中
+      if (testData[i]['typeList'].length == 0) { continue };
+      var tragetIndex = mergeData.findIndex(function(item) { return item.parentTypeName == testData[i]['typeList'][innerI]['parentTypeName']});
+      if (tragetIndex == -1) {
+        // 判断该病人是否存在多个运送大类
+        if (temporaryParentTypeName.indexOf(testData[i]['typeList'][innerI]['parentTypeName']) != -1) {
+          temporaryObj['parentTypeName'] = testData[i]['typeList'][innerI]['parentTypeName'];
+          temporaryObj['typeList'][0]['typeChildList'].push({
+            taskTypeName: testData[i]['typeList'][innerI]['taskTypeName'],
+            quantity: testData[i]['typeList'][innerI]['quantity'],
+          })
+        } else {
+          var temporaryinnerObj = {typeList:[]};
+          temporaryinnerObj['parentTypeName'] = testData[i]['typeList'][innerI]['parentTypeName'];
+          temporaryinnerObj['typeList'].push({
+            patientName: testData[i]['patientName'],
+            bedNumber: testData[i]['bedNumber'],
+            sex: testData[i]['sex'],
+            quarantine: testData[i]['quarantine'],
+            typeChildList: []
+          });
+          temporaryinnerObj['typeList'][0]['typeChildList'].push({
+            taskTypeName: testData[i]['typeList'][innerI]['taskTypeName'],
+            quantity: testData[i]['typeList'][innerI]['quantity'],
+          })
+          mergeData.push(temporaryinnerObj)
+        }
+      } else {
+        // 判断病人是否存在于已有运送大类的typelist中
+        var patientIndex = mergeData[tragetIndex]['typeList'].findIndex(function(item) { return item.bedNumber == temporaryObj['typeList'][0]['bedNumber']});
+        if (patientIndex == -1) {
+          mergeData[tragetIndex]['typeList'].push({
+            patientName: testData[i]['patientName'],
+            bedNumber: testData[i]['bedNumber'],
+            sex: testData[i]['sex'],
+            quarantine: testData[i]['quarantine'],
+            typeChildList: []
+          })
+        };
+        mergeData[tragetIndex]['typeList'][mergeData[tragetIndex]['typeList'].length-1]['typeChildList'].push({
+          taskTypeName: testData[i]['typeList'][innerI]['taskTypeName'],
+          quantity: testData[i]['typeList'][innerI]['quantity'],
+        })
+      };
+      // 存储该病人信息下的运送大类(一个病人有可能会有多个运送大类)
+      temporaryParentTypeName.push(testData[i]['typeList'][innerI]['parentTypeName']);
+    };
+    temporaryObj.hasOwnProperty('parentTypeName') && mergeData.push(temporaryObj)
+  };
+  return mergeData
+}
+
+/* 
+  * 去除包裹的大括号
+  * @param{String} str
+*/
+export const removeBlock = (str) => {
+  if (str) {
+    let reg = /^\{/gi;
+    let reg2 = /\}$/gi;
+    str = str.replace(reg,"");
+    str = str.replace(reg2,"");
+    return str;
+  } else {
+    return str;
+  }
+}
+
+/* 
+  * 生成UUID
+*/
+export const UUID = () => {
+  var d = new Date().getTime()
+  var uuid = 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    var r = (d + Math.random() * 16) % 16 | 0
+    d = Math.floor(d / 16)
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16)
+  })
+  return uuid
+}
+
+/* 
+  * 去除两个数组的相同值
+  * @param{Array} a
+  * @param{Array} b
+*/
+export const arrayDiff = (a, b) => { 
+  for(let i=0; i<b.length; i++) { 
+    for(let j=0; j<a.length; j++) { 
+      if(a[j] == b[i]){ 
+        a.splice(j,1); 
+        j=j-1; 
+      } 
+    } 
+  } 
+  return a; 
+}
+
+/* 
+  * 压缩图片
+  * @param{String} originSite base64字符串
+  * @param{Function} callback 压缩成功后的回调函数
+*/
+export const compressImg = (originSite,callback) => {
+  let image = new Image(); //新建一个img标签（还没嵌入DOM节点)
+  image.src = originSite;
+  image.onload = function() {
+    let canvas = document.createElement('canvas'),
+    context = canvas.getContext('2d');
+    let x = image.width/500;  //压缩倍数
+    if (image.width > 500) {
+      var imageWidth = image.width / x;   //压缩后图片的大小
+      var imageHeight = image.height / x;
+    } else {
+      var imageWidth = image.width / 1;   //不进行压缩大小
+      var imageHeight = image.height / 1;
+    };
+    let data = '';
+    canvas.width = imageWidth;
+    canvas.height = imageHeight;
+    context.drawImage(image, 0, 0, imageWidth, imageHeight);
+    data = canvas.toDataURL('image/jpeg');
+    callback(data)
+  }
+}
+
+/* 
+  * 压缩图片
+  * @param{String} img 图片对象
+*/
+export const compress = (image) => {
+    // let canvas = document.createElement('canvas'),
+    // context = canvas.getContext('2d');
+    // let x = image.width/500;  //压缩倍数
+    // if (image.width > 500) {
+    //   var imageWidth = image.width / x;   //压缩后图片的大小
+    //   var imageHeight = image.height / x;
+    // } else {
+    //   var imageWidth = image.width / 1;   //不进行压缩大小
+    //   var imageHeight = image.height / 1;
+    // };
+    // let data = '';
+    // canvas.width = imageWidth;
+    // canvas.height = imageHeight;
+    // context.drawImage(image, 0, 0, imageWidth, imageHeight);
+    // data = canvas.toDataURL('image/jpeg');
+    // return dataURItoBlob(data);
+
+
+    let canvas = document.createElement('canvas'),
+    context = canvas.getContext('2d');
+    let x = image.width/500;  //压缩倍数
+    if (image.width > 500) {
+      var imageWidth = image.width / x;   //压缩后图片的大小
+      var imageHeight = image.height / x;
+    } else {
+      var imageWidth = image.width / 1;   //不进行压缩大小
+      var imageHeight = image.height / 1;
+    };
+    let data = '';
+    canvas.width = imageWidth;
+    canvas.height = imageHeight;
+    context.drawImage(image, 0, 0, imageWidth, imageHeight);
+    data = canvas.toDataURL('image/jpeg');
+    return data
+}
+
+
+/* 
+  * base64格式转化为file对象
+  * @param{urlData} urlData base64字符串
+  * @param{name} base64文件名称
+*/
+
+export const dataURItoBlob = (urlData) => {
+  let arr = urlData.split(',');
+  let type = arr[0].match(/:(.*?);/)[1];
+  let fileExt = type.split('/')[1];
+  let bstr = atob(arr[1]);
+  let n = bstr.length;
+  let u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], 'filename.' + fileExt, {
+    type: type
+  });
+}
+
+/* 
+ * Base64编码转换为file对象
+ * @param{String} dataurl base编码字符串
+ * @param{String} filename 文件名称
+ */
+export const base64ImgtoFile = (dataurl, filename = 'file') => {
+  let arr = dataurl.split(',')
+  let mime = arr[0].match(/:(.*?);/)[1]
+  let suffix = mime.split('/')[1]
+  let bstr = atob(arr[1])
+  let n = bstr.length
+  let u8arr = new Uint8Array(n)
+  while (n--) {
+      u8arr[n] = bstr.charCodeAt(n)
+  }
+  return new File([u8arr], `${filename}.${suffix}`, {
+      type: mime
+  })
+}
+
+/* 
+  * 将数组中符合条件的元素移到最前面
+  * @param{Array} arr
+  * @param{String} key 
+*/
+export const changeArrIndex = (arr,key) => {
+  let deleteItem = [];
+  for (let i = 0; i < arr.length; i++) {
+		if (arr[i]['text'] === key) {
+      deleteItem = arr.splice(i, 1);
+      arr.unshift(deleteItem[0]);
+			break;
+		}
+	};
+  return arr
+}
+
+/* 
+  * 数组升序排序(时间专用)
+  * @param{Array} arr
+  * @param{String} key 
+*/
+export const arrDateTimeSort = (arr) => {
+  if (Object.prototype.toString.call(arr) != '[object Array]') { return };
+  for (let i=0; i<arr.length-1; i++) {
+    for (let j = 0; j < arr.length-1-i; j++) {
+      if((new Date(getFullDate(arr[j]))).getTime() > (new Date(getFullDate(arr[j+1])).getTime())){
+        let temp = arr[j];
+        arr[j] = arr[j+1];
+        arr[j+1] = temp
+      }
+    }    
+  };
+  return arr
+}
+
+/* 
+  * 拼接完整时间
+  * @param{Array} arr
+  * @param{String} key 
+*/
+export const getFullDate = (hourTime) => {
+  let currentdate;
+  let strDate;
+  let seperator1 = "-";
+  let month = new Date().getMonth() + 1;
+  strDate = new Date().getDate();
+  if (month >= 1 && month <= 9) {
+      month = "0" + month;
+  };
+  if (strDate >= 0 && strDate <= 9) {
+    strDate = "0" + strDate;
+  };
+  currentdate = new Date().getFullYear() + seperator1 + month + seperator1 + strDate
+  return currentdate + ' ' + hourTime
+}
+
+/*
+ * 判断时间是否超时
+ * @param{String} startTime YYYY-mm-dd HH:MM:ss 开始时间 
+ * @param{Number} interVal minute 计划用时
+ * @return {Boolean} 返回true或false
+*/
+export const judgeOverTime = (startTime,interVal) => {
+  let isOverTime = false
+  let startMillisecond = new Date(startTime).getTime();
+  let audio = new Audio();
+  audio.preloadc = "auto";
+  process.env.NODE_ENV == 'development' ? audio.src = "/static/audios/task-info-voice.wav" : audio.src = "/wisdomLogisticsServePlatformApp/static/audios/task-info-voice.wav";
+  let interValModule = setInterval(() => {
+    let realMillisecond = new Date().getTime();
+    if (realMillisecond - startMillisecond >= interVal*60*1000) {
+      isOverTime = true;
+      // 播放预警提示
+      audio.play();
+      clearInterval(interValModule)
+    }
+  },1000);
+  return isOverTime
+}
+
+/*
+ * canvas签名旋转
+ * @param{src} base64图片
+ * @param{edg} 旋转角度
+ */
+export const rotateBase64Img = (src, edg, callback) => {
+  var canvas = document.createElement("canvas");
+  var ctx = canvas.getContext("2d");
+  var imgW; //图片宽度
+  var imgH; //图片高度
+  var size; //canvas初始大小
+  if (edg % 90 != 0) {
+      console.error("旋转角度必须是90的倍数!");
+      throw '旋转角度必须是90的倍数!';
+  }
+  (edg < 0) && (edg = (edg % 360) + 360)
+  const quadrant = (edg / 90) % 4; //旋转象限
+  const cutCoor = { sx: 0, sy: 0, ex: 0, ey: 0 }; //裁剪坐标
+  var image = new Image();
+  image.crossOrigin = "anonymous"
+  image.src = src;
+  image.onload = function() {
+      imgW = image.width;
+      imgH = image.height;
+      size = imgW > imgH ? imgW : imgH;
+      canvas.width = size * 2;
+      canvas.height = size * 2;
+      switch (quadrant) {
+          case 0:
+              cutCoor.sx = size;
+              cutCoor.sy = size;
+              cutCoor.ex = size + imgW;
+              cutCoor.ey = size + imgH;
+              break;
+          case 1:
+              cutCoor.sx = size - imgH;
+              cutCoor.sy = size;
+              cutCoor.ex = size;
+              cutCoor.ey = size + imgW;
+              break;
+          case 2:
+              cutCoor.sx = size - imgW;
+              cutCoor.sy = size - imgH;
+              cutCoor.ex = size;
+              cutCoor.ey = size;
+              break;
+          case 3:
+              cutCoor.sx = size;
+              cutCoor.sy = size - imgW;
+              cutCoor.ex = size + imgH;
+              cutCoor.ey = size + imgW;
+              break;
+      }
+      ctx.translate(size, size);
+      ctx.rotate(edg * Math.PI / 180);
+      //drawImage向画布上绘制图片
+      ctx.drawImage(image, 0, 0);
+      //getImageData() 复制画布上指定矩形的像素数据
+      var imgData = ctx.getImageData(cutCoor.sx, cutCoor.sy, cutCoor.ex, cutCoor.ey);
+      if (quadrant % 2 == 0) {
+          canvas.width = imgW;
+          canvas.height = imgH;
+      } else {
+          canvas.width = imgH;
+          canvas.height = imgW;
+      }
+      //putImageData() 将图像数据放回画布
+      ctx.putImageData(imgData, 0, 0);
+      callback(canvas.toDataURL())
+  }
+}
+
+/*
+ * 判断时间大小
+ * @param{String} t1 HH:MM 时间1 
+ * @param{String} t2 HH:MM 时间2
+ * @return {Boolean} 返回true或false
+*/
+
+export const compareDateTime = (t1,t2) => {
+  let date = new Date();
+  let a = t1.split(":");
+  let b = t2.split(":");
+  return date.setHours(a[0],a[1]) <= date.setHours(b[0],b[1]);
+}
+
+/*
+ * 
+ *  清空所有LocalStorage
+ * 
+ * 
+*/
+
+export const removeAllLocalStorage = () => {
+  // removeStore('userName');
+  // removeStore('userPassword');
+  removeStore('userInfo');
+  removeStore('isLogin');
+  removeStore('token');
+  removeStore('isLogin');
+  removeStore('timeMessage');
+  removeStore('ossMessage');
+  removeStore('chooseHospitalArea');
+  removeStore('appPermission');
+}
+
+/*
+ * 
+ *  清空除登录信息外的LocalStorage
+ * 
+ * 
+*/
+
+export const removeExceptLoginMessageLocalStorage = () => {
+}
+
+/*
+ * 
+ *  任务优先级转换
+ * @param{Number} index
+ * 
+*/
+
+export const priorityTransfer = (index) => {
+  switch(index) {
+    case 1 :
+      return '正常'
+      break;
+    case 2 :
+      return '重要'
+      break;
+    case 3 :
+      return '紧急'
+      break;
+    case 4 :
+      return '紧急重要'
+      break;
+    default:
+      return '无'
+  }
+}
+
