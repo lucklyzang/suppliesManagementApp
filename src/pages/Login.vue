@@ -4,10 +4,6 @@
 		<van-dialog v-model="modalShow" :title="modalContent"
 		 show-cancel-button @confirm="sureCancel" @cancel="cancelSure">
 		</van-dialog>
-		<!-- 院区 -->
-		<div class="transport-rice-box" v-show="showHospitalCampus">
-			<ScrollSelection buttonLocation='top' v-model="showHospitalCampus" :pickerValues="hospitalCampusDefaultIndex" :isShowSearch="false" :columns="hospitalCampusOption" @sure="hospitalCampusSureEvent" @cancel="hospitalCampusCancelEvent" @close="hospitalCampusCloseEvent" />
-		</div>
 		<div class="top-background-area">
 			<img src="@/common/images/home/login-background-image.png" />
 			<div class="title-area">
@@ -38,11 +34,11 @@
 			</div>
       <div class="remember-password">
         <div class="remember-password-content">
-          <van-checkbox v-model="checked" checked-color="#1864FF">记住账户密码</van-checkbox>
+          <van-checkbox v-model="checked" checked-color="#1864FF">记住账号密码</van-checkbox>
          </div>
       </div>
 	<div class="form-btn">
-        <div v-preventReClick @click="sure">登 录</div>
+        <div v-preventReClick @click="loginHandle">登 录</div>
 	</div>
 		</div>
 	</div>
@@ -50,14 +46,10 @@
 
 <script>
 	import { mapGetters, mapMutations } from 'vuex'
-	import { logIn, getTemplateType, getdepartmentList, getdepartmentListNo,registerChannel, getAppPermission } from '@/api/login.js'
-	import { getProjectdepartmentListNo, registerProjectChannel } from '@/api/project/login.js'
-	import { setStore, getStore, removeStore,IsPC } from '@/common/js/utils'
-	import ScrollSelection from "@/components/ScrollSelection";
-  	import Qs from 'qs'
+	import { logIn, getUserInfo, getAppPermission } from '@/api/login.js'
+	import { setStore, getStore, removeStore } from '@/common/js/utils'
 	export default {
 	components: {
-		ScrollSelection,
 	},
 		data() {
 			return {
@@ -68,23 +60,15 @@
 					password: ''
 				},
                 checked: false,
-				hospitalCampusDefaultIndex: 0,
-				hospitalCampusOption: [],
-				showHospitalCampus: false,
-				currentHospitalCampusSpaces: '请选择',
-				
 				rememberAccountMessage: false,
 				modalShow: false,
-				modalContent: '',
-				temporaryUsername: '',
-				proId: '',
-				deviceNumber: ''
+				modalContent: ''
 			}
 		},
 		computed: {
 			...mapGetters([
-				'chooseHospitalArea',
 				'userInfo',
+				'userTokenInfo',
 				'baseURL'
 			])
 		},
@@ -111,44 +95,43 @@
 		methods: {
 			...mapMutations([
 				'storeUserInfo',
+				'storeUserTokenInfo',
 				'changeOverDueWay',
-				'changeTemplateType',
 				'changeToken',
 				'changeIsLogin',
-				'storeChooseHospitalArea',
-				'changeIsMedicalMan',
-				'storeAppPermission',
-				'changeUserType',
-				'changeIsNewCircle',
-				'changeRoleNameList'
+				'storeAppPermission'
 			]),
-      
-			// 院区下拉选择框确认事件
-			hospitalCampusSureEvent (val,value,id) {
-				if (val) {
-					this.hospitalCampusDefaultIndex = id;
-					this.currentHospitalCampusSpaces =  val;
-					this.storeChooseHospitalArea({
-						text: val,
-						value,
-						id
-					});
-					this.loginHandle();
-				} else {
-					this.hospitalCampusDefaultIndex = '';
-					this.currentGoalSpaces = '请选择'
-				};
-				this.showHospitalCampus = false
-			},
-			
-			// 院区下拉选择框取消事件
-			hospitalCampusCancelEvent () {
-				this.showHospitalCampus = false
-			},
-			
-			// 院区下拉选择框关闭事件
-			hospitalCampusCloseEvent () {
-				this.showHospitalCampus = false
+
+			// 获取用户详情
+			getUserInfoEvent () {
+				return new Promise((resolve,reject) => {
+					this.showLoadingHint = true;
+					this.infoText = '获取中···';
+					getUserInfo(this.userTokenInfo['userId'])
+					.then((res) => {
+						this.showLoadingHint = false;
+						this.infoText = '';
+						if (res && res.data.code == 0) {
+							resolve();
+							this.storeUserInfo(res.data.data);
+						} else {
+							reject(res.data.msg);
+							this.$dialog.alert({
+								message: `${res.data.msg}`,
+								closeOnPopstate: true
+							}).then(() => {})
+						}
+					})
+					.catch((err) => {
+						reject(err);
+						this.showLoadingHint = false;
+						this.infoText = '';
+						this.$dialog.alert({
+							message: `${err}`,
+							closeOnPopstate: true
+						}).then(() => {})
+					})
+				})
 			},
 
 			// 获取用户权限
@@ -160,7 +143,7 @@
 					.then((res) => {
 						this.showLoadingHint = false;
 						this.infoText = '';
-						if (res && res.data.code == 200) {
+						if (res && res.data.code == 0) {
 							resolve();
 							this.storeAppPermission(res.data.data);
 						} else {
@@ -183,31 +166,21 @@
 				})
 			},
 				
-			// 账号密码事件
-			sure () {
-				if (this.form.username === '' || this.form.password === '') {
-					this.$toast({
-						message: '账号或密码不能为空'
-					});
-					return;
-				};
+			// 账号密码登录事件
+			authLoginEvent () {
 				return new Promise((resolve,reject)=> {
 					let loginMessage ={
 						username: this.form.username,
 						password: this.form.password
 					};
-					this.temporaryUsername = getStore('userName') ? getStore('userName') : '无';
 					this.showLoadingHint = true;
 					this.infoText = '登录中···';
 					logIn(loginMessage).then((res) => {
 						this.showLoadingHint = false;
 						this.infoText = '';
 						if (res) {
-							if (res.data.code == 200) {
-								resolve(res.data.data)
-								this.changeOverDueWay(false);
-								setStore('storeOverDueWay',false); 
-								// 登录用户名密码及用户信息存入Locastorage
+							if (res.data.code == 0) {
+								resolve();
 								// 判断是否勾选记住用户名密码
 								if (this.checked) {
 									setStore('userName', this.form.username);
@@ -216,35 +189,17 @@
 									removeStore('userName');
 									removeStore('userPassword');
 								};
-								// 登录用户信息存入store
-								this.changeIsLogin(true);
-								this.storeUserInfo(res.data.data);
-								// 存入用户角色列表
-								this.changeRoleNameList(res.data.data.roleNameList);
-								this.hospitalCampusOption = [];
-								this.changeIsMedicalMan(false);
-								if (this.userInfo['worker']['hospitalList'].length > 1) {
-									for (let i = 0;i<this.userInfo['worker']['hospitalList'].length;i++) {
-										this.hospitalCampusOption.push({
-											value: this.userInfo['worker']['hospitalList'][i]['id'],
-											text: this.userInfo['worker']['hospitalList'][i]['name'],
-											id: i
-										})
-									};
-									this.showHospitalCampus = true;
-									this.hospitalCampusDefaultIndex = 0;
-								} else {
-									this.storeChooseHospitalArea({
-										value: this.userInfo['worker']['hospitalList'][0]['id'],
-										text: this.userInfo['worker']['hospitalList'][0]['name'],
-										id: 0
-									});
-									this.loginHandle()
-								}
+								// 登录用户token信息存入store
+								this.storeUserTokenInfo(res.data.data);
+								// 存入token
+								this.changeToken(res.data.data['accessToken']);
 							} else {
 								reject(res.data.msg);
-								this.modalShow = true;
-								this.modalContent = `${res.data.msg}`
+								this.infoText = '';
+								this.$dialog.alert({
+									message: `${res.data.msg}`,
+									closeOnPopstate: true
+								}).then(() => {})
 							}
 						}
 					})
@@ -252,17 +207,31 @@
 						reject(err);
 						this.showLoadingHint = false;
 						this.infoText = '';
-						this.modalShow = true;
-						this.modalContent = err;
+						this.$dialog.alert({
+							message: `${err}`,
+							closeOnPopstate: true
+						}).then(() => {})
 					})
 				})	
 			},
 
 			// 登录事件
 			async loginHandle () {
+				if (this.form.username === '' || this.form.password === '') {
+					this.$toast({
+						message: '账号或密码不能为空'
+					});
+					return;
+				};
 				try {
+					// 账号密码登录
+					await this.authLoginEvent();
+					// 获取用户详情
+					await this.getUserInfoEvent();
 					// 获取用户权限
-					await this.getappPermissionEvent();
+					// await this.getappPermissionEvent();
+					this.changeIsLogin(true);
+					this.changeOverDueWay(false);
 					this.$router.push({ path: "/suppliesHome" })
 				} catch (err) {
 					this.$dialog.alert({

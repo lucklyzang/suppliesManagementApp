@@ -90,7 +90,8 @@
 				'projectGlobalTimer',
 				'globalTimer',
 				'equipmentPatrolGlobalTimer',
-				'securityPatrolGlobalTimer'
+				'securityPatrolGlobalTimer',
+				'changeOverDueWay'
 			]),
 			userName() {
 			  return this.userInfo['worker']['name']
@@ -191,12 +192,12 @@
 				this.showLoadingHint = true;
 				this.infoText = '提交中···';
 				modificationPassword({
-					username: this.userAccount,
-					password: this.formerPasswordValue,
+					oldPassword: this.formerPasswordValue,
 					newPassword: this.newPasswordValue
 				}).then((res) => {
 					this.showLoadingHint = false;
 					if (res && res.data.code == 200) {
+						this.changeOverDueWay(true);
 						setTimeout(()=>{
 							this.$router.push({ path: '/' });
 						},2000);

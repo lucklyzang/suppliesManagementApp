@@ -17,7 +17,7 @@
 						用户账号
 					</div>
 					<div class="account-area-right">
-						{{ userAccount }}
+						dh
 					</div>
 				</div>
 				<div class="account-area account-area-bottom-border">
@@ -25,15 +25,7 @@
 						用户姓名
 					</div>
 					<div class="account-area-right">
-						{{ userName }}
-					</div>
-				</div>
-				<div class="account-area account-area-bottom-border">
-					<div class="account-area-left">
-						所属部门
-					</div>
-					<div class="account-area-right">
-						{{ depName }}
+						经典科
 					</div>
 				</div>
 				<div class="account-area" @click="modificationPasswordEvent">
@@ -87,31 +79,32 @@
 				'equipmentPatrolGlobalTimer',
 				'securityPatrolGlobalTimer'
 			]),
-			userName() {
-			  return this.userInfo['worker']['name']
-			},
-			workerId() {
-				return this.userInfo['worker']['id']
-			},
-			proName () {
-			  return this.chooseHospitalArea['text']
-			},
-			proId() {
-				return this.chooseHospitalArea['value']
-			},
-			depId() {
-				return this.userInfo['worker']['departments'].length == 0 ? '' : this.userInfo['worker']['departments'][0]['id']
-			},
-			depName() {
-				return this.userInfo['worker']['departments'].length == 0 ? '' : this.userInfo['worker']['departments'][0]['name']
-			},
-			userAccount() {
-				return this.userInfo['worker']['account']
-			}
+			// userName() {
+			//   return this.userInfo['worker']['name']
+			// },
+			// workerId() {
+			// 	return this.userInfo['worker']['id']
+			// },
+			// proName () {
+			//   return this.chooseHospitalArea['text']
+			// },
+			// proId() {
+			// 	return this.chooseHospitalArea['value']
+			// },
+			// depId() {
+			// 	return this.userInfo['worker']['departments'].length == 0 ? '' : this.userInfo['worker']['departments'][0]['id']
+			// },
+			// depName() {
+			// 	return this.userInfo['worker']['departments'].length == 0 ? '' : this.userInfo['worker']['departments'][0]['name']
+			// },
+			// userAccount() {
+			// 	return this.userInfo['worker']['account']
+			// }
 		},
 		methods: {
 			...mapMutations([
-				'changeUserBasicInfo'
+				'changeUserBasicInfo',
+				'changeOverDueWay'
 			]),
 
 			onClickLeft () {
@@ -143,23 +136,30 @@
 			userSignOutEvent () {
 				this.showLoadingHint = true;
 				this.infoText = '退出登录中...';
-				userSignOut(this.proId,this.workerId).then((res) => {
-					if ( res && res.data.code == 200) {
+				userSignOut().then((res) => {
+					this.showLoadingHint = false;
+					if (res && res.data.code == 0 && res.data.data) {
+						this.changeOverDueWay(true);
 						removeAllLocalStorage();
 						store.dispatch('resetLoginState');
 						store.dispatch('resetSuppliesManagementInfoState');
 						if(store.getters.suppliesHomeGlobalTimer) {window.clearInterval(store.getters.suppliesHomeGlobalTimer)};
 						this.$router.push({path: "/"});
 					} else {
-            			this.modalShow = true;
-						this.modalContent = `${res.data.msg}`
-					};
-					this.showLoadingHint = false;
+						this.$dialog.alert({
+							message: res.data.msg,
+							closeOnPopstate: true,
+						})
+						.then(() => {})
+					}
 				})
 				.catch((err) => {
 					this.showLoadingHint = false;
-          			this.modalShow = true;
-					this.modalContent = err.message
+          			this.$dialog.alert({
+						message: err,
+						closeOnPopstate: true,
+					})
+					.then(() => {})
 				})
 			}
 		}

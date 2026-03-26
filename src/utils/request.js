@@ -18,6 +18,41 @@ const service = axios.create({
     shouldRetry: (err) => true // 重试条件
 });
 
+// 计算是否快要过期
+const isTokenExpired = () => {
+    // 初次登录时userTokenInfo值为null
+    if (store.getters.userTokenInfo !== null) {
+        const expireTime = new Date(store.getters.userTokenInfo['expiresTime']).getTime();
+        const timeDifference = expireTime - Date.now();
+        if (expireTime && timeDifference < 60000) {
+            return true
+        };
+        return false
+    } else {
+        return false
+    }
+};
+
+// 是否正在刷新的标记 -- 防止重复发出刷新token接口--节流阀
+let isRefreshing = false;
+
+// 失效后同时发送请求的容器 -- 缓存接口
+let subscribers = [];
+
+// 刷新 token 后, 将缓存的接口重新请求一次
+function onAccessTokenFetched(newToken) {
+	subscribers.forEach((callback) => {
+			callback(newToken)
+	});
+	// 清空缓存接口
+	subscribers = []
+};
+
+// 添加缓存接口
+function addSubscriber(callback) {
+    subscribers.push(callback)
+};
+
 // request interceptor
 service.interceptors.request.use(
     config => {
@@ -26,6 +61,69 @@ service.interceptors.request.use(
         if (store.getters.token) {
             config.headers['Authorization'] = store.getters.token
         };
+        try {
+            if (isTokenExpired() && store.getters.userTokenInfo['refreshToken'] && store.getters.isLogin) {
+                // 如果token快过期了
+                if (!isRefreshing) { // 控制重复获取token
+                        isRefreshing = true;
+                        axios({
+                        headers: {
+                            'tenant-id': 1,
+                            'Authorization': store.getters.token
+                        },
+                        baseURL: `${store.getters.baseURL}`,
+                        method: 'post',
+                        url: `spd/admin-api/system/auth/refresh-token?refreshToken=${store.getters.userTokenInfo['refreshToken']}`
+                        }).then(res => {
+                        if (res && res.data.code === 0) {
+                            isRefreshing = false;
+                            const result = res.data.data;
+                            // token存储到vuex
+                            if (result) {
+                                // token信息存入store
+                                store.commit('changeToken',result.accessToken);
+                                // 用户token信息存入store
+                                store.commit('storeUserTokenInfo',result);
+                                onAccessTokenFetched(result.accessToken)
+                            }
+                        } else {
+                            router.push({ path: '/' });
+                            isRefreshing = true;
+                            // 清空store和localStorage
+                            store.dispatch('resetLoginState');
+                            store.dispatch('resetSuppliesManagementInfoState');
+                            removeAllLocalStorage();
+                            if(store.getters.suppliesHomeGlobalTimer) {window.clearInterval(store.getters.suppliesHomeGlobalTimer)};
+                        }
+                    }).catch((err) => {
+                            router.push({ path: '/' });
+                        // 清空store和localStorage
+                        store.dispatch('resetLoginState');
+                        store.dispatch('resetSuppliesManagementInfoState');
+                        removeAllLocalStorage();
+                        if(store.getters.suppliesHomeGlobalTimer) {window.clearInterval(store.getters.suppliesHomeGlobalTimer)};
+                        isRefreshing = true
+                    })
+            };
+            // 将其他接口缓存起来 -- 这个Promise函数很关键
+            const retryRequest = new Promise((resolve) => {
+                // 这里是将其他接口缓存起来的关键, 返回Promise并且让其状态一直为等待状态,
+                // 只有当token刷新成功后, 就会调用通过addSubscriber函数添加的缓存接口,
+                // 此时, Promise的状态就会变成resolve
+                addSubscriber((newToken) => {
+                    // 表示用新的token去替换掉原来的token
+                    config.headers['Authorization'] = `${newToken}`;
+                    // 替换掉url -- 因为baseURL会扩展请求url
+                    config.url = config.url.replace(config.baseURL, '');
+                    // 返回重新封装的config, 就会将新配置去发送请求
+                    resolve(config)
+                })
+            });
+                return retryRequest
+            };
+        } catch (err) {
+            console.log('err',err)
+        };    
         return config;
       }, function (error) {
         //处理请求错误
@@ -36,9 +134,6 @@ service.interceptors.request.use(
 // response interceptor
 service.interceptors.response.use(
     response => {
-        if (response.headers['token']) {
-            store.commit('changeToken', response.headers['token'])
-        };
         return response
     },
     (error) => {

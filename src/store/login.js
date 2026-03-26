@@ -15,9 +15,9 @@ export default {
 			state.userInfo = JSON.parse(getStore('userInfo')) ? JSON.parse(getStore('userInfo')) : null;
 			return state.userInfo
 		},
-		isMedicalMan:(state) => {
-			state.isMedicalMan = getStore('isMedicalMan') ? getStore('isMedicalMan') === 'false' ? false : true : false;
-			return state.isMedicalMan
+		userTokenInfo:(state) => {
+			state.userTokenInfo = JSON.parse(getStore('userTokenInfo')) ? JSON.parse(getStore('userTokenInfo')) : null;
+			return state.userTokenInfo
 		},
 		chooseHospitalArea:(state) => {
 			state.chooseHospitalArea = JSON.parse(getStore('chooseHospitalArea')) ? JSON.parse(getStore('chooseHospitalArea')) : null;
@@ -31,21 +31,9 @@ export default {
 			state.isLogin = getStore('isLogin') ? getStore('isLogin') === 'false' ? false : true : false;
 			return state.isLogin
 		},
-		socketOpen: (state) => {
-			state.socketOpen = getStore('socketOpen') ? getStore('socketOpen') === 'false' ? false : true : false;
-			return state.socketOpen
-		},
-		templateType:  (state) => {
-			state.templateType = getStore('templateType') ? getStore('templateType') : '';
-			return state.templateType
-		},
 		token:(state) => {
 			state.token = getStore('token') ? getStore('token') : null;
 			return state.token
-		},
-		affairToken:(state) => {
-			state.affairToken = getStore('affairToken') ? getStore('affairToken') : null;
-			return state.affairToken
 		},
 		overDueWay: state => state.overDueWay
 	},
@@ -64,13 +52,16 @@ export default {
 				state.timeMessage = playLoad
 			}
 		},
-		changeIsMedicalMan (state, playLoad) {
-		  state.isMedicalMan = playLoad
-		},
 		storeUserInfo(state, playLoad) {
 			if (playLoad && playLoad != 'null') {
 				setStore('userInfo', playLoad);
 				state.userInfo = playLoad
+			}
+		},
+		storeUserTokenInfo(state, playLoad) {
+			if (playLoad && playLoad != 'null') {
+				setStore('userTokenInfo', playLoad);
+				state.userTokenInfo = playLoad
 			}
 		},
 		storeChooseHospitalArea(state, playLoad) {
@@ -85,32 +76,11 @@ export default {
 				state.appPermission = playLoad
 			}
 		},
-		// 修改模板状态
-		changeTemplateType(state, playLoad) {
-			if (playLoad && playLoad != 'null') {
-				setStore('templateType', playLoad);
-				state.templateType = playLoad
-			}
-		},
 		// 修改token状态
 		changeToken(state, playLoad) {
 			if (playLoad && playLoad != 'null') {
 				setStore('token', playLoad);
 				state.token = playLoad
-			}
-		},
-		// 修改事务接口token状态
-		changeAffairToken(state, playLoad) {
-			if (playLoad && playLoad != 'null') {
-				setStore('affairToken', playLoad);
-				state.affairToken = playLoad
-			}
-		},
-		// 修改socken是否打开
-		changeSocketOpen(state, playLoad) {
-			if (playLoad && playLoad != 'null') {
-				setStore('socketOpen', playLoad);
-				state.socketOpen = playLoad
 			}
 		},
 		// 修改是否登录状态
@@ -126,7 +96,7 @@ export default {
 		},
 		//重置登录信息的状态
 		resetLoginInfoState(state) {
-				Object.assign(state, getDefaultLoginState())
+			Object.assign(state, getDefaultLoginState())
 		}
 	},
 	actions: {

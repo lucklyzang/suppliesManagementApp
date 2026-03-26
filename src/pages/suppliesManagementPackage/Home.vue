@@ -14,10 +14,10 @@
             </div>
             <div class="user-message">
                 <div class="user-name">
-                    {{ userName }}
+                    ds
                 </div>
                 <div class="account-name">
-                    {{ proName }}
+                    的撒大
                 </div>
             </div>
 		</div>
@@ -139,27 +139,27 @@
                 'lastMessageNumber',
                 'chooseHospitalArea'
             ]),
-            userName() {
-			  return this.userInfo['worker']['name']
-			},
-			workerId() {
-				return this.userInfo['worker']['id']
-			},
-			proName () {
-			  return this.chooseHospitalArea['text']
-			},
-			proId() {
-				return this.chooseHospitalArea['value']
-			},
-			depId() {
-				return this.userInfo['worker']['departments'].length == 0 ? '' : this.userInfo['worker']['departments'][0]['id']
-			},
-			depName() {
-				return this.userInfo['worker']['departments'].length == 0 ? '' : this.userInfo['worker']['departments'][0]['name']
-			},
-			userAccount() {
-				return this.userInfo['worker']['account']
-			}
+            // userName() {
+			//   return this.userInfo['worker']['name']
+			// },
+			// workerId() {
+			// 	return this.userInfo['worker']['id']
+			// },
+			// proName () {
+			//   return this.chooseHospitalArea['text']
+			// },
+			// proId() {
+			// 	return this.chooseHospitalArea['value']
+			// },
+			// depId() {
+			// 	return this.userInfo['worker']['departments'].length == 0 ? '' : this.userInfo['worker']['departments'][0]['id']
+			// },
+			// depName() {
+			// 	return this.userInfo['worker']['departments'].length == 0 ? '' : this.userInfo['worker']['departments'][0]['name']
+			// },
+			// userAccount() {
+			// 	return this.userInfo['worker']['account']
+			// }
         },
 
         methods: {
