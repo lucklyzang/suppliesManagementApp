@@ -14,29 +14,29 @@
             </div>
             <div class="user-message">
                 <div class="user-name">
-                    ds
+                    {{ userName }}
                 </div>
                 <div class="account-name">
-                    的撒大
+                    {{ loginDate }}
                 </div>
             </div>
 		</div>
         <div class="task-board">
             <h2>待办事项</h2>
             <div class="subproject-list-box">
-                <div class="subproject-list" v-for="(item,index) in cleaningManagementList" 
+                <div class="subproject-list" v-for="(item,index) in backlogList" 
                     :key="index"
-                    @click="patrolTaskEvent(item,index)"
+                    @click="backlogListEvent(item,index)"
                 >
                     <span>{{ item.name }}</span>
-                    <p>
-                        <span class="message-number">2</span>
+                    <p class="message-number">
+                        <span>{{ item.value }}</span>
                     </p>
                 </div> 
             </div>
         </div>
         <div class="functional-zone">
-            <div class="service-list" v-for="(item,index) in safeList" :key="index" @click="functionalZoneEvent(item,index)">
+            <div class="service-list" v-for="(item,index) in functionalZoneList" :key="index" @click="functionalZoneEvent(item,index)">
                 <div class="list-top">
                     <img :src="item.url" />
                 </div>
@@ -49,6 +49,7 @@
 <script>
     import HeaderTop from '@/components/HeaderTop'
     import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction';
+    import SOtime from '@/common/js/SOtime.js'
     import {
         mapGetters,
         mapMutations
@@ -69,17 +70,19 @@
                 currentMessageNumber: 0,
                 isShowMessageNumber: false,
                 isTimeoutContinue: true,
-                cleaningManagementList: [
+                backlogList: [
                     {
                         name: '待送货',
-                        value: 1
+                        state: 0,
+                        value: 0
                     },
                     {
                         name: '待确认',
-                        value: 2
+                        state: 1,
+                        value: 0
                     }
                 ],
-                safeList: [
+                functionalZoneList: [
 					{
 						text: '订单',
 						url: require('@/common/images/home/supplies-order-icon.png')
@@ -114,6 +117,13 @@
         },
 
         mounted() {
+            this.backlogList.forEach((item,index) => {
+                if (item.name == '待送货') {
+                    item.value = 4;
+                } else if (item.name == '待确认') {
+                    item.value = 18;
+                }
+            });
             // 获取任务数量
             // if (!this.suppliesHomeGlobalTimer) {
             //     windowTimer = window.setInterval(() => {
@@ -139,27 +149,30 @@
                 'lastMessageNumber',
                 'chooseHospitalArea'
             ]),
-            // userName() {
-			//   return this.userInfo['worker']['name']
-			// },
-			// workerId() {
-			// 	return this.userInfo['worker']['id']
-			// },
-			// proName () {
-			//   return this.chooseHospitalArea['text']
-			// },
-			// proId() {
-			// 	return this.chooseHospitalArea['value']
-			// },
-			// depId() {
-			// 	return this.userInfo['worker']['departments'].length == 0 ? '' : this.userInfo['worker']['departments'][0]['id']
-			// },
-			// depName() {
-			// 	return this.userInfo['worker']['departments'].length == 0 ? '' : this.userInfo['worker']['departments'][0]['name']
-			// },
-			// userAccount() {
-			// 	return this.userInfo['worker']['account']
-			// }
+            userName() {
+			  return this.userInfo['nickname']
+			},
+            userAccount() {
+				return this.userInfo['username']
+			},
+			workerId() {
+				return this.userInfo['id']
+			},
+			proName () {
+			  return this.userInfo['deptName']
+			},
+			proId() {
+				return this.userInfo['deptId']
+			},
+			depId() {
+				return this.userInfo['departmentId']
+			},
+			depName() {
+				return ''
+			},
+            loginDate() {
+                return SOtime.time8(this.userInfo['loginDate'])
+            }
         },
 
         methods: {
@@ -171,28 +184,40 @@
                 'changeSuppliesHomeGlobalTimer'
             ]),
             
-            // 查询任务数量
+            // 查询待办事项中各类型任务数量
             getTaskCount (proId,workerId) {
                 queryTaskCount(proId,workerId).then((res) => {
                     if (res && res.data.code == 200) {
-                        const {bxTask, sxTask, kxTask} = res.data.data;
-                        this.repairsWorkerOrderCount = bxTask;
-                        this.deviceServiceCount = sxTask;
-                        this.departmentServieCount = kxTask
+                        this.backlogList.forEach((item,index) => {
+                            if (item.name == '待送货') {
+                                item.value = ''
+                            } else if (item.name == '待确认') {
+                                item.value = ''
+                            }
+                        })
                     }
                 })
                 .catch((err) => {
-                this.$dialog.alert({
-                    message: `${err.message}`,
-                    closeOnPopstate: true
-                }).then(() => {
-                })
+                    this.$dialog.alert({
+                        message: `${err.message}`,
+                        closeOnPopstate: true
+                    }).then(() => {
+                    })
                 })
             },
 
             // 头像点击事件
             userInfoEvent () {
                 this.$router.push({path: '/myInfo'})
+            },
+
+            // 待办事项列表点击事件
+            backlogListEvent (item,index) {
+                if (item.name == '待送货') {
+                    this.$router.push({path: '/suppliesDeliverGoodsList'})
+                } else if(item.name == '待确认') {
+                    this.$router.push({path: '/suppliesOrderList'})
+                }
             },
 
             // 功能区点击事件
@@ -257,8 +282,8 @@
                     background: #E5E5E5;
                     img {
                         vertical-align: middle;
-                        width: 40px;
-                        height: 40px;
+                        width: 48px;
+                        height: 48px;
                     }
                 };
                 .user-message {
@@ -267,7 +292,7 @@
                     justify-content: center;
                     z-index: 100;
                     color: #101010;
-                    height: 60px;
+                    height: 48px;
                     flex: 1;
                     font-size: 13px;
                     .user-name {
@@ -275,10 +300,10 @@
                         word-break: break-all;
                     }
                     .account-name {
+                        font-size: 12px;
                         width: 98%;
                         word-break: break-all;
-                        margin-top: 10px;
-                        line-height: 20px
+                        margin-top: 4px;
                     }
                 }
             };
@@ -321,22 +346,26 @@
                                 text-align: center
                             }
                         };
-                        >p {
+                        .message-number {
                             position: absolute;
-                            width: 17px;
-                            height: 17px;
-                            display: flex;
-                            justify-content: center;
-                            align-items: center;
-                            background: #E86F50;
-                            border-radius: 50%;
                             top: -10px;
                             right: 0;
-                            span {
+                            display: inline-flex;
+                            justify-content: center;
+                            align-items: center;
+                            vertical-align: middle;
+                            background-color: #E86F50;
+                            color: #ffffff;              
+                            font-size: 12px;              
+                            min-width: 17px;
+                            max-width: 24px;
+                            aspect-ratio: 1;
+                            border-radius: 50%;
+                            padding: 0 4px;
+                            box-sizing: border-box;
+                            >span {
                                 .no-wrap();
-                                font-size: 12px;
-                                color: #fff;
-                            }
+                            }                      
                         }
                     };
                     >div:nth-child(5) {

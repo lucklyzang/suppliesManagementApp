@@ -195,7 +195,6 @@
 								this.changeToken(res.data.data['accessToken']);
 							} else {
 								reject(res.data.msg);
-								this.infoText = '';
 								this.$dialog.alert({
 									message: `${res.data.msg}`,
 									closeOnPopstate: true

@@ -158,28 +158,28 @@ export default {
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo","chooseHospitalArea"]),
+    ...mapGetters(["userInfo"]),
     userName() {
-      return this.userInfo['worker']['name']
-    },
-    workerId() {
-      return this.userInfo['worker']['id']
-    },
-    proName () {
-      return this.chooseHospitalArea['span']
-    },
-    proId() {
-      return this.chooseHospitalArea['value']
-    },
-    depId() {
-      return this.userInfo['worker']['departments'].length == 0 ? '' : this.userInfo['worker']['departments'][0]['id']
-    },
-    depName() {
-      return this.userInfo['worker']['departments'].length == 0 ? '' : this.userInfo['worker']['departments'][0]['name']
-    },
-    userAccount() {
-      return this.userInfo['worker']['account']
-    }
+			  return this.userInfo['nickname']
+			},
+            userAccount() {
+				return this.userInfo['username']
+			},
+			workerId() {
+				return this.userInfo['id']
+			},
+			proName () {
+			  return this.userInfo['deptName']
+			},
+			proId() {
+				return this.userInfo['deptId']
+			},
+			depId() {
+				return this.userInfo['departmentId']
+			},
+			depName() {
+				return ''
+			}
   },
 
   methods: {

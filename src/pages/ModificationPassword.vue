@@ -84,35 +84,30 @@
 		computed: {
 			...mapGetters([
 				'userInfo',
-				'userBasicInfo',
 				'statusBarHeight',
 				'navigationBarHeight',
-				'projectGlobalTimer',
-				'globalTimer',
-				'equipmentPatrolGlobalTimer',
-				'securityPatrolGlobalTimer',
 				'changeOverDueWay'
 			]),
 			userName() {
-			  return this.userInfo['worker']['name']
+			  return this.userInfo['nickname']
+			},
+            userAccount() {
+				return this.userInfo['username']
 			},
 			workerId() {
-				return this.userInfo['worker']['id']
+				return this.userInfo['id']
 			},
 			proName () {
-			  return this.chooseHospitalArea['text']
+			  return this.userInfo['deptName']
 			},
 			proId() {
-				return this.chooseHospitalArea['value']
+				return this.userInfo['deptId']
 			},
 			depId() {
-				return this.userInfo['worker']['departments'].length == 0 ? '' : this.userInfo['worker']['departments'][0]['id']
+				return this.userInfo['departmentId']
 			},
 			depName() {
-				return this.userInfo['worker']['departments'].length == 0 ? '' : this.userInfo['worker']['departments'][0]['name']
-			},
-			userAccount() {
-				return this.userInfo['worker']['account']
+				return ''
 			}
 		},
 		methods: {

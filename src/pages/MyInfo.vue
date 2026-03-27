@@ -17,7 +17,7 @@
 						用户账号
 					</div>
 					<div class="account-area-right">
-						dh
+						{{ userAccount }}
 					</div>
 				</div>
 				<div class="account-area account-area-bottom-border">
@@ -25,7 +25,7 @@
 						用户姓名
 					</div>
 					<div class="account-area-right">
-						经典科
+						{{ userName }}
 					</div>
 				</div>
 				<div class="account-area" @click="modificationPasswordEvent">
@@ -33,7 +33,7 @@
 						修改密码
 					</div>
 					<div class="account-area-right">
-            <van-icon name="arrow" color="#101010" size="24" />
+            			<van-icon name="arrow" color="#101010" size="24" />
 					</div>
 				</div>
 			</div>
@@ -72,34 +72,29 @@
 			...mapGetters([
 				'userInfo',
 				'statusBarHeight',
-				'navigationBarHeight',
-				'chooseHospitalArea',
-				'projectGlobalTimer',
-				'globalTimer',
-				'equipmentPatrolGlobalTimer',
-				'securityPatrolGlobalTimer'
+				'navigationBarHeight'
 			]),
-			// userName() {
-			//   return this.userInfo['worker']['name']
-			// },
-			// workerId() {
-			// 	return this.userInfo['worker']['id']
-			// },
-			// proName () {
-			//   return this.chooseHospitalArea['text']
-			// },
-			// proId() {
-			// 	return this.chooseHospitalArea['value']
-			// },
-			// depId() {
-			// 	return this.userInfo['worker']['departments'].length == 0 ? '' : this.userInfo['worker']['departments'][0]['id']
-			// },
-			// depName() {
-			// 	return this.userInfo['worker']['departments'].length == 0 ? '' : this.userInfo['worker']['departments'][0]['name']
-			// },
-			// userAccount() {
-			// 	return this.userInfo['worker']['account']
-			// }
+			userName() {
+			  return this.userInfo['nickname']
+			},
+            userAccount() {
+				return this.userInfo['username']
+			},
+			workerId() {
+				return this.userInfo['id']
+			},
+			proName () {
+			  return this.userInfo['deptName']
+			},
+			proId() {
+				return this.userInfo['deptId']
+			},
+			depId() {
+				return this.userInfo['departmentId']
+			},
+			depName() {
+				return ''
+			}
 		},
 		methods: {
 			...mapMutations([
