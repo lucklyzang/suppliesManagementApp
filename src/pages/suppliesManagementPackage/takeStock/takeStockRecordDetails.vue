@@ -56,7 +56,21 @@
 							<span>100</span>
 						</div>
 						<div class="sales-return-content">
-                            200
+                            <van-popover
+                                v-model="showPopover"
+                                placement="top"
+                                trigger="click"
+                                @open="showPopoverEvent"
+                                get-container=".sales-return-content"
+                                >
+                                <div>
+                                    <p class="p-one">盈亏说明</p>
+                                    <p class="p-two">干傻事噶即可</p>
+                                </div>
+                                <template #reference>
+                                    20
+                                </template>
+                            </van-popover>
 						</div>
 						<div class="unit-content">
 							<span>盒</span>
@@ -94,7 +108,8 @@ export default {
     return {
       loadingShow: false,
       overlayShow: false,
-      backlogEmptyShow: false
+      backlogEmptyShow: false,
+      showPopover: false
     }
   },
 
@@ -142,6 +157,11 @@ export default {
 
     onClickLeft () {
         this.$router.push({path: '/suppliesTakeStockRecord'})
+    },
+    
+    // popover打开事件
+    showPopoverEvent () {
+        console.log(1);
     },
 
     // 获取订单列表
@@ -361,6 +381,31 @@ export default {
                         flex: none !important;
                     };
                     .sales-return-content {
+                        /deep/ .van-popover {
+                            background: #fff !important;
+                            top: 29px !important;
+                            .van-popover__content {
+                                border-radius: 5px !important;
+                                box-shadow: 0px 2px 6px 0px rgba(0,0,0,0.1) !important;
+                                >div {
+                                    width:120px;
+                                    padding: 10px 8px;
+                                    box-sizing: border-box;
+                                    >p {
+                                        font-size:12px;
+                                        word-break:break-all;
+                                    };
+                                    .p-one {
+                                        color:#E8CB51;
+                                        margin-bottom:8px  
+                                    };
+                                    .p-two {
+                                        color:#101010;
+                                        line-height: 18px; 
+                                    }
+                                }
+                            }
+                        }
                     };
                     .barter-content {
                     }

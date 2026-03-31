@@ -350,7 +350,9 @@ export default {
                           align-items: center;
                           margin-right: 4px;
                           &:last-child {
+                            flex: none !important;
                             margin-right: 0 !important;
+                            width: 80px !important;
                           };
                           >span {
                             font-size: 14px;
