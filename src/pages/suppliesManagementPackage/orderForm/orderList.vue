@@ -1,7 +1,6 @@
 <template>
   <div class="page-box" ref="wrapper">
-    <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">加载中...</van-loading>
-    <van-overlay :show="overlayShow" z-index="100000" />
+    <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">{{ infoText }}</van-loading>
     <div class="nav">
         <van-nav-bar title="订单" left-text="返回" left-arrow @click-left="onClickLeft" @click-right="enterHistoryOrderEvent"  :border="false">
             <template #right>
@@ -15,12 +14,12 @@
           <div class="status-date-box">
 				<div class="status-box" ref="myElement">
 					<div class="status-span" @click="orderStatusListShow = !orderStatusListShow">
-						<span>{{ currentStatusspan }}</span>
+						<span>{{ currentStatusText }}</span>
 						<van-icon :name="orderStatusListShow ? 'arrow-down' : 'arrow-up'" color="#101010" size="16" />
 					</div>
 					<div class="status-list-box" v-if="orderStatusListShow">
 						<div class="status-list" v-for="(item,index) in orderStatusList" @click="statusListEvent(item,index)" :key="index">
-							<span :class="{'statusspanStyle': index == currentStatusIndex }">{{ item }}</span>
+							<span :class="{'statusspanStyle': index == currentStatusIndex }">{{ item.text }}</span>
 						</div>
 					</div>
 				</div>
@@ -36,17 +35,17 @@
 					</div>
 				</div>
 			</div>
-            <div class="order-list-box">
-				<div class="order-list" v-for="(item,index) in orderList" :key="index" @click="enterOrderDetailsEvent(item,index)">
+            <div class="order-list-box" ref="scrollBacklogTask">
+				<div class="order-list" v-for="(item,index) in fullOrderList" :key="index" @click="enterOrderDetailsEvent(item,index)">
 					<div class="order-list-top">
 						<div class="order-type">
-							<span>{{ item.orderType }}</span>
-							<span>{{ item.orderNumber }}</span>
+							<span>{{ item.orderTypeName }}</span>
+							<span>{{ item.no }}</span>
 						</div>
 						<div class="order-status"
 						:class="{
-							'staySureStyle ' : item.state == 1, 
-							'stayDeliveryStyle' : item.state == 2,
+							'staySureStyle ' : item.status == 20, 
+							'stayDeliveryStyle' : item.status == 30,
 							}"
 						>
 							<span>{{ stateTransfer(item.status) }}</span>
@@ -55,7 +54,7 @@
 					<div class="order-list-center">
 						<div class="product-list">
 							<span>产品清单:</span>
-							<span>{{ item.productList }}</span>
+							<span>{{ extractProductInventoryMessage(item['items']) }}</span>
 						</div>
 						<div class="create-delivery-date">
 							<div class="create-delivery-date-left">
@@ -64,22 +63,22 @@
 							</div>
 							<div class="create-delivery-date-left">
 								<span>交货日期:</span>
-								<span>{{ item.deliveryDate }}</span>
+								<span>{{ item.orderTime }}</span>
 							</div>
 						</div>
 						<div class="create-delivery-date delivery-address">
                             <div class="create-delivery-date-left">
 								<span>下单医院:</span>
-								<span>{{ item.deliveryAddress }}</span>
+								<span></span>
 							</div>
 							<div class="create-delivery-date-left">
 								<span>送货地址:</span>
-								<span>{{ item.deliveryAddress }}</span>
+								<span>{{ item.address }}</span>
 							</div>
 						</div>
 						<div class="product-list remark-box">
 							<span>备注:</span>
-							<span>{{ item.remark }}</span>
+							<span>{{ item.remark ? item.remark : '无' }}</span>
 						</div>
 					</div>
 					<div class="order-list-bottom">
@@ -99,6 +98,11 @@
 						</div>
 					</div>
 				</div>
+                <van-empty description="您还没有相关订单" v-show="isShowNoData" />
+                <div v-show="bottomLoadingShow" class="bottom-loading-show">
+                    加载中...
+                </div>
+                <div class="no-more-data" v-show="isShowNoMoreData">没有更多数据了!</div>
 			</div>
         </div>
     </div>
@@ -168,9 +172,10 @@
   </div>
 </template>
 <script>
-import NavBar from "@/components/NavBar";
-import { mapGetters, mapMutations } from "vuex";
-import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
+import NavBar from "@/components/NavBar"
+import { mapGetters, mapMutations } from "vuex"
+import { mixinsDeviceReturn } from '@/mixins/deviceReturnFunction'
+import { getPlanOrderPage } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
 import SOtime from '@/common/js/SOtime.js'
 export default {
   name: "suppliesOrderList",
@@ -181,10 +186,16 @@ export default {
   data() {
     return {
       loadingShow: false,
-      overlayShow: false,
+      bottomLoadingShow: false,
       backlogEmptyShow: false,
       refuseModalShow: false,
       showCalendar: false,
+      infoText: '加载中...',
+      isShowNoData: false,
+      isShowNoMoreData: false,
+      currentPageNum: 1,
+      pageSize: 20,
+      totalCount: 0,
       revocationDeliveryOrderModalShow: false,
       revocationInfoImage: require('@/common/images/home/revocation-info-icon.png'),
       sourcePath: '',
@@ -193,64 +204,47 @@ export default {
       endDate: '',
       minDate: new Date('2026-03-16'),
       maxDate: new Date('2027-03-16'),
-      currentStatusspan: '全部状态',
+      currentStatusText: '全部状态',
       currentStatusIndex: 0,
+      currentStatusValue: '',
+      needQueryStatusList: [20,30],
       orderStatusListShow: false,
       refuseReasonValue: '',
       orderStatusList: [
-        '全部状态',
-        '待确认',
-        '待送货'
+        {
+            value: '',
+            ext: '全部状态'
+		},
+        {
+            value: 20,
+            text: '待确认'
+        },
+        {
+            value: 30,
+            text: '待发货'
+        }
       ],
-      orderList: [
-            {
-                orderType: '计划订单',
-                orderNumber: '5552H5552',
-                status: 0,
-                productList: 'XXX、XXX、XXXX',
-                createTime: '05-31 17:21',
-                deliveryDate: '05-31',
-                deliveryAddress: '检验科',
-                remark: '一周一送'
-            },
-            {
-                orderType: '计划订单',
-                orderNumber: '5552H5552',
-                status: 1,
-                productList: 'XXX、XXX、XXXX',
-                createTime: '05-31 17:21',
-                deliveryDate: '05-31',
-                deliveryAddress: '检验科',
-                remark: '一周一送'
-            },
-            {
-                orderType: '计划订单',
-                orderNumber: '5552H5552',
-                status: 2,
-                productList: 'XXX、XXX、XXXX',
-                createTime: '05-31 17:21',
-                deliveryDate: '05-31',
-                deliveryAddress: '检验科',
-                remark: '一周一送'
-            },
-            {
-                orderType: '计划订单',
-                orderNumber: '5552H5552',
-                status: 3,
-                productList: 'XXX、XXX、XXXX',
-                createTime: '05-31 17:21',
-                deliveryDate: '05-31',
-                deliveryAddress: '检验科',
-                remark: '一周一送'
-            }
-        ]
+      eventTime: 0,
+      orderList: [],
+      fullOrderList: []
     }
   },
 
   mounted() {
     // 控制设备物理返回按键
     this.deviceReturn('/suppliesHome');
+    this.$nextTick(()=> {
+      this.initScrollChange()
+    });
     this.getDateRange();
+    this.getPlanOrderPageEvent({
+        pageNo: this.currentPageNum,
+        pageSize: this.pageSize,
+        status: '',
+        statusList: this.currentStatusValue === '' ? this.needQueryStatusList : [this.currentStatusValue],
+        orderTime: [`${this.startDate}`,`${this.endDate}`],
+        creator: ''// this.userAccount
+    },true)
     const el = this.$refs.myElement;
     //点击状态栏区域以外的地方时，库房列表收起
     document.addEventListener('click', (event) => {
@@ -305,37 +299,81 @@ export default {
         this.$router.push({path: '/suppliesHistoryOrderList'})
     },
 
+     // 事件列表注册滚动事件
+    initScrollChange () {
+      let boxBackScroll = this.$refs['scrollBacklogTask'];
+      boxBackScroll.addEventListener('scroll',this.eventListLoadMore,true)
+    },
+
+    // 事件列表加载事件
+    eventListLoadMore () {
+      let boxBackScroll = this.$refs['scrollBacklogTask'];
+      if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
+        // 点击筛选确定后，不加载数据
+        if (this.eventTime) {return};
+        this.eventTime = 1;
+        this.timeTwo = setTimeout(() => {
+          let totalPage = Math.ceil(this.totalCount/this.pageSize);
+          if (this.currentPageNum >= totalPage) {
+           this.isShowNoMoreData = true;
+          } else {
+            this.isShowNoMoreData = false;
+            this.currentPageNum = this.currentPageNum + 1;
+            this.getPlanOrderPageEvent({
+                pageNo: this.currentPageNum,
+                pageSize: this.pageSize,
+                status: '',
+                statusList: this.currentStatusValue === '' ? this.needQueryStatusList : [this.currentStatusValue],
+                orderTime: [`${this.startDate}`,`${this.endDate}`],
+                creator: '' // this.userAccount
+            },false)
+          };
+          this.eventTime = 0;
+          console.log('事件列表滚动了',boxBackScroll.scrollTop, boxBackScroll.offsetHeight, boxBackScroll.scrollHeight)
+        },300)
+      }
+    },
+
     //任务状态转换
     stateTransfer (num) {
         switch(num) {
-                case 0:
-                    return '未分配'
+            case 10:
+                return '待审核'
+                break;
+            case 20:
+                    return '待确认'
                     break;
-                case 1:
-                        return '未查阅'
-                        break;
-                case 2:
-                        return '未开始'
-                        break;
-                case 3:
-                        return '进行中'
-                        break;
-                case 4:
-                        return '待复核'
-                        break;
-                case 5:
-                        return '已完成'
-                        break;
-                case 6:
-                        return '已复核'
-                        break;
-                case 7:
-                        return '已取消'
-                        break
-                case 8:
-                        return '复核中'
-                        break
+            case 21:
+                    return '未通过'
+                    break;
+            case 30:
+                    return '待送货'
+                    break;
+            case 31:
+                    return '已拒绝'
+                    break;
+            case 40:
+                    return '已发货'
+                    break;
+            case 41:
+                    return '售后中'
+                    break;
+            case 50:
+                    return '已完成'
+                    break;
         } 
+    },
+
+    // 提取产品清单信息
+    extractProductInventoryMessage (items) {
+        if (items.length == 0) {
+            return ''
+        };
+        let temporaryArray = [];
+        for (let item of items) {
+            temporaryArray.push(item.productName);
+        };
+        return temporaryArray.join("、")
     },
 
     // 撤销生成送货单确认弹框取消事件
@@ -362,12 +400,83 @@ export default {
     enterHistoryOrderEvent () {
         this.$router.push({path: '/suppliesHistoryOrderList'})
     },
+
+    // 查询订单列表
+    getPlanOrderPageEvent(data,flag) {
+        this.orderList = [];
+        this.isShowNoData = false;
+        if (flag) {
+            this.fullOrderList = [];
+            this.loadingShow = true;
+            this.infoText = '加载中···';
+            this.bottomLoadingShow = false;
+        } else {
+            this.loadingShow = false;
+            this.infoText = '';
+            this.bottomLoadingShow = true;
+        };
+        getPlanOrderPage(data).then((res) => {
+            if ( res && res.data.code == 0) {
+                this.orderList = res.data.data.list;
+                this.totalCount = res.data.data.total;
+                this.orderList.forEach((item)=>{
+                    item.createTime = SOtime.time3(item.createTime);
+                    item.orderTime = SOtime.time8(item.orderTime);
+                });
+                this.fullOrderList = this.fullOrderList.concat(this.orderList);
+                if (this.fullOrderList.length == 0) {
+                    this.isShowNoData = true
+                } else {
+                    this.isShowNoData = false
+                };
+            } else {
+                this.$toast({
+                    type: 'fail',
+                    message: res.data.msg
+                })
+            };
+            if (flag) {
+                this.loadingShow = false;
+                this.infoText = '';
+            } else {
+                this.bottomLoadingShow = false;
+                let totalPage = Math.ceil(this.totalCount/this.pageSize);
+                if (this.currentPageNum >= totalPage) {
+                    this.isShowNoMoreData = true;
+                } else {
+                    this.isShowNoMoreData = false;
+                }	
+            }
+        })
+        .catch((err) => {
+            if (flag) {
+                this.loadingShow = false;
+                this.infoText = '';
+            } else {
+                this.bottomLoadingShow = false;
+            };
+            this.$toast({
+                type: 'fail',
+                message: err
+            })
+        })
+    },
+			
     
     // 日历日期选择确认事件
     calendarConfirm(e) {
         this.showCalendar = false;
         this.startDate = SOtime.time8(new Date(e[0]).getTime());
-        this.endDate = SOtime.time8(new Date(e[e.length-1]).getTime())
+        this.endDate = SOtime.time8(new Date(e[e.length-1]).getTime());
+        this.currentPageNum = 1;
+        this.getPlanOrderPageEvent({
+            pageNo: this.currentPageNum,
+            pageSize: this.pageSize,
+            status: '',
+            statusList: this.currentStatusValue === '' ? this.needQueryStatusList : [this.currentStatusValue],
+            orderTime: [`${this.startDate}`,`${this.endDate}`],
+            creator: '' // this.userAccount
+        },true)
     },
     
     // 将时间戳转换为当天的 00:00:00
@@ -380,14 +489,14 @@ export default {
     // 获取开始和结束日期(中间相隔一个月)
     getDateRange() {
         this.defaultDateArr = [];
-        const start = new Date(); 
-        const end = new Date(start);
-        end.setMonth(start.getMonth() + 1);
-        end.setHours(23, 59, 59, 999);
+        const end = new Date(); 
+        const start = new Date(end);
+        start.setMonth(end.getMonth() - 1);
+        start.setHours(23, 59, 59, 999);
         this.startDate = this.formatDate(start);
         this.endDate = this.formatDate(end);
-        this.defaultDateArr.push(new Date(this.startDate));
-        this.defaultDateArr.push(new Date(this.endDate))
+        this.defaultDateArr.push(this.startDate);
+        this.defaultDateArr.push(this.endDate)
     },
     
     formatDate(date) {
@@ -399,9 +508,19 @@ export default {
     
     // 订单列表点击事件
     statusListEvent(item,index) {
-        this.currentStatusspan = item;
+        this.currentStatusText = item.text;
+        this.currentStatusValue = item.value,
         this.currentStatusIndex = index;
         this.orderStatusListShow = false;
+        this.currentPageNum = 1;
+        this.getPlanOrderPageEvent({
+            pageNo: this.currentPageNum,
+            pageSize: this.pageSize,
+            status: '',
+            statusList: this.currentStatusValue === '' ? this.needQueryStatusList : [this.currentStatusValue],
+            orderTime: [`${this.startDate}`,`${this.endDate}`],
+            creator: '' // this.userAccount
+        },true)
     },
     
     //进入订单详情事件
@@ -427,51 +546,6 @@ export default {
     // 确认订单事件
     sureEvent(item,index) {
 
-    },
-
-    // 获取订单列表
-    queryTaskList (taskType,page,pageSize) {
-        this.loadingShow = true;
-        this.overlayShow = true;
-        this.backlogEmptyShow = false;
-        this.completedEmptyShow = false;
-        this.isShowBacklogTaskNoMoreData = false;
-        this.isShowCompletetedTaskNoMoreData = false;
-		getAllTaskList({proId : this.proId, workerId: this.workerId,taskType,system:6,page,pageSize})
-        .then((res) => {
-            this.loadingShow = false;
-            this.overlayShow = false;
-            if (res && res.data.code == 200) {
-                if (taskType == 1) {
-                    this.backlogTaskList = res.data.data.list;
-                    this.totalCount = res.data.data.total;
-                    this.fullBacklogTaskList = this.fullBacklogTaskList.concat(this.backlogTaskList);
-                    if (this.fullBacklogTaskList.length == 0) {
-                        this.backlogEmptyShow = true
-                    }
-                } else if (taskType == 2) {
-                    this.completedTaskList = res.data.data.list;
-                    this.totalCount = res.data.data.total;
-                    this.fullCompletedTaskList = this.fullCompletedTaskList.concat(this.completedTaskList);
-                    if (this.fullCompletedTaskList.length == 0) {
-                        this.completedEmptyShow = true
-                    }
-                }
-            } else {
-            this.$toast({
-                type: 'fail',
-                message: res.data.msg
-            })
-            }
-      })
-      .catch((err) => {
-        this.loadingShow = false;
-        this.overlayShow = false;
-        this.$toast({
-          type: 'fail',
-          message: err
-        })
-      })
     }
   }
 };
@@ -802,12 +876,7 @@ export default {
                         justify-content: center;
                         width: 67px;
                         height: 25px;
-                        background: rgba(232,203,81,0.16);
                         border-radius: 4px;
-                        >span {
-                            font-size: 14px;
-                            color: #E8CB51;
-                        }
                     };
                     .staySureStyle {
                         background: rgba(232,203,81,0.16) !important;
@@ -900,7 +969,7 @@ export default {
                         display: flex;
                         align-items: center;
                         .delete-left {
-                                width: 65px;
+                                padding: 0 6px;
                                 height: 28px;
                                 display: flex;
                                 align-items: center;
@@ -915,7 +984,7 @@ export default {
                                 }
                         };
                         .edit-right {
-                                width: 65px;
+                                padding: 0 6px;
                                 height: 28px;
                                 display: flex;
                                 align-items: center;
@@ -930,7 +999,21 @@ export default {
                         }
                     }
                 }
-            }
+            };
+            .bottom-loading-show {
+              font-size: 12px;
+              color: #BEC7D1;
+              width: 100%;
+              text-align: center;
+              line-height: 30px
+            };
+            .no-more-data {
+              font-size: 12px;
+              color: #BEC7D1;
+              width: 100%;
+              text-align: center;
+              line-height: 30px
+          }
         }
     }
   }

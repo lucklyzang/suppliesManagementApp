@@ -10,7 +10,7 @@
 		</div>
         <div class="user-box" @click="userInfoEvent">
             <div class="user-photo">
-                <img :src="defaultPersonPng" />
+                <img :src="avatar ? avatar : 'defaultPersonPng'" />
             </div>
             <div class="user-message">
                 <div class="user-name">
@@ -158,6 +158,9 @@
 			workerId() {
 				return this.userInfo['id']
 			},
+            avatar () {
+                return this.userInfo['avatar']
+            },
 			proName () {
 			  return this.userInfo['deptName']
 			},

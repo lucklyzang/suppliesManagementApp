@@ -1,0 +1,74 @@
+import request from '@/utils/request'
+import qs from 'qs'
+
+// 获取计划订单分页
+export function getPlanOrderPage(data) {
+	if (data.orderTime && Array.isArray(data.orderTime)) {
+	  data.orderTime = data.orderTime.map(function(date,index,array){
+			if (index == 0) {
+				return date + ' 00:00:00'
+			} else if (index == 1) {
+				return date + ' 23:59:59'
+			}
+		})
+	};
+	return request({
+	    url: '/spd/admin-api/erp/plan-order/page',
+	    method: 'get',
+			params: data,
+			paramsSerializer: function (params) {
+				return qs.stringify(params, { arrayFormat: 'repeat' })
+			}
+	  })
+}
+
+// 获得计划订单详情
+export function getPlanOrder(id) {
+	return request({
+	    url: `/spd/admin-api/erp/plan-order/get?id=${id}`,
+	    method: 'get'
+	  })
+}
+
+// 根据订单查询出货单
+export function getSaleReturnPage(id) {
+	return request({
+	    url: `/spd/admin-api/erp/sale-out/query-by-orderId?orderId=${id}`,
+	    method: 'get'
+	  })
+}
+
+// 获得出货单详情
+export function getSaleReturn(id) {
+	return request({
+	    url: `/spd/admin-api/erp/sale-out/get?id=${id}`,
+	    method: 'get'
+	  })
+}
+
+// 创建退换货
+export function createSaleReturn(data) {
+	return request({
+	    url: '/spd/admin-api/erp/sale-return/create',
+	    method: 'post',
+			data
+	  })
+}
+
+
+// 更新订单状态
+export function checkOrder(data) {
+	return request({
+	    url: '/spd/admin-api/erp/check-order/update-status',
+	    method: 'put',
+			params: data
+	  })
+}
+
+// 查询订单操作记录
+export function queryorderOperationLog(orderId) {
+	return request({
+	    url: `/spd/admin-api/erp/order-operation-log/list-by-order-id?orderId=${orderId}`,
+	    method: 'get'
+	  })
+}
