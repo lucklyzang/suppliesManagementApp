@@ -1,7 +1,6 @@
 <template>
   <div class="page-box" ref="wrapper">
-    <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">加载中...</van-loading>
-    <van-overlay :show="overlayShow" z-index="100000" />
+    <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">{{ infoText }}</van-loading>
     <div class="nav">
         <van-nav-bar title="生成送货单" left-span="返回" left-arrow @click-left="onClickLeft"  :border="false">
         </van-nav-bar>
@@ -14,12 +13,12 @@
 				</div>
 			</div>
 			<div class="content-center">
-				<div class="empty-info" v-if="chooseMaterialList.length == 0">
+				<div class="empty-info" v-if="materialList.length == 0">
 					<van-empty description="暂无产品" />
 				</div>
-				<div class="product-list" v-for="(item,index) in chooseMaterialList" :key="item.productName">
+				<div class="product-list" v-for="(item,index) in materialList" :key="item.productName">
 					<div class="product-left">
-						<img :src="item.productImage" />
+						<img :src="item['images'] ? item['images'] : productDefaultImage" />
 					</div>
 					<div class="product-center">
 						<div class="product-name">
@@ -30,23 +29,23 @@
 						<div class="product-specification">
 							<div class="product-specification-left">
 								<span>
-									{{ item.specification }}
+									{{ item.specification ? item.specification : '无' }}
 								</span>
 							</div>
 						</div>
 					</div>
 					<div class="product-right">
 						<div class="product-number-box">
-							<van-stepper v-model="item.quantity" @change="function(val){productNumberBoxChange(item,index,val)}" integer min="0" />
+							<van-stepper v-model="item.inputCount" @change="function(val){productNumberBoxChange(item,index,val)}" integer min="0" :max="Number(item['count'])-Number(item['outCount'])" />
 						</div>
 						<div class="product-total-price">
               <div class="total-demand">
                 <span>总需求数</span>
-                <span>200</span>
+                <span>{{ item.count }}</span>
               </div>
               <div class="surplus-demand">
                 <span>剩余需求数</span>
-                <span>100</span>
+                <span>{{ item.count - item.outCount }}</span>
               </div>
 						</div>
 					</div>
@@ -55,7 +54,7 @@
 			<div class="total-prices">
 				<div class="total-prices-right">
 					<span>总数量:</span>
-					<span>{{ `${allChooseProductPrice}` }}</span>
+					<span>{{ `${allCount}` }}</span>
 				</div>
 			</div>
         </div>
@@ -109,6 +108,7 @@
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
+import { getPlanOrder, createSaleOut } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
 export default {
   name: "suppliesCreateDeliveryOrder",
   components: {
@@ -118,51 +118,51 @@ export default {
   data() {
     return {
       loadingShow: false,
-      overlayShow: false,
-      allChooseProductPrice: 0,
+      infoText: '生成中···',
+      allCount: 0,
       createDeliveryOrderModalShow: false,
-      chooseMaterialList: [
-          {
-            productName: '洗手液',
-            specification: '500ML',
-            unit: '瓶',
-            unitPrice: '4.5',
-            quantity: 0,
-            checked: false,
-            disabled: false,
-            productImage: require('@/common/images/home/supplies-order-icon.png')
-        },
-        {
-            productName: '一次性垫',
-            specification: '90*40cm',
-            unit: '包',
-            unitPrice: '8.3',
-            quantity: 0,
-            checked: false,
-            disabled: false,
-            productImage: require('@/common/images/home/supplies-order-icon.png')
-        }
-      ],
+      isExceedStockQuantity: false,
+      productDefaultImage: require('@/common/images/home/revocation-info-icon.png'),
+      orderId: '',
+      chooseMaterialList: [],
+      orderMessage: {},
+      materialList: []
     }
   },
 
   mounted() {
     // 控制设备物理返回按键
     this.deviceReturn('/suppliesOrderList');
+    this.orderId = this.$route.query.orderId;
+    this.parallelFunction();
   },
 
   beforeRouteEnter(to, from, next) {
     next() 
   },
 
-  watch: {},
+  watch: { 
+      materialList: {
+        handler(newVal, oldVal) {
+          if (newVal.length > 0) {
+            if (Number(newVal[0]['inputCount']) > Number(newVal[0]['count']) - Number(newVal[0]['outCount'])) {
+              this.isExceedStockQuantity = true;
+            } else {
+              this.isExceedStockQuantity = false;
+            }
+          }	
+        },
+        deep: true,
+        immediate: true
+    }
+  },
 
   computed: {
     ...mapGetters(["userInfo"]),
-    userName() {
+      userName() {
 			  return this.userInfo['nickname']
 			},
-            userAccount() {
+      userAccount() {
 				return this.userInfo['username']
 			},
 			workerId() {
@@ -191,11 +191,11 @@ export default {
 
     // 求和函数(计算所有添加产品总价格)
     reduceTotal() {
-        let targetMsg = this.chooseMaterialList.filter((item) => {
-            return item.quantity > 0
+        let targetMsg = this.materialList.filter((item) => {
+            return item.inputCount > 0
         });
-        this.allChooseProductPrice = targetMsg.reduce((accumulator, currentValue) => {
-            return accumulator + currentValue.quantity
+        this.allCount = targetMsg.reduce((accumulator, currentValue) => {
+            return accumulator + currentValue.inputCount + currentValue.count
         }, 0);
     },
 
@@ -208,10 +208,7 @@ export default {
 
     // 产品步进器change事件
     productNumberBoxChange(item,index,val) {
-        if (val === 0) {
-          this.chooseMaterialList.splice(index,1);
-        };
-        item['quantity'] = val;
+        this.$set(this.materialList[index],'inputCount',val);
         this.reduceTotal();
     },
 
@@ -223,6 +220,30 @@ export default {
     // 确定生成送货单弹框确定事件
     createDeliveryOrderModalShowSubmitEvent () {
       this.createDeliveryOrderModalShow = false;
+      if (this.isExceedStockQuantity) {
+        this.$toast({
+          type: 'fail',
+          message: '出库数量不能超过库存数量!'
+        });
+        return 
+      };
+      let deliveryOrderList = [];
+      for (let item of this.materialList) {
+        deliveryOrderList.push({
+          orderItemId: item.id, //销售订单项编号
+          warehouseId: item.warehouseId, // 仓库编号
+          productId: item.productId, // 产品编号
+          productUnitId: item.productUnitId, // 产品单位编号
+          productPrice: item.productPrice, // 产品单价
+          count: item.inputCount, // 产品数量
+          taxPercent: item.taxPercent, // 税率，百分比
+          remark: item.remark //备注
+        }) 
+      };
+      this.createSaleOutEvent({
+        orderId: this.orderId,
+        items: deliveryOrderList
+      })
     },
 
     // 退出事件
@@ -233,6 +254,88 @@ export default {
     // 提交事件
     submitEvent() {
       this.createDeliveryOrderModalShow = true;
+    },
+
+    // 生成送货单事件
+    createSaleOutEvent(data) {
+      this.loadingShow = true;
+      this.infoText = '生成中···';
+      createSaleOut(data).then((res) => {
+          this.loadingShow = false;
+          this.infoText = '';
+          if ( res && res.data.code == 0) {
+              this.$toast({
+                type: 'success',
+                message: '生成送货单成功!'
+              })
+          } else {
+              this.$toast({
+                type: 'fail',
+                message: res.data.msg
+              })
+          }
+      })
+      .catch((err) => {
+          this.loadingShow = false;
+          this.infoText = '';
+          this.$toast({
+              type: 'fail',
+              message: err
+          })
+      })
+    },
+
+    // 查询订单详情
+    getPlanOrderEvent() {
+        return new Promise((resolve,reject) => {
+            getPlanOrder(this.orderId).then((res) => {
+                this.loadingShow = false;
+                this.infoText = '';
+                if ( res && res.data.code == 0) {
+                    resolve(res.data.data);
+                } else {
+                    reject(res.data.msg);
+                    this.$toast({
+                        type: 'fail',
+                        message: res.data.msg
+                    })
+                }
+            })
+            .catch((err) => {
+                reject(err)
+            })
+        })
+    },
+
+    // 并行查询订单详情
+	  parallelFunction () {
+        this.loadingShow = false;
+        this.infoText = '加载中···';
+        Promise.all([this.getPlanOrderEvent()])
+        .then((res) => {
+            this.loadingShow = false;
+            this.infoText = '';
+            if (res && res.length > 0) {
+                this.orderMessage = {};
+                let [item1] = res;
+                if (item1) {
+                  this.orderMessage = item1;
+                  this.materialList = this.orderMessage['items'];
+                  this.allCount = this.orderMessage['totalCount'];
+                  this.materialList.forEach((item,index) => {
+                    this.$set(this.materialList[index],'inputCount',0);
+                  })
+                }
+            }
+        })
+        .catch((err) => {
+            this.loadingShow = false;
+            this.infoText = '';
+            this.$toast({
+                type: 'fail',
+                message: err
+            })
+        })
     }
   }
 };

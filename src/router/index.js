@@ -15,6 +15,8 @@ const SuppliesOrderDetails= () =>
     import ('@/pages/suppliesManagementPackage/orderForm/OrderDetails')
 const SuppliesCreateDeliveryOrder= () =>
     import ('@/pages/suppliesManagementPackage/orderForm/createDeliveryOrder')
+const SuppliesHistoryDeliveryNote= () =>
+    import ('@/pages/suppliesManagementPackage/orderForm/historyDeliveryNote')
 const SuppliesDeliverGoodsList= () =>
     import ('@/pages/suppliesManagementPackage/deliverGoods/deliverGoodsList')
 const SuppliesDeliverHistoryGoodsList= () =>
@@ -79,6 +81,12 @@ let baseRoute = [{
     name: 'suppliesOrderDetails',
     component: SuppliesOrderDetails,
     meta: { index: 4 }
+  },
+  {
+    path: '/suppliesHistoryDeliveryNote',
+    name: 'suppliesHistoryDeliveryNote',
+    component: SuppliesHistoryDeliveryNote,
+    meta: { index: 5 }
   },
   {
     path: '/suppliesCreateDeliveryOrder',

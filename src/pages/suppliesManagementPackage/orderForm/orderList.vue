@@ -17,7 +17,7 @@
 						<span>{{ currentStatusText }}</span>
 						<van-icon :name="orderStatusListShow ? 'arrow-down' : 'arrow-up'" color="#101010" size="16" />
 					</div>
-					<div class="status-list-box" v-if="orderStatusListShow">
+					<div class="status-list-box" v-show="orderStatusListShow">
 						<div class="status-list" v-for="(item,index) in orderStatusList" @click="statusListEvent(item,index)" :key="index">
 							<span :class="{'statusspanStyle': index == currentStatusIndex }">{{ item.text }}</span>
 						</div>
@@ -83,16 +83,16 @@
 					</div>
 					<div class="order-list-bottom">
 						<div class="order-list-btn">
-							<div class="delete-left" @click.stop="revocationSureEvent(item,index)">
+							<div class="delete-left" v-show="item.status == 30" @click.stop="revocationSureEvent(item,index)">
 								<span>撤销确认</span>
 							</div>
-							<div class="delete-left" v-if="false" @click.stop="refuseEvent(item,index)">
+							<div class="delete-left" v-show="item.status == 20"  @click.stop="refuseEvent(item,index)">
 								<span>拒绝订单</span>
 							</div>
-							<div class="edit-right" @click.stop="createDeliveryOrderEvent(item,index)">
+							<div class="edit-right" v-show="item.status == 30" @click.stop="createDeliveryOrderEvent(item,index)">
 								<span>生成送货单</span>
 							</div>
-							<div class="edit-right" v-if="false" @click.stop="sureEvent(item,index)">
+							<div class="edit-right" v-show="item.status == 20" @click.stop="sureEvent(item,index)">
 								<span>确认订单</span>
 							</div>
 						</div>
@@ -102,7 +102,7 @@
                 <div v-show="bottomLoadingShow" class="bottom-loading-show">
                     加载中...
                 </div>
-                <div class="no-more-data" v-show="isShowNoMoreData">没有更多数据了!</div>
+                <div class="no-more-data" v-show="isShowNoMoreData && !loadingShow && !isShowNoData">没有更多数据了!</div>
 			</div>
         </div>
     </div>
@@ -175,7 +175,7 @@
 import NavBar from "@/components/NavBar"
 import { mapGetters, mapMutations } from "vuex"
 import { mixinsDeviceReturn } from '@/mixins/deviceReturnFunction'
-import { getPlanOrderPage } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
+import { getPlanOrderPage, checkOrder } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
 import SOtime from '@/common/js/SOtime.js'
 export default {
   name: "suppliesOrderList",
@@ -187,7 +187,6 @@ export default {
     return {
       loadingShow: false,
       bottomLoadingShow: false,
-      backlogEmptyShow: false,
       refuseModalShow: false,
       showCalendar: false,
       infoText: '加载中...',
@@ -210,10 +209,12 @@ export default {
       needQueryStatusList: [20,30],
       orderStatusListShow: false,
       refuseReasonValue: '',
+      currentOrderIndex: '',
+      currentOrderId: '',
       orderStatusList: [
         {
             value: '',
-            ext: '全部状态'
+            text: '全部状态'
 		},
         {
             value: 20,
@@ -221,7 +222,7 @@ export default {
         },
         {
             value: 30,
-            text: '待发货'
+            text: '待送货'
         }
       ],
       eventTime: 0,
@@ -295,11 +296,12 @@ export default {
         this.$router.push({path: '/suppliesHome'})
     },
 
+    // 进入历史订单事件
     enterHistoryOrderEvent () {
         this.$router.push({path: '/suppliesHistoryOrderList'})
     },
 
-     // 事件列表注册滚动事件
+    // 事件列表注册滚动事件
     initScrollChange () {
       let boxBackScroll = this.$refs['scrollBacklogTask'];
       boxBackScroll.addEventListener('scroll',this.eventListLoadMore,true)
@@ -383,7 +385,11 @@ export default {
 
     // 撤销生成送货单确认弹框确认事件
     revocationDeliveryOrderModalShowSureEvent () {
-      this.revocationDeliveryOrderModalShow = false
+      this.revocationDeliveryOrderModalShow = false;
+      this.checkOrderEvent({
+        id: this.currentOrderId,
+        status: 20
+      },30)
     },
 
     // 拒绝弹框取消事件
@@ -393,12 +399,78 @@ export default {
     
     // 拒绝弹提交事件
     refuseModalSubmitEvent () {
-        this.refuseModalShow = false
+        this.refuseModalShow = false;
+        if (this.refuseReasonValue === '') {
+            this.$toast({
+                type: 'fail',
+                message: '拒绝理由不能为空'
+            });
+            return
+        };
+        this.checkOrderEvent({
+            id: this.currentOrderId ,
+            status: 31,
+            content: this.refuseReasonValue
+        },30)
     },
-    
-    // 进入历史订单事件
-    enterHistoryOrderEvent () {
-        this.$router.push({path: '/suppliesHistoryOrderList'})
+
+    // 更新订单状态(拒绝-31、确认-30、撤销确认-20)
+    checkOrderEvent(data,status) {
+        this.loadingShow = true;
+        this.infoText = '提交中···';
+        checkOrder(data).then((res) => {
+            this.infoText = '';
+            this.loadingShow = false;
+            if ( res && res.data.code == 0) {
+                if (res.data.data) {
+                    if (status == 31) {
+                        this.fullOrderList.splice(this.currentOrderIndex,1);
+                    } else if (status == 30) {
+                        if (this.currentStatusValue === '') {
+                            this.fullOrderList.forEach((item,index) => {
+                                if (item.id == this.currentOrderId) {
+                                    item.status = 30
+                                }
+                            })
+                        } else {
+                            this.fullOrderList.splice(this.currentOrderIndex,1);
+                        }
+                    } else if (status == 20) {
+                         if (this.currentStatusValue === '') {
+                            this.fullOrderList.forEach((item,index) => {
+                                if (item.id == this.currentOrderId) {
+                                    item.status = 20
+                                }
+                            })
+                        } else {
+                            this.fullOrderList.splice(this.currentOrderIndex,1);
+                        }
+                    };
+                    this.$toast({
+                        type: 'success',
+                        message: '提交成功!'
+                    })
+                } else {
+                    this.$toast({
+                        type: 'fail',
+                        message: res.data.msg
+                    })
+                }
+            } else {
+               this.$toast({
+                    type: 'fail',
+                    message: res.data.msg
+                })
+            }
+        })
+        .catch((err) => {
+            this.infoText = '';
+            this.loadingShow = false;
+            this.$toast({
+                type: 'fail',
+                message: err
+            })
+        })
     },
 
     // 查询订单列表
@@ -495,8 +567,8 @@ export default {
         start.setHours(23, 59, 59, 999);
         this.startDate = this.formatDate(start);
         this.endDate = this.formatDate(end);
-        this.defaultDateArr.push(this.startDate);
-        this.defaultDateArr.push(this.endDate)
+        this.defaultDateArr.push(new Date(this.startDate));
+        this.defaultDateArr.push(new Date(this.endDate))
     },
     
     formatDate(date) {
@@ -525,27 +597,46 @@ export default {
     
     //进入订单详情事件
     enterOrderDetailsEvent(item,index) {
-        this.$router.push('/suppliesOrderDetails')
+        this.$router.push({
+            path: '/suppliesOrderDetails', 
+            query: {
+                orderId: item.id
+            }
+        })
     },
     
     // 撤销确认订单事件
     revocationSureEvent(item,index) {
+        this.currentOrderIndex = index;
+        this.currentOrderId = item['id'];
         this.revocationDeliveryOrderModalShow = true;
     },
     
     // 生成送货单事件
     createDeliveryOrderEvent(item,index) {
-        this.$router.push('/suppliesCreateDeliveryOrder')
+         this.$router.push({
+            path: '/suppliesCreateDeliveryOrder', 
+            query: {
+                orderId: item.id
+            }
+        })
     },
 
     // 拒绝订单事件
     refuseEvent(item,index) {
-      this.refuseModalShow = true 
+        this.currentOrderIndex = index;
+        this.currentOrderId = item['id'];
+        this.refuseModalShow = true 
     },
 
     // 确认订单事件
     sureEvent(item,index) {
-
+        this.currentOrderIndex = index;
+        this.currentOrderId = item['id'];
+        this.checkOrderEvent({
+            id: this.currentOrderId ,
+            status: 30
+        },30)
     }
   }
 };

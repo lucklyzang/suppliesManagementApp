@@ -51,18 +51,26 @@ export function createSaleReturn(data) {
 	return request({
 	    url: '/spd/admin-api/erp/sale-return/create',
 	    method: 'post',
-			data
+		data
 	  })
 }
 
+// 创建出库
+export function createSaleOut(data) {
+	return request({
+	    url: '/spd/admin-api/erp/sale-out/create',
+	    method: 'post',
+		data
+	  })
+}
 
 // 更新订单状态
 export function checkOrder(data) {
 	return request({
-	    url: '/spd/admin-api/erp/check-order/update-status',
+	    url: '/spd/admin-api/erp/sale-order/update-status',
 	    method: 'put',
-			params: data
-	  })
+		params: data
+	})
 }
 
 // 查询订单操作记录
