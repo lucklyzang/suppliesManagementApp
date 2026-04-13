@@ -1,7 +1,6 @@
 <template>
   <div class="page-box" ref="wrapper">
-    <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">加载中...</van-loading>
-    <van-overlay :show="overlayShow" z-index="100000" />
+    <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">{{ infoText }}</van-loading>
     <div class="nav">
         <van-nav-bar title="详情" left-text="返回" left-arrow @click-left="onClickLeft"  :border="false">
         </van-nav-bar>
@@ -10,11 +9,17 @@
         <div class="content-box">
             <div class="order-details-top">
                 <div class="order-type">
-                    <span>计划订单</span>
-                    <span>552342432</span>
+                    <span>送货单号</span>
+                    <span>{{ orderMessage['no'] }}</span>
                 </div>
-                <div class="order-status">
-                    <span>{{ stateTransfer(2) }}</span>
+                <div class="order-status"
+                    :class="{
+                        'stayDeliveryStyle ' : orderMessage.status == 10, 
+                        'deliveryingStyle' : orderMessage.status == 20,
+                        'alreadyDeliveryStyle' : orderMessage.status == 60
+                    }"
+                >
+                    <span>{{ stateTransfer(orderMessage['status']) }}</span>
                 </div>
             </div>
             <div class="order-details-title">
@@ -28,7 +33,7 @@
 				</div>
 				<div class="product-list" v-for="(item) in materialList" :key="item.productName">
 					<div class="product-left">
-                        <img :src="item.productimg" />
+                        <img :src="item['images'] ? item['images'] : productDefaultImage" />
 					</div>
 					<div class="product-center">
 						<div class="product-name">
@@ -39,16 +44,16 @@
 						<div class="product-specification">
 							<div class="product-specification-left">
 								<span>
-									{{ item.specification }}
+									{{ item.specification ? item.specification : '无' }}
 								</span>
 							</div>
 							<div class="product-specification-right">
 								<span>￥</span>
 								<span>
-									{{ item.unitPrice }}
+									{{ formatPrice(item.productPrice) }}
 								</span>
 								<span>
-									{{ `/${item.unit}` }}
+									{{ `/${item.productUnitName}` }}
 								</span>
 							</div>
 						</div>
@@ -56,11 +61,11 @@
 					<div class="product-right">
 						<div class="product-number-box">
 							<span>数量:</span>
-							<span>4</span>
+							<span>{{ item.count }}</span>
 						</div>
 						<div class="product-total-price">
 							<span>总额:</span>
-							<span>{{ `￥20.00` }}</span>
+							<span>{{ `￥${formatPrice(item.totalPrice)}` }}</span>
 						</div>
 					</div>
 				</div>
@@ -69,31 +74,31 @@
 				<div class="create-delivery-date">
 					<div class="create-delivery-date-left">
 						<span>创建时间:</span>
-						<span>05-31 17:21</span>
+						<span>{{ orderMessage['createTime'] }}</span>
 					</div>
 					<div class="create-delivery-date-left">
 						<span>交货日期:</span>
-						<span>05-31</span>
+						<span>{{ orderMessage['outTime'] }}</span>
 					</div>
 				</div>
 				<div class="create-delivery-date">
 					<div class="create-delivery-date-left">
 						<span>下单医院:</span>
-						<span>打卡善良的凯撒</span>
+						<span></span>
 					</div>
 					<div class="create-delivery-date-left">
 						<span>送货地址:</span>
-						<span>大苏打的</span>
+						<span>{{ orderMessage['address'] ? orderMessage['address'] : '无' }}</span>
 					</div>
 				</div>
                 <div class="create-delivery-date">
 					<div class="create-delivery-date-left">
 						<span>科室电话:</span>
-						<span>打卡善良的凯撒</span>
+						<span>{{ orderMessage['mobile'] }}</span>
 					</div>
 					<div class="create-delivery-date-left">
 						<span>关联订单:</span>
-						<span>大苏打的</span>
+						<span>{{ orderMessage['orderId'] }}</span>
 					</div>
 				</div>
 			</div>
@@ -131,19 +136,7 @@
                 </div>
                 <div class="photograph-content">
                     <div class="image-list">
-                        <img :src="productimg" />
-                    </div>
-                     <div class="image-list">
-                        <img :src="productimg" />
-                    </div>
-                     <div class="image-list">
-                        <img :src="productimg" />
-                    </div>
-                     <div class="image-list">
-                        <img :src="productimg" />
-                    </div>
-                    <div class="image-list">
-                        <img :src="productimg" />
+                        <img :src="productDefaultImage" />
                     </div>
                 </div>
             </div>
@@ -161,6 +154,8 @@
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
+import { getSaleReturn } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
+import SOtime from '@/common/js/SOtime.js'
 export default {
   name: "suppliesDeliverGoodsDetails",
   components: {
@@ -170,37 +165,21 @@ export default {
   data() {
     return {
       loadingShow: false,
-      overlayShow: false,
+      infoText: '加载中...',
       allChooseProductPrice: 0,
-      productimg: require('@/common/images/home/add-icon.png'),
-      materialList: [
-        {
-            productName: '洗手液',
-            specification: '500ML',
-            unit: '瓶',
-            unitPrice: '4.5',
-            quantity: 0,
-            checked: false,
-            disabled: false,
-            productimg: require('@/common/images/home/supplies-order-icon.png')
-        },
-        {
-            productName: '一次性垫',
-            specification: '90*40cm',
-            unit: '包',
-            unitPrice: '8.3',
-            quantity: 0,
-            checked: false,
-            disabled: false,
-            productimg: require('@/common/images/home/supplies-order-icon.png')
-        }
-      ]
+      orderId: '',
+      productDefaultImage: require('@/common/images/home/revocation-info-icon.png'),
+      orderMessage: {},
+      materialList: [],
+      orderId: ''
     }
   },
 
   mounted() {
     // 控制设备物理返回按键
     this.deviceReturn('/suppliesDeliverGoodsList');
+    this.orderId = this.$route.query.orderId;
+    this.parallelFunction()
   },
 
   beforeRouteEnter(to, from, next) {
@@ -241,36 +220,17 @@ export default {
         this.$router.push({path: '/suppliesDeliverGoodsList'})
     },
 
-    //任务状态转换
     stateTransfer (num) {
         switch(num) {
-                case 0:
-                    return '未分配'
+                case 10:
+                    return '待送货'
                     break;
-                case 1:
-                        return '未查阅'
-                        break;
-                case 2:
-                        return '未开始'
-                        break;
-                case 3:
-                        return '进行中'
-                        break;
-                case 4:
-                        return '待复核'
-                        break;
-                case 5:
-                        return '已完成'
-                        break;
-                case 6:
-                        return '已复核'
-                        break;
-                case 7:
-                        return '已取消'
-                        break
-                case 8:
-                        return '复核中'
-                        break
+                case 20:
+                    return '送货中'
+                    break;
+                case 60:
+                    return '已送货'
+                    break;
         } 
     },
 
@@ -279,6 +239,58 @@ export default {
         if (typeof num !== 'number' || isNaN(num)) return "0.00";
             const value = Math.round(num * 100) / 100;
             return value.toFixed(2);
+    },
+
+    // 查询出货单详情
+    getSaleReturnEvent() {
+        return new Promise((resolve,reject) => {
+            getSaleReturn(this.orderId).then((res) => {
+                this.loadingShow = false;
+                this.infoText = '';
+                if ( res && res.data.code == 0) {
+                    resolve(res.data.data);
+                } else {
+                    reject(res.data.msg);
+                    this.$toast({
+                        type: 'fail',
+                        message: res.data.msg
+                    })
+                }
+            })
+            .catch((err) => {
+                reject(err)
+            })
+        })
+    },
+
+    // 并行查询订单详情
+	parallelFunction () {
+        this.loadingShow = false;
+        this.infoText = '加载中···';
+        Promise.all([this.getSaleReturnEvent()])
+        .then((res) => {
+            this.loadingShow = false;
+            this.infoText = '';
+            if (res && res.length > 0) {
+                this.orderMessage = {};
+                let [item1] = res;
+                if (item1) {
+                    this.orderMessage = item1;
+                    this.materialList = this.orderMessage['items'];
+                    this.allChooseProductPrice = this.orderMessage['totalProductPrice'];
+                    this.orderMessage['createTime'] = SOtime.time3(this.orderMessage['createTime']);
+                    this.orderMessage['requestTime'] = SOtime.time8(this.orderMessage['requestTime']);
+                }
+            }
+        })
+        .catch((err) => {
+            this.loadingShow = false;
+            this.infoText = '';
+            this.$toast({
+                type: 'fail',
+                message: err
+            })
+        })
     }
   }
 };
@@ -348,37 +360,20 @@ export default {
                 justify-content: center;
                 width: 67px;
                 height: 25px;
-                background: rgba(232,203,81,0.16);
                 border-radius: 4px;
-                >span {
-                    font-size: 14px;
-                    color: #E8CB51;
-                }
             };
-            .noStartStyle {
-            background: #BBBBBB !important
+            .stayDeliveryStyle {
+                background: rgba(251,229,223,1) !important;
+                color: #EB7D61 !important;
             };
-            .underwayStyle {
-            background: #289E8E !important
+            .deliveryingStyle {
+                background: rgba(203,245,228,1) !important;
+                color: #35D897 !important;
             };
-            .completeStyle {
-            background: #242424 !important
+            .alreadyDeliveryStyle {
+                background: rgba(59,157,249,0.12) !important;
+                color: #3B9DF9 !important;
             };
-            .redivStyle {
-            background: #F2A15F !important
-            };
-            .haveRedivStyle {
-            background: #9B7D31 !important
-            };
-            .waitRedivStyle {
-            background: orange !important
-            };
-            .cancelStyle {
-            background: #E8CB51 !important
-            };
-            .completeStyle {
-            background: #101010 !important
-            }
         };
         .order-details-title {
             padding: 0 12px;

@@ -80,3 +80,67 @@ export function queryorderOperationLog(orderId) {
 	    method: 'get'
 	  })
 }
+
+// 查询仓库信息
+export function getwarehouseInfo() {
+	return request({
+	    url: '/spd/admin-api/erp/warehouse/simple-list',
+	    method: 'get'
+	  })
+}
+
+// 获取出库分页
+export function getSaleOutPage(data) {
+	if (data.outTime && Array.isArray(data.outTime)) {
+	  data.outTime = data.outTime.map(function(date,index,array){
+			if (index == 0) {
+				return date + ' 00:00:00'
+			} else if (index == 1) {
+				return date + ' 23:59:59'
+			}
+		})
+	};
+	return request({
+	    url: '/spd/admin-api/erp/sale-out/page',
+	    method: 'get',
+			params: data,
+			paramsSerializer: function (params) {
+				return qs.stringify(params, { arrayFormat: 'repeat' })
+			}
+	  })
+}
+
+// 获取用户列表
+export function queryUserList(type) {
+	return request({
+	    url: `/spd/admin-api/system/user/simple-list?type=${type}`,
+	    method: 'get'
+	  })
+}
+
+// 配送订单
+export function saleOutDelivery(data) {
+	return request({
+	    url: '/spd/admin-api/erp/sale-out/delivery',
+	    method: 'put',
+		params: data
+	})
+}
+
+// 取消送货单
+export function saleOutCancel(data) {
+	return request({
+	    url: '/spd/admin-api/erp/sale-out/cancel',
+	    method: 'put',
+		params: data
+	})
+}
+
+// 撤销送货单
+export function saleOutRevoke(data) {
+	return request({
+	    url: '/spd/admin-api/erp/sale-out/revoke',
+	    method: 'put',
+		params: data
+	})
+}

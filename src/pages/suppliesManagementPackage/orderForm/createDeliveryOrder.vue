@@ -6,66 +6,104 @@
         </van-nav-bar>
     </div>
     <div class="content">
-        <div class="content-box">
-            <div class="content-top">
-				<div class="content-top-left">
-					<span>生成送货单</span>
-				</div>
-			</div>
-			<div class="content-center">
-				<div class="empty-info" v-if="materialList.length == 0">
-					<van-empty description="暂无产品" />
-				</div>
-				<div class="product-list" v-for="(item,index) in materialList" :key="item.productName">
-					<div class="product-left">
-						<img :src="item['images'] ? item['images'] : productDefaultImage" />
-					</div>
-					<div class="product-center">
-						<div class="product-name">
-							<span>
-								{{ item.productName }}
-							</span>
-						</div>
-						<div class="product-specification">
-							<div class="product-specification-left">
-								<span>
-									{{ item.specification ? item.specification : '无' }}
-								</span>
-							</div>
-						</div>
-					</div>
-					<div class="product-right">
-						<div class="product-number-box">
-							<van-stepper v-model="item.inputCount" @change="function(val){productNumberBoxChange(item,index,val)}" integer min="0" :max="Number(item['count'])-Number(item['outCount'])" />
-						</div>
-						<div class="product-total-price">
-              <div class="total-demand">
-                <span>总需求数</span>
-                <span>{{ item.count }}</span>
+      <div class="content-box">
+        <div class="content-top">
+          <div class="content-top-left">
+            <span>生成送货单</span>
+          </div>
+			  </div>
+        <div class="content-center">
+          <div class="empty-info" v-if="materialList.length == 0">
+            <van-empty description="暂无产品" />
+          </div>
+          <div class="product-list" v-for="(item,index) in materialList" :key="item.productName">
+            <div class="product-left">
+              <img :src="item['images'] ? item['images'] : productDefaultImage" />
+            </div>
+            <div class="product-center">
+              <div class="product-name">
+                <span>
+                  {{ item.productName }}
+                </span>
               </div>
-              <div class="surplus-demand">
-                <span>剩余需求数</span>
-                <span>{{ item.count - item.outCount }}</span>
+              <div class="product-specification">
+                <div class="product-specification-left">
+                  <span>
+                    {{ item.specification ? item.specification : '无' }}
+                  </span>
+                </div>
               </div>
-						</div>
-					</div>
-				</div>
-			</div>
-			<div class="total-prices">
-				<div class="total-prices-right">
-					<span>总数量:</span>
-					<span>{{ `${allCount}` }}</span>
-				</div>
-			</div>
+            </div>
+            <div class="product-right">
+              <div class="product-number-box">
+                <van-stepper v-model="item.inputCount" @change="function(val){productNumberBoxChange(item,index,val)}" integer min="0" :max="Number(item['count'])-Number(item['outCount'])" />
+              </div>
+              <div class="product-total-price">
+                <div class="total-demand">
+                  <span>总需求数</span>
+                  <span>{{ item.count }}</span>
+                </div>
+                <div class="surplus-demand">
+                  <span>剩余需求数</span>
+                  <span>{{ item.count - item.outCount - item.inputCount }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-    </div>
-    <div class="btn-box">
-        <div class="btn-left" @click="quitEvent">
-            <span>退出</span>
+        <div class="total-prices">
+          <div class="total-prices-right">
+            <span>总数量:</span>
+            <span>{{ `${allCount}` }}</span>
+          </div>
         </div>
-        <div class="btn-right" @click="submitEvent">
-            <span>提交</span>
+        <div class="shipment-warehouse-box">
+          <div class="shipment-warehouse-left">
+            <span>*</span>
+            <span>出货仓库</span>
+          </div>
+          <div class="shipment-warehouse-right" ref="myElement">
+            <div class="shipment-warehouse-span" @click="shipmentWarehouseListShow = !shipmentWarehouseListShow">
+              <span>{{ currentShipmentWarehouseText }}</span>
+              <van-icon :name="shipmentWarehouseListShow ? 'arrow-down' : 'arrow-up'" color="#101010" size="16" />
+            </div>
+            <div class="shipment-warehouse-list-box" v-show="shipmentWarehouseListShow">
+              <div class="shipment-warehouse-list" v-for="(item,index) in shipmentWarehouseListList" @click="shipmentWarehouseListEvent(item,index)" :key="index">
+                <span :class="{'shipmentWarehouseSpanStyle': index == currentShipmentWarehouseIndex }">{{ item.name }}</span>
+              </div>
+            </div>
+				  </div>
         </div>
+        <div class="arrival-date-box">
+          <div class="arrival-date-left">
+            <span>要求到货日期:</span>
+          </div>
+          <div class="arrival-date-right" @click="arrivalDateShow = !arrivalDateShow">
+            <span>{{ arrivalDate }}</span>
+            <van-icon name="notes-o" color="#CACACA" size="20" />
+          </div>
+        </div>
+        <div class="remark-box">
+          <div class="remark-span">
+              <span>备注:</span>
+          </div>
+          <div class="remark-content">
+              <van-field
+                v-model="remarkValue"
+                type="textarea"
+                placeholder="请输入"
+              />
+          </div>
+        </div>
+      </div>
+      <div class="btn-box">
+            <div class="btn-left" @click="quitEvent">
+                <span>退出</span>
+            </div>
+            <div class="btn-right" @click="submitEvent">
+                <span>提交</span>
+            </div>
+      </div>
     </div>
     <!-- 确定生成送货单弹框	 -->
     <div class="create-delivery-order-modal">
@@ -83,7 +121,7 @@
                      <span>
                        订单号不变，选中的物品生成新的送货单，新生成的送货单号为
                      </span>
-                     <span>【SHD456332】</span>
+                     <span>{{ newDeliveryNote }}</span>
                    </div>
                    <div class="modal-center-info">
                      您可以继续生成新的送货单
@@ -102,13 +140,23 @@
             </div>
         </van-dialog>
     </div>
+    <!-- 到货日期选择器 -->
+    <van-popup v-model="arrivalDateShow" position="bottom" :style="{ height: '40%' }">
+       <van-datetime-picker
+        v-model="currentDate"
+        type="date"
+        @cancel="arrivalDateShow = false"
+        @confirm="arrivalDateSureEvent"
+      />
+    </van-popup>
   </div>
 </template>
 <script>
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
-import { getPlanOrder, createSaleOut } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
+import { getPlanOrder, getwarehouseInfo, createSaleOut } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
+import SOtime from '@/common/js/SOtime.js'
 export default {
   name: "suppliesCreateDeliveryOrder",
   components: {
@@ -121,7 +169,17 @@ export default {
       infoText: '生成中···',
       allCount: 0,
       createDeliveryOrderModalShow: false,
+      newDeliveryNote: '',
       isExceedStockQuantity: false,
+      shipmentWarehouseListShow: false,
+      currentShipmentWarehouseText: '请选择',
+      arrivalDateShow: false,
+      arrivalDate: SOtime.time8(new Date().getTime()),
+      currentDate: new Date(),
+      currentShipmentWarehouseIndex: 0,
+      currentShipmentWarehouseValue: 0,
+      shipmentWarehouseListList:[],
+      remarkValue: '',
       productDefaultImage: require('@/common/images/home/revocation-info-icon.png'),
       orderId: '',
       chooseMaterialList: [],
@@ -135,6 +193,13 @@ export default {
     this.deviceReturn('/suppliesOrderList');
     this.orderId = this.$route.query.orderId;
     this.parallelFunction();
+    const el = this.$refs.myElement;
+    //点击状态栏区域以外的地方时，库房列表收起
+    document.addEventListener('click', (event) => {
+        if (el && !el.contains(event.target)){
+            this.shipmentWarehouseListShow = false;
+        }
+    }, false)
   },
 
   beforeRouteEnter(to, from, next) {
@@ -189,6 +254,17 @@ export default {
       this.$router.push({path: '/suppliesOrderList'})
     },
 
+    // 重置数据
+    resetData () {
+      this.newDeliveryNote = '';
+    },
+    
+    // 初始化送货日期
+    getArrivalDate() {
+      this.arrivalDate = SOtime.time8(new Date(this.orderMessage['confirmTime']).getTime());
+      this.currentDate = new Date(this.orderMessage['confirmTime'])
+    },
+
     // 求和函数(计算所有添加产品总价格)
     reduceTotal() {
         let targetMsg = this.materialList.filter((item) => {
@@ -217,13 +293,21 @@ export default {
       this.createDeliveryOrderModalShow = false;
     },
 
-    // 确定生成送货单弹框确定事件
+    // 确定继续生成送货单弹框确定事件
     createDeliveryOrderModalShowSubmitEvent () {
       this.createDeliveryOrderModalShow = false;
+      this.resetData();
       if (this.isExceedStockQuantity) {
         this.$toast({
           type: 'fail',
-          message: '出库数量不能超过库存数量!'
+          message: '出库数量不能超过剩余需求数量!'
+        });
+        return 
+      };
+      if (this.currentShipmentWarehouseText == '请选择') {
+        this.$toast({
+          type: 'fail',
+          message: '请选择出货仓库!'
         });
         return 
       };
@@ -231,7 +315,7 @@ export default {
       for (let item of this.materialList) {
         deliveryOrderList.push({
           orderItemId: item.id, //销售订单项编号
-          warehouseId: item.warehouseId, // 仓库编号
+          warehouseId: this.currentShipmentWarehouseValue, // 仓库编号
           productId: item.productId, // 产品编号
           productUnitId: item.productUnitId, // 产品单位编号
           productPrice: item.productPrice, // 产品单价
@@ -241,7 +325,9 @@ export default {
         }) 
       };
       this.createSaleOutEvent({
-        orderId: this.orderId,
+        orderId: this.orderId, //销售订单编号
+        outTime: this.arrivalDate + ' 00:00:00', //出库时间
+        remark: this.remarkValue, //备注
         items: deliveryOrderList
       })
     },
@@ -253,7 +339,39 @@ export default {
 
     // 提交事件
     submitEvent() {
-      this.createDeliveryOrderModalShow = true;
+      if (this.isExceedStockQuantity) {
+        this.$toast({
+          type: 'fail',
+          message: '出库数量不能超过剩余需求数量!'
+        });
+        return 
+      };
+      if (this.currentShipmentWarehouseText == '请选择') {
+        this.$toast({
+          type: 'fail',
+          message: '请选择出货仓库!'
+        });
+        return 
+      };
+      let deliveryOrderList = [];
+      for (let item of this.materialList) {
+        deliveryOrderList.push({
+          orderItemId: item.id, //销售订单项编号
+          warehouseId: this.currentShipmentWarehouseValue, // 仓库编号
+          productId: item.productId, // 产品编号
+          productUnitId: item.productUnitId, // 产品单位编号
+          productPrice: item.productPrice, // 产品单价
+          count: item.inputCount, // 产品数量
+          taxPercent: item.taxPercent, // 税率，百分比
+          remark: item.remark //备注
+        }) 
+      };
+      this.createSaleOutEvent({
+        orderId: this.orderId, //销售订单编号
+        outTime: this.arrivalDate + ' 00:00:00', //出库时间
+        remark: this.remarkValue, //备注
+        items: deliveryOrderList
+      })
     },
 
     // 生成送货单事件
@@ -263,11 +381,9 @@ export default {
       createSaleOut(data).then((res) => {
           this.loadingShow = false;
           this.infoText = '';
-          if ( res && res.data.code == 0) {
-              this.$toast({
-                type: 'success',
-                message: '生成送货单成功!'
-              })
+          if ( res && res.data.code == 0) { 
+            this.createDeliveryOrderModalShow = true;
+            this.newDeliveryNote = '';
           } else {
               this.$toast({
                 type: 'fail',
@@ -307,24 +423,51 @@ export default {
         })
     },
 
+    // 查询仓库信息
+    getWarehouseInfoEvent() {
+        return new Promise((resolve,reject) => {
+            getwarehouseInfo().then((res) => {
+                this.loadingShow = false;
+                this.infoText = '';
+                if ( res && res.data.code == 0) {
+                    resolve(res.data.data);
+                } else {
+                    reject(res.data.msg);
+                    this.$toast({
+                        type: 'fail',
+                        message: res.data.msg
+                    })
+                }
+            })
+            .catch((err) => {
+              reject(err)
+            })
+        })
+    },
+
     // 并行查询订单详情
 	  parallelFunction () {
         this.loadingShow = false;
         this.infoText = '加载中···';
-        Promise.all([this.getPlanOrderEvent()])
+        Promise.all([this.getPlanOrderEvent(),this.getWarehouseInfoEvent()])
         .then((res) => {
             this.loadingShow = false;
             this.infoText = '';
             if (res && res.length > 0) {
                 this.orderMessage = {};
-                let [item1] = res;
+                this.shipmentWarehouseListList = [];
+                let [item1,item2] = res;
                 if (item1) {
                   this.orderMessage = item1;
                   this.materialList = this.orderMessage['items'];
                   this.allCount = this.orderMessage['totalCount'];
                   this.materialList.forEach((item,index) => {
                     this.$set(this.materialList[index],'inputCount',0);
-                  })
+                  });
+                  this.getArrivalDate()
+                };
+                if (item2) {
+                  this.shipmentWarehouseListList = item2;
                 }
             }
         })
@@ -336,6 +479,20 @@ export default {
                 message: err
             })
         })
+    },
+
+    // 仓库列表点击事件
+    shipmentWarehouseListEvent(item,index) {
+      this.currentShipmentWarehouseText = item.name;
+      this.currentShipmentWarehouseValue = item.id,
+      this.currentShipmentWarehouseIndex = index;
+      this.shipmentWarehouseListShow = false;
+    },
+
+    // 到货日期选择框确认事件
+    arrivalDateSureEvent (value) {
+      this.arrivalDateShow = false;
+      this.arrivalDate = SOtime.time8(new Date(value).getTime());
     }
   }
 };
@@ -472,6 +629,7 @@ export default {
         display: flex;
         flex-direction: column;
         padding:  0 6px;
+        overflow: auto;
       .content-top {
 			 height: 40px;
 			 padding: 0 4px;
@@ -622,10 +780,115 @@ export default {
 				 }
 				} 
 			 }
-		 }
-    }
-  };
-  .btn-box {
+		 };
+     .shipment-warehouse-box {
+       display: flex;
+       align-items: center;
+       .shipment-warehouse-left {
+         width: 120px;
+         margin-right: 10px;
+         >span {
+           &:first-child {
+            color: red;
+           };
+           &:last-child {
+            font-size: 14px;
+            color: #101010;
+           }
+         }
+       };
+       .shipment-warehouse-right {
+        flex: 1;
+        position: relative;
+        border-radius: 6px;
+        border: 1px solid #BBBBBB;
+        height: 30px;
+        .shipment-warehouse-span {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 30px;
+            padding: 0 10px;
+            box-sizing: border-box;
+            >span {
+                margin-right: 4px;
+                font-size: 14px;
+                color: #101010
+            }
+        };
+        .shipment-warehouse-list-box {
+            width: 100%;
+            background: #fff;
+            position: absolute;
+            left: 0;
+            top: 35px;
+            max-height: 160px;
+            overflow: auto;
+            padding: 0 10px;
+            box-sizing: border-box;
+            border: 1px solid #bbbbbb;
+            z-index: 10;
+            .shipment-warehouse-list {
+                height: 30px;
+                width: 70px;
+                display: flex;
+                align-items: center;
+                >span {
+                    font-size: 12px;
+                    color: #101010
+                };
+                .shipmentWarehouseSpanStyle {
+                    color: #3B9DF9 !important;
+                }
+            }
+        }
+       }
+     };
+     .arrival-date-box {
+        margin: 10px 0;
+        display: flex;
+        align-items: center;
+       .arrival-date-left {
+         width: 120px;
+         margin-left: 10px;
+         >span {
+            font-size: 14px;
+            color: #101010;
+         }
+       };
+       .arrival-date-right {
+          flex: 1;
+          border-radius: 3px;
+          border: 1px solid #BBBBBB;
+          height: 30px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 10px;
+          box-sizing: border-box;
+       }
+     };
+    .remark-box {
+        display: flex;
+        margin-bottom: 10px;
+        .remark-span {
+          width: 120px;
+          margin-left: 10px;
+            >span {
+              font-size: 14px;
+              color: #101010;
+            }
+        };
+        .remark-content {
+            flex: 1;
+            border: 1px solid #888888;
+            .van-cell {
+                padding: 6px 10px !important;
+            }
+        }
+      }
+    };
+    .btn-box {
         height: 60px;
         padding: 0 14px;
         box-sizing: border-box;
@@ -658,6 +921,7 @@ export default {
                 color: #fff;
             }
         }
-    }
+      }
+  }
 }
 </style>

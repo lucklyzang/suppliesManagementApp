@@ -187,14 +187,14 @@ export default {
     return {
       loadingShow: false,
       bottomLoadingShow: false,
-      refuseModalShow: false,
-      showCalendar: false,
       infoText: '加载中...',
       isShowNoData: false,
       isShowNoMoreData: false,
       currentPageNum: 1,
       pageSize: 20,
       totalCount: 0,
+      refuseModalShow: false,
+      showCalendar: false,
       revocationDeliveryOrderModalShow: false,
       revocationInfoImage: require('@/common/images/home/revocation-info-icon.png'),
       sourcePath: '',
@@ -578,7 +578,7 @@ export default {
         return `${y}-${m}-${d}`;
     },
     
-    // 订单列表点击事件
+    // 订单状态列表点击事件
     statusListEvent(item,index) {
         this.currentStatusText = item.text;
         this.currentStatusValue = item.value,

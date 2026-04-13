@@ -1,7 +1,6 @@
 <template>
   <div class="page-box" ref="wrapper">
-    <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">加载中...</van-loading>
-    <van-overlay :show="overlayShow" z-index="100000" />
+    <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">{{ infoText }}</van-loading>
     <div class="nav">
         <van-nav-bar title="送货" left-text="返回" left-arrow @click-left="onClickLeft"  @click-right="enterHistoryOrderEvent" :border="false">
             <template #right>
@@ -15,12 +14,12 @@
           <div class="status-date-box">
 				<div class="status-box" ref="myElement">
 					<div class="status-span" @click="orderStatusListShow = !orderStatusListShow">
-						<span>{{ currentStatusspan }}</span>
+						<span>{{ currentStatusText }}</span>
 						<van-icon :name="orderStatusListShow ? 'arrow-down' : 'arrow-up'" color="#101010" size="16" />
 					</div>
 					<div class="status-list-box" v-if="orderStatusListShow">
 						<div class="status-list" v-for="(item,index) in orderStatusList" @click="statusListEvent(item,index)" :key="index">
-							<span :class="{'statusspanStyle': index == currentStatusIndex }">{{ item }}</span>
+							<span :class="{'statusspanStyle': index == currentStatusIndex }">{{ item.text }}</span>
 						</div>
 					</div>
 				</div>
@@ -36,18 +35,18 @@
 					</div>
 				</div>
 			</div>
-            <div class="order-list-box">
-				<div class="order-list" v-for="(item,index) in orderList" :key="index" @click="enterOrderDetailsEvent(item,index)">
+            <div class="order-list-box" ref="scrollBacklogTask">
+				<div class="order-list" v-for="(item,index) in fullOrderList" :key="index" @click="enterOrderDetailsEvent(item,index)">
 					<div class="order-list-top">
 						<div class="order-type">
-							<span>{{ item.orderType }}</span>
+							<span>送货单号</span>
 							<span>{{ item.orderNumber }}</span>
 						</div>
 						<div class="order-status"
 						:class="{
-							'stayDeliveryStyle ' : item.state == 1, 
-							'deliveryingStyle' : item.state == 2,
-                            'alreadyDeliveryStyle' : item.state == 3
+							'stayDeliveryStyle ' : item.status == 10, 
+							'deliveryingStyle' : item.status == 20,
+                            'alreadyDeliveryStyle' : item.status == 60
 							}"
 						>
 							<span>{{ stateTransfer(item.status) }}</span>
@@ -56,7 +55,7 @@
 					<div class="order-list-center">
 						<div class="product-list">
 							<span>产品清单:</span>
-							<span>{{ item.productList }}</span>
+							<span>{{ extractProductInventoryMessage(item['items']) }}</span>
 						</div>
 						<div class="create-delivery-date">
 							<div class="create-delivery-date-left">
@@ -65,27 +64,27 @@
 							</div>
 							<div class="create-delivery-date-left">
 								<span>交货日期:</span>
-								<span>{{ item.deliveryDate }}</span>
+								<span>{{ item.requestTime }}</span>
 							</div>
 						</div>
 						<div class="create-delivery-date delivery-address">
                             <div class="create-delivery-date-left">
 								<span>下单医院:</span>
-								<span>{{ item.deliveryAddress }}</span>
+								<span></span>
 							</div>
 							<div class="create-delivery-date-left">
 								<span>送货地址:</span>
-								<span>{{ item.deliveryAddress }}</span>
+								<span>{{ item.address }}</span>
 							</div>
 						</div>
                         <div class="create-delivery-date delivery-address">
                             <div class="create-delivery-date-left">
 								<span>科室电话:</span>
-								<span>{{ item.deliveryAddress }}</span>
+								<span>{{ item.mobile }}</span>
 							</div>
 							<div class="create-delivery-date-left">
 								<span>关联订单:</span>
-								<span>{{ item.deliveryAddress }}</span>
+								<span>{{ item.orderNo }}</span>
 							</div>
 						</div>
 						<div class="product-list remark-box">
@@ -95,21 +94,26 @@
 					</div>
 					<div class="order-list-bottom">
 						<div class="order-list-btn">
-							<div class="delete-left" @click.stop="revocationDeliverGoodsEvent(item,index)">
+							<div class="delete-left" v-show="item.status == 20" @click.stop="revocationDeliverGoodsEvent(item,index)">
 								<span>撤销送货</span>
 							</div>
-							<div class="delete-left" v-if="false" @click.stop="cancelDeliverOrderEvent(item,index)">
+							<div class="delete-left" v-show="item.status == 10" @click.stop="cancelDeliverOrderEvent(item,index)">
 								<span>取消送货单</span>
 							</div>
-							<div class="edit-right" v-if="false" @click.stop="deliverGoodsEvent(item,index)">
+							<div class="edit-right" v-show="item.status == 10" @click.stop="deliverGoodsEvent(item,index)">
 								<span>送货</span>
 							</div>
-							<div class="edit-other" @click.stop="deliveryEvent(item,index)">
+							<div class="edit-other" v-show="item.status == 20" @click.stop="deliveryEvent(item,index)">
 								<span>送达</span>
 							</div>
 						</div>
 					</div>
 				</div>
+                <van-empty description="您还没有相关订单" v-show="isShowNoData" />
+                <div v-show="bottomLoadingShow" class="bottom-loading-show">
+                    加载中...
+                </div>
+                <div class="no-more-data" v-show="isShowNoMoreData && !loadingShow && !isShowNoData">没有更多数据了!</div>
 			</div>
         </div>
     </div>
@@ -134,7 +138,7 @@
                             </div>
                            <div class="delivery-person-list-box" v-if="deliveryPersonShow">
                                 <div class="delivery-person-list" v-for="(item,index) in deliveryPersonList" @click.stop="deliveryPersonListEvent(item,index)" :key="index">
-                                    <span :class="{'deliveryPersonspanStyle': index == currentDeliveryPersonIndex }">{{ item }}</span>
+                                    <span :class="{'deliveryPersonspanStyle': index === currentDeliveryPersonIndex }">{{ item.name }}</span>
                                 </div>
 					        </div>
                         </div>
@@ -187,7 +191,7 @@
                 <div class="evaluate-modal-center">
                   <img :src="revocationInfoImage"  />
                   <div class="modal-center-content">
-                    请再次确认是否要撤销该<br>【6533366113】送货单？
+                    `请再次确认是否要撤销该<br>【${currentOrderNo}】送货单？`
                   </div>
                 </div>
                 <div class="evaluate-modal-bottom">
@@ -203,6 +207,33 @@
             </div>
         </van-dialog>
     </div>
+     <!-- 取消送货单弹框	 -->
+    <div class="revocation-delivery-order-modal">
+        <van-dialog v-model="cancelDeliveryOrderModalShow" :showConfirmButton="false">
+            <div class="evaluate-model-content">
+                <div class="evaluate-modal-top">
+                    <span>取消送货单</span>
+                    <van-icon name="cross" color="#101010" size="20" @click="cancelDeliveryOrderModalShow = false" />
+                </div>
+                <div class="evaluate-modal-center">
+                  <img :src="revocationInfoImage"  />
+                  <div class="modal-center-content">
+                   {{  `请再次确认是否要取消该<br>【${currentOrderNo}】送货单?` }}
+                  </div>
+                </div>
+                <div class="evaluate-modal-bottom">
+                    <div class="evaluate-modal-btn">
+                        <div class="cancel-left" @click.stop="cancelDeliveryOrderModalShowCancelEvent">
+                            <span>取消</span>
+                        </div>
+                        <div class="submit-right" @click.stop="cancelDeliveryOrderModalShowSureEvent">
+                            <span>确定</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </van-dialog>
+    </div>
     <!-- 日历 --> 
     <van-calendar v-model="showCalendar" :min-date="minDate" :max-date="maxDate" :default-date="defaultDateArr" type="range" @confirm="calendarConfirm" />
   </div>
@@ -211,6 +242,7 @@
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
+import { getSaleOutPage, queryUserList, saleOutDelivery, saleOutCancel, saleOutRevoke } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
 import SOtime from '@/common/js/SOtime.js'
 export default {
   name: "suppliesDeliverGoodsList",
@@ -221,11 +253,17 @@ export default {
   data() {
     return {
       loadingShow: false,
-      overlayShow: false,
-      backlogEmptyShow: false,
+      bottomLoadingShow: false,
+      infoText: '加载中...',
+      isShowNoData: false,
+      isShowNoMoreData: false,
+      currentPageNum: 1,
+      pageSize: 20,
+      totalCount: 0,
       deliverGoodsModalShow: false,
       showCalendar: false,
       revocationDeliveryOrderModalShow: false,
+      cancelDeliveryOrderModalShow: false,
       currentdeliveryPerson: '请选择',
       deliveryPersonShow: false,
       revocationInfoImage: require('@/common/images/home/revocation-info-icon.png'),
@@ -234,63 +272,63 @@ export default {
       endDate: '',
       minDate: new Date('2026-03-16'),
       maxDate: new Date('2027-03-16'),
-      currentStatusspan: '全部状态',
+      currentStatusText: '全部状态',
       currentStatusIndex: 0,
+      currentStatusValue: '',
+      needQueryStatusList: [10,20,60],
       orderStatusListShow: false,
       deliverGoodsValue: '',
       contactInformationValue: '',
+      currentOrderIndex: '',
+      currentOrderId: '',
+      currentOrderNo: '',
       deliveryPersonList: [
-            '全部状态',
-            '待送货',
-            '送货中',
-            '已送货'
+          {
+            name: '请选择',
+            value: ''
+          }
       ],
-      currentDeliveryPersonIndex: 0,
+      currentDeliveryPersonIndex: '',
       orderStatusList: [
-        '全部状态',
-        '待确认',
-        '待审核',
-        '已审核'
+        {
+            value: '',
+            text: '全部状态'
+		},
+        {
+            value: 10,
+            text: '待送货'
+        },
+        {
+            value: 20,
+            text: '送货中'
+        },
+        {
+            value: 60,
+            text: '已送货'
+        }
       ],
-      orderList: [
-            {
-                orderType: '送货单号',
-                orderNumber: '5552H5552',
-                status: 0,
-                productList: 'XXX、XXX、XXXX',
-                createTime: '05-31 17:21',
-                deliveryDate: '05-31',
-                deliveryAddress: '检验科',
-                remark: '一周一送'
-            },
-            {
-                orderType: '送货单号',
-                orderNumber: '5552H5552',
-                status: 1,
-                productList: 'XXX、XXX、XXXX',
-                createTime: '05-31 17:21',
-                deliveryDate: '05-31',
-                deliveryAddress: '检验科',
-                remark: '一周一送'
-            },
-            {
-                orderType: '送货单号',
-                orderNumber: '5552H5552',
-                status: 2,
-                productList: 'XXX、XXX、XXXX',
-                createTime: '05-31 17:21',
-                deliveryDate: '05-31',
-                deliveryAddress: '检验科',
-                remark: '一周一送'
-            }
-        ]
+      eventTime: 0,
+      orderList: [],
+      fullOrderList: []
     }
   },
 
   mounted() {
     // 控制设备物理返回按键
     this.deviceReturn('/suppliesHome');
+      this.$nextTick(()=> {
+      this.initScrollChange()
+    });
     this.getDateRange();
+    this.getSaleOutPageEvent({
+        pageNo: this.currentPageNum,
+        pageSize: this.pageSize,
+        status: '',
+        statusList: this.currentStatusValue === '' ? this.needQueryStatusList : [this.currentStatusValue],
+        outTime: [`${this.startDate}`,`${this.endDate}`],
+        creator: ''// this.userAccount
+    },true);
+    this.queryUserListEvent();
     const el = this.$refs.myElement;
     //点击状态栏区域以外的地方时，库房列表收起
     document.addEventListener('click', (event) => {
@@ -342,9 +380,265 @@ export default {
         this.$router.push({path: '/suppliesDeliverHistoryGoodsList'})
     },
 
+    // 事件列表注册滚动事件
+    initScrollChange () {
+      let boxBackScroll = this.$refs['scrollBacklogTask'];
+      boxBackScroll.addEventListener('scroll',this.eventListLoadMore,true)
+    },
+
+    // 事件列表加载事件
+    eventListLoadMore () {
+      let boxBackScroll = this.$refs['scrollBacklogTask'];
+      if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
+        // 点击筛选确定后，不加载数据
+        if (this.eventTime) {return};
+        this.eventTime = 1;
+        this.timeTwo = setTimeout(() => {
+          let totalPage = Math.ceil(this.totalCount/this.pageSize);
+          if (this.currentPageNum >= totalPage) {
+           this.isShowNoMoreData = true;
+          } else {
+            this.isShowNoMoreData = false;
+            this.currentPageNum = this.currentPageNum + 1;
+            this.getSaleOutPageEvent({
+                pageNo: this.currentPageNum,
+                pageSize: this.pageSize,
+                status: '',
+                statusList: this.currentStatusValue === '' ? this.needQueryStatusList : [this.currentStatusValue],
+                outTime: [`${this.startDate}`,`${this.endDate}`],
+                creator: '' // this.userAccount
+            },false)
+          };
+          this.eventTime = 0;
+          console.log('事件列表滚动了',boxBackScroll.scrollTop, boxBackScroll.offsetHeight, boxBackScroll.scrollHeight)
+        },300)
+      }
+    },
+
+    // 获取用户列表
+    queryUserListEvent () {
+        this.loadingShow = true;
+        this.infoText = '查询中···';
+        this.deliveryPersonList = [];
+        queryUserList(1).then((res) => {
+            this.loadingShow = false;
+            this.infoText = '';
+            if ( res && res.data.code == 0) {
+                for (let item of res.data.data) {
+                    this.deliveryPersonList.push({
+                        name: item['nickname'],
+                        value: item['id']
+                    })
+                }
+            } else {
+                this.$toast({
+                    type: 'fail',
+                    message: res.data.msg
+                })
+            }
+        })
+        .catch((err) => {
+            this.loadingShow = false;
+            this.infoText = '';
+            this.$toast({
+                type: 'fail',
+                message: err
+            })
+        })
+    },
+
+    // 订单配送事件(已送货-60、送货中-20、待送货-10)
+    saleOutDeliveryEvent (data) {
+        this.loadingShow = true;
+        this.infoText = '送货中···';
+        saleOutDelivery(data).then((res) => {
+            this.loadingShow = false;
+            this.infoText = '';
+            if ( res && res.data.code == 0) {
+                if (res.data.data) {
+                    if (this.currentStatusValue === '') {
+                        this.fullOrderList.forEach((item,index) => {
+                            if (item.id == this.currentOrderId) {
+                                item.status = 20
+                            }
+                        })
+                    } else {
+                        this.fullOrderList.splice(this.currentOrderIndex,1);
+                    };
+                    this.$toast({
+                        type: 'success',
+                        message: '送货成功!'
+                    })
+                } else {
+                    this.$toast({
+                        type: 'fail',
+                        message: res.data.msg
+                    })
+                }
+            } else {
+                this.$toast({
+                    type: 'fail',
+                    message: res.data.msg
+                })
+            }
+        })
+        .catch((err) => {
+            this.loadingShow = false;
+            this.infoText = '';
+            this.$toast({
+                type: 'fail',
+                message: err
+            })
+        })
+    },
+
+    // 订单取消事件(已送货-60、送货中-20、待送货-10)
+    saleOutCancelEvent (data) {
+        this.loadingShow = true;
+        this.infoText = '取消中···';
+        saleOutCancel(data).then((res) => {
+            this.loadingShow = false;
+            this.infoText = '';
+            if ( res && res.data.code == 0) {
+                if (res.data.data) {
+                    this.fullOrderList.splice(this.currentOrderIndex,1);
+                    this.$toast({
+                        type: 'success',
+                        message: '取消成功!'
+                    })
+                } else {
+                    this.$toast({
+                        type: 'fail',
+                        message: res.data.msg
+                    })
+                }
+            } else {
+                this.$toast({
+                    type: 'fail',
+                    message: res.data.msg
+                })
+            }
+        })
+        .catch((err) => {
+            this.loadingShow = false;
+            this.infoText = '';
+            this.$toast({
+                type: 'fail',
+                message: err
+            })
+        })
+    },
+
+    // 订单撤销事件(已送货-60、送货中-20、待送货-10)
+    saleOutRevokeEvent (data) {
+        this.loadingShow = true;
+        this.infoText = '撤销中···';
+        saleOutRevoke(data).then((res) => {
+            this.loadingShow = false;
+            this.infoText = '';
+            if ( res && res.data.code == 0) {
+                if (res.data.data) {
+                    if (this.currentStatusValue === '') {
+                        this.fullOrderList.forEach((item,index) => {
+                            if (item.id == this.currentOrderId) {
+                                item.status = 10
+                            }
+                        })
+                    } else {
+                        this.fullOrderList.splice(this.currentOrderIndex,1);
+                    };
+                    this.$toast({
+                        type: 'success',
+                        message: '撤销成功!'
+                    })
+                } else {
+                    this.$toast({
+                        type: 'fail',
+                        message: res.data.msg
+                    })
+                }
+            } else {
+                this.$toast({
+                    type: 'fail',
+                    message: res.data.msg
+                })
+            }
+        })
+        .catch((err) => {
+            this.loadingShow = false;
+            this.infoText = '';
+            this.$toast({
+                type: 'fail',
+                message: err
+            })
+        })
+    },
+
+    
+    // 查询出货单列表
+    getSaleOutPageEvent(data,flag) {
+        this.orderList = [];
+        this.isShowNoData = false;
+        if (flag) {
+            this.fullOrderList = [];
+            this.loadingShow = true;
+            this.infoText = '加载中···';
+            this.bottomLoadingShow = false;
+        } else {
+            this.loadingShow = false;
+            this.infoText = '';
+            this.bottomLoadingShow = true;
+        };
+        getSaleOutPage(data).then((res) => {
+            if ( res && res.data.code == 0) {
+                this.orderList = res.data.data.list;
+                this.totalCount = res.data.data.total;
+                this.orderList.forEach((item)=>{
+                    item.createTime = SOtime.time3(item.createTime);
+                    item.requestTime = SOtime.time8(item.requestTime);
+                });
+                this.fullOrderList = this.fullOrderList.concat(this.orderList);
+                if (this.fullOrderList.length == 0) {
+                    this.isShowNoData = true
+                } else {
+                    this.isShowNoData = false
+                };
+            } else {
+                this.$toast({
+                    type: 'fail',
+                    message: res.data.msg
+                })
+            };
+            if (flag) {
+                this.loadingShow = false;
+                this.infoText = '';
+            } else {
+                this.bottomLoadingShow = false;
+                let totalPage = Math.ceil(this.totalCount/this.pageSize);
+                if (this.currentPageNum >= totalPage) {
+                    this.isShowNoMoreData = true;
+                } else {
+                    this.isShowNoMoreData = false;
+                }	
+            }
+        })
+        .catch((err) => {
+            if (flag) {
+                this.loadingShow = false;
+                this.infoText = '';
+            } else {
+                this.bottomLoadingShow = false;
+            };
+            this.$toast({
+                type: 'fail',
+                message: err
+            })
+        })
+    },
+
     // 配送人列表点击事件
     deliveryPersonListEvent(item,index) {
-        this.currentdeliveryPerson = item;
+        this.currentdeliveryPerson = item.name;
         this.currentDeliveryPersonIndex = index;
         this.deliveryPersonShow = false;
     },
@@ -352,34 +646,30 @@ export default {
     //任务状态转换
     stateTransfer (num) {
         switch(num) {
-                case 0:
-                    return '未分配'
+                case 10:
+                    return '待送货'
                     break;
-                case 1:
-                        return '未查阅'
-                        break;
-                case 2:
-                        return '未开始'
-                        break;
-                case 3:
-                        return '进行中'
-                        break;
-                case 4:
-                        return '待复核'
-                        break;
-                case 5:
-                        return '已完成'
-                        break;
-                case 6:
-                        return '已复核'
-                        break;
-                case 7:
-                        return '已取消'
-                        break
-                case 8:
-                        return '复核中'
-                        break
+                case 20:
+                    return '送货中'
+                    break;
+                case 60:
+                    return '已送货'
+                    break;
         } 
+    },
+
+    
+    // 取消送货单确认弹框取消事件
+    cancelDeliveryOrderModalShowCancelEvent () {
+      this.cancelDeliveryOrderModalShow = false;
+    },
+
+    // 取消送货单确认弹框确认事件
+    cancelDeliveryOrderModalShowSureEvent () {
+      this.saleOutCancel({
+        id: this.currentOrderId
+      });
+      this.cancelDeliveryOrderModalShow = false
     },
 
     // 撤销送货单确认弹框取消事件
@@ -389,6 +679,9 @@ export default {
 
     // 撤销生成送货单确认弹框确认事件
     revocationDeliveryOrderModalShowSureEvent () {
+      this.saleOutRevokeEvent({
+        id: this.currentOrderId
+      });
       this.revocationDeliveryOrderModalShow = false
     },
 
@@ -399,14 +692,43 @@ export default {
     
     // 送货弹框提交事件
     deliverGoodsModalSubmitEvent () {
-        this.deliverGoodsModalShow = false
+        this.deliverGoodsModalShow = false;
+        if (this.currentdeliveryPerson === '请选择') {
+             this.$toast({
+                type: 'fail',
+                message: '请选择配送人!'
+            });
+            return
+        };
+        // 联系方式校验
+        if (this.contactInformationValue !== '') {
+            if(!(/^1[3-9]\d{9}$/.test(this.contactInformationValue))){
+                this.$toast("联系方式格式有误,请重新填写!");
+                return
+            }
+        };
+        this.saleOutDeliveryEvent({
+            id: this.currentOrderId,
+            deliveryRemark: this.deliverGoodsValue,
+            courier: this.currentdeliveryPerson,
+            courierMobile: this.contactInformationValue
+        })
     },
     
     // 日历日期选择确认事件
     calendarConfirm(e) {
         this.showCalendar = false;
         this.startDate = SOtime.time8(new Date(e[0]).getTime());
-        this.endDate = SOtime.time8(new Date(e[e.length-1]).getTime())
+        this.endDate = SOtime.time8(new Date(e[e.length-1]).getTime());
+        this.currentPageNum = 1;
+        this.getSaleOutPageEvent({
+            pageNo: this.currentPageNum,
+            pageSize: this.pageSize,
+            status: '',
+            statusList: this.currentStatusValue === '' ? this.needQueryStatusList : [this.currentStatusValue],
+            outTime: [`${this.startDate}`,`${this.endDate}`],
+            creator: '' // this.userAccount
+        },true)
     },
     
     // 将时间戳转换为当天的 00:00:00
@@ -419,10 +741,10 @@ export default {
     // 获取开始和结束日期(中间相隔一个月)
     getDateRange() {
         this.defaultDateArr = [];
-        const start = new Date(); 
-        const end = new Date(start);
-        end.setMonth(start.getMonth() + 1);
-        end.setHours(23, 59, 59, 999);
+        const end = new Date(); 
+        const start = new Date(end);
+        start.setMonth(end.getMonth() - 1);
+        start.setHours(23, 59, 59, 999);
         this.startDate = this.formatDate(start);
         this.endDate = this.formatDate(end);
         this.defaultDateArr.push(new Date(this.startDate));
@@ -436,31 +758,54 @@ export default {
         return `${y}-${m}-${d}`;
     },
     
-    // 订单列表点击事件
+    // 送货单状态列表点击事件
     statusListEvent(item,index) {
-        this.currentStatusspan = item;
+        this.currentStatusText = item.text;
+        this.currentStatusValue = item.value;
         this.currentStatusIndex = index;
         this.orderStatusListShow = false;
+        this.currentPageNum = 1;
+        this.getSaleOutPageEvent({
+            pageNo: this.currentPageNum,
+            pageSize: this.pageSize,
+            status: '',
+            statusList: this.currentStatusValue === '' ? this.needQueryStatusList : [this.currentStatusValue],
+            outTime: [`${this.startDate}`,`${this.endDate}`],
+            creator: '' // this.userAccount
+        },true)
     },
     
     //进入送货单详情事件
     enterOrderDetailsEvent(item,index) {
-        this.$router.push('/suppliesDeliverGoodsDetails')
+        this.$router.push({
+            path: '/suppliesDeliverGoodsDetails', 
+            query: {
+                orderId: item.id
+            }
+        })
     },
     
     // 撤销送货事件
     revocationDeliverGoodsEvent(item,index) {
+        this.currentOrderId = item.id;
+        this.currentOrderNo = item.no;
+        this.currentOrderIndex = index;
         this.revocationDeliveryOrderModalShow = true;
     },
     
     // 送货事件
     deliverGoodsEvent(item,index) {
+        this.currentOrderId = item.id;
+        this.currentOrderIndex = index;
         this.deliverGoodsModalShow = true;
     },
 
     // 取消送货单事件
     cancelDeliverOrderEvent(item,index) {
-      this.revocationDeliveryOrderModalShow = true 
+      this.currentOrderId = item.id;
+      this.currentOrderNo = item.no;
+      this.currentOrderIndex = index;
+      this.cancelDeliveryOrderModalShow = true 
     },
 
     // 送达事件
@@ -468,49 +813,16 @@ export default {
         this.$router.push('/suppliesDelivery')
     },
 
-    // 获取订单列表
-    queryTaskList (taskType,page,pageSize) {
-        this.loadingShow = true;
-        this.overlayShow = true;
-        this.backlogEmptyShow = false;
-        this.completedEmptyShow = false;
-        this.isShowBacklogTaskNoMoreData = false;
-        this.isShowCompletetedTaskNoMoreData = false;
-		getAllTaskList({proId : this.proId, workerId: this.workerId,taskType,system:6,page,pageSize})
-        .then((res) => {
-            this.loadingShow = false;
-            this.overlayShow = false;
-            if (res && res.data.code == 200) {
-                if (taskType == 1) {
-                    this.backlogTaskList = res.data.data.list;
-                    this.totalCount = res.data.data.total;
-                    this.fullBacklogTaskList = this.fullBacklogTaskList.concat(this.backlogTaskList);
-                    if (this.fullBacklogTaskList.length == 0) {
-                        this.backlogEmptyShow = true
-                    }
-                } else if (taskType == 2) {
-                    this.completedTaskList = res.data.data.list;
-                    this.totalCount = res.data.data.total;
-                    this.fullCompletedTaskList = this.fullCompletedTaskList.concat(this.completedTaskList);
-                    if (this.fullCompletedTaskList.length == 0) {
-                        this.completedEmptyShow = true
-                    }
-                }
-            } else {
-            this.$toast({
-                type: 'fail',
-                message: res.data.msg
-            })
-            }
-      })
-      .catch((err) => {
-        this.loadingShow = false;
-        this.overlayShow = false;
-        this.$toast({
-          type: 'fail',
-          message: err
-        })
-      })
+    // 提取产品清单信息
+    extractProductInventoryMessage (items) {
+        if (items.length == 0) {
+            return ''
+        };
+        let temporaryArray = [];
+        for (let item of items) {
+            temporaryArray.push(item.productName);
+        };
+        return temporaryArray.join("、")
     }
   }
 };
@@ -590,7 +902,6 @@ export default {
                                         align-items: center;
                                         >span {
                                             display: inline-block;
-                                            height: 20px;
                                             width: 70px;
                                             font-size: 12px;
                                             color: #101010
@@ -912,10 +1223,7 @@ export default {
                         height: 25px;
                         background: rgba(232,203,81,0.16);
                         border-radius: 4px;
-                        >span {
-                            font-size: 14px;
-                            color: #E8CB51;
-                        }
+                        font-size: 14px;
                     };
                     .stayDeliveryStyle {
                         background: rgba(251,229,223,1) !important;
@@ -1012,7 +1320,7 @@ export default {
                         display: flex;
                         align-items: center;
                         .delete-left {
-                                width: 65px;
+                                padding: 0 6px;
                                 height: 28px;
                                 display: flex;
                                 align-items: center;
@@ -1027,7 +1335,7 @@ export default {
                                 }
                         };
                         .edit-right {
-                            width: 65px;
+                            width: 69px;
                             height: 28px;
                             display: flex;
                             align-items: center;
@@ -1041,7 +1349,7 @@ export default {
                             }
                         };
                         .edit-other {
-                            width: 65px;
+                            width: 69px;
                             height: 28px;
                             display: flex;
                             align-items: center;
@@ -1056,7 +1364,21 @@ export default {
                         }
                     }
                 }
-            }
+            };
+            .bottom-loading-show {
+              font-size: 12px;
+              color: #BEC7D1;
+              width: 100%;
+              text-align: center;
+              line-height: 30px
+            };
+            .no-more-data {
+              font-size: 12px;
+              color: #BEC7D1;
+              width: 100%;
+              text-align: center;
+              line-height: 30px
+          }
         }
     }
   }
