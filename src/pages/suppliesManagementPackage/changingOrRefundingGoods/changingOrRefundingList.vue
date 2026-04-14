@@ -1,7 +1,6 @@
 <template>
   <div class="page-box" ref="wrapper">
     <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">加载中...</van-loading>
-    <van-overlay :show="overlayShow" z-index="100000" />
     <div class="nav">
         <van-nav-bar title="退换货" left-text="返回" left-arrow @click-left="onClickLeft"  :border="false">
         </van-nav-bar>
@@ -21,50 +20,50 @@
 					</div>
 				</div>
 			</div>
-            <div class="order-list-box">
-				<div class="order-list" v-for="(item,index) in orderList" :key="index" @click="enterOrderDetailsEvent(item,index)">
+            <div class="order-list-box" ref="scrollBacklogTask">
+				<div class="order-list" v-for="(item,index) in fullOrderList" :key="index" @click="enterOrderDetailsEvent(item,index)">
 					<div class="order-list-top">
                         <div class="order-number-text">
                             <span>单号</span>
-                            <span>1232</span>
+                            <span>{{ item['no'] }}</span>
                         </div>
 						<div class="img-box">
-                            <img :src="salesReturnIcon" />
+                            <img :src="item['type'] == 1 ? barterIcon : salesReturnIcon" />
                         </div>
 					</div>
 					<div class="order-list-center">
 						<div class="product-list">
 							<span>退货清单:</span>
-							<span>{{ item.productList }}</span>
+							<span>{{ extractProductInventoryMessage(item['items']) }}</span>
 						</div>
 						<div class="create-delivery-date">
 							<div class="create-delivery-date-left">
-								<span>送货日期:</span>
+								<span>创建时间:</span>
 								<span>{{ item.createTime }}</span>
 							</div>
 							<div class="create-delivery-date-left">
-								<span>退换日期:</span>
-								<span>{{ item.deliveryDate }}</span>
+								<span>交货日期:</span>
+								<span>{{ item.returnTime }}</span>
 							</div>
 						</div>
 						<div class="create-delivery-date delivery-address">
                             <div class="create-delivery-date-left">
 								<span>下单医院:</span>
-								<span>{{ item.deliveryAddress }}</span>
+								<span></span>
 							</div>
 							<div class="create-delivery-date-left">
 								<span>送货地址:</span>
-								<span>{{ item.deliveryAddress }}</span>
+								<span>{{ item.address }}</span>
 							</div>
 						</div>
                         <div class="create-delivery-date delivery-address">
                             <div class="create-delivery-date-left">
 								<span>科室电话:</span>
-								<span>{{ item.deliveryAddress }}</span>
+								<span>{{ item.mobile ? item.mobile : '' }}</span>
 							</div>
 							<div class="create-delivery-date-left">
-								<span>关联订单:</span>
-								<span>{{ item.deliveryAddress }}</span>
+								<span>关联订单</span>
+								<span>{{ item.orderNo }}</span>
 							</div>
 						</div>
 						<div class="product-list remark-box">
@@ -84,6 +83,11 @@
 					</div>
 				</div>
 			</div>
+            <van-empty description="您还没有相关订单" v-show="isShowNoData" />
+            <div v-show="bottomLoadingShow" class="bottom-loading-show">
+                加载中...
+            </div>
+            <div class="no-more-data" v-show="isShowNoMoreData && !loadingShow && !isShowNoData">没有更多数据了!</div>
         </div>
     </div>
     <!-- 拒绝退换弹框	 -->
@@ -122,7 +126,7 @@
             </div>
         </van-dialog>
     </div>
-      <!-- 确认退换货弹框	 -->
+    <!-- 确认换货弹框	 -->
     <div class="revocation-delivery-order-modal">
         <van-dialog v-model="revocationDeliveryOrderModalShow" :showConfirmButton="false">
             <div class="evaluate-model-content">
@@ -134,8 +138,8 @@
                   <img :src="revocationInfoImage"  />
                   <div class="modal-center-content">确定要同意换货吗？</div>
                   <div class="modal-center-info">
-                      <span>将为您生成退货单号，单号为</span>
-                      <span>"TD5532533"</span>
+                      <span></span>
+                      <span></span>
                   </div>
                 </div>
                 <div class="evaluate-modal-bottom">
@@ -151,6 +155,35 @@
             </div>
         </van-dialog>
     </div>
+    <!-- 确认退货弹框 -->
+    <div class="revocation-delivery-order-modal">
+        <van-dialog v-model="salesReturnOrderModalShow" :showConfirmButton="false">
+            <div class="evaluate-model-content">
+                <div class="evaluate-modal-top">
+                    <span></span>
+                    <van-icon name="cross" color="#101010" size="20" @click="salesReturnOrderModalShow = false" />
+                </div>
+                <div class="evaluate-modal-center">
+                  <img :src="revocationInfoImage"  />
+                  <div class="modal-center-content">确定要同意退货吗？</div>
+                  <div class="modal-center-info">
+                      <span></span>
+                      <span></span>
+                  </div>
+                </div>
+                <div class="evaluate-modal-bottom">
+                    <div class="evaluate-modal-btn">
+                        <div class="cancel-left" @click.stop="salesReturnOrderModalShowCancelEvent">
+                            <span>取消</span>
+                        </div>
+                        <div class="submit-right" @click.stop="salesReturnOrderModalShowSureEvent">
+                            <span>确定</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </van-dialog>
+    </div>
     <!-- 日历 --> 
     <van-calendar v-model="showCalendar" :min-date="minDate" :max-date="maxDate" :default-date="defaultDateArr" type="range" @confirm="calendarConfirm" />
   </div>
@@ -159,6 +192,7 @@
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
+import { getSaleReturnBarterPage, updateSaleReturOrder } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
 import SOtime from '@/common/js/SOtime.js'
 export default {
   name: "suppliesChangingOrRefundingList",
@@ -169,71 +203,50 @@ export default {
   data() {
     return {
       loadingShow: false,
-      overlayShow: false,
-      backlogEmptyShow: false,
+      bottomLoadingShow: false,
+      infoText: '加载中...',
+      isShowNoData: false,
+      isShowNoMoreData: false,
+      currentPageNum: 1,
+      pageSize: 20,
+      totalCount: 0,
       refuseModalShow: false,
       showCalendar: false,
       revocationDeliveryOrderModalShow: false,
+      salesReturnOrderModalShow: false,
       salesReturnIcon: require('@/common/images/home/sales-return-icon.png'),
       barterIcon: require('@/common/images/home/barter-icon.png'),
       revocationInfoImage: require('@/common/images/home/revocation-info-icon.png'),
       defaultDateArr: [],
       startDate: '',
       endDate: '',
-      minDate: new Date('2026-03-16'),
+      minDate: new Date('2025-03-16'),
       maxDate: new Date('2027-03-16'),
       currentStatusspan: '全部状态',
       currentStatusIndex: 0,
       refuseReasonValue: '',
-      orderList: [
-            {
-                orderType: '计划订单',
-                orderNumber: '5552H5552',
-                status: 0,
-                productList: 'XXX、XXX、XXXX',
-                createTime: '05-31 17:21',
-                deliveryDate: '05-31',
-                deliveryAddress: '检验科',
-                remark: '一周一送'
-            },
-            {
-                orderType: '计划订单',
-                orderNumber: '5552H5552',
-                status: 1,
-                productList: 'XXX、XXX、XXXX',
-                createTime: '05-31 17:21',
-                deliveryDate: '05-31',
-                deliveryAddress: '检验科',
-                remark: '一周一送'
-            },
-            {
-                orderType: '计划订单',
-                orderNumber: '5552H5552',
-                status: 2,
-                productList: 'XXX、XXX、XXXX',
-                createTime: '05-31 17:21',
-                deliveryDate: '05-31',
-                deliveryAddress: '检验科',
-                remark: '一周一送'
-            },
-            {
-                orderType: '计划订单',
-                orderNumber: '5552H5552',
-                status: 3,
-                productList: 'XXX、XXX、XXXX',
-                createTime: '05-31 17:21',
-                deliveryDate: '05-31',
-                deliveryAddress: '检验科',
-                remark: '一周一送'
-            }
-        ]
+      currentOrderId: '',
+      currentOrderIndex: '',
+      orderList: [],
+      eventTime: 0,
+      fullOrderList: []
     }
   },
 
   mounted() {
     // 控制设备物理返回按键
     this.deviceReturn('/suppliesHome');
+    this.$nextTick(()=> {
+      this.initScrollChange()
+    });
     this.getDateRange();
+    this.getSaleReturnBarterPageEvent({
+        pageNo: this.currentPageNum,
+        pageSize: this.pageSize,
+        status: '',
+        returnTime: [`${this.startDate}`,`${this.endDate}`],
+        creator: ''// this.userAccount
+    },true)
   },
 
   beforeRouteEnter(to, from, next) {
@@ -274,47 +287,66 @@ export default {
         this.$router.push({path: '/suppliesHome'})
     },
 
-    //任务状态转换
-    stateTransfer (num) {
-        switch(num) {
-                case 0:
-                    return '未分配'
-                    break;
-                case 1:
-                        return '未查阅'
-                        break;
-                case 2:
-                        return '未开始'
-                        break;
-                case 3:
-                        return '进行中'
-                        break;
-                case 4:
-                        return '待复核'
-                        break;
-                case 5:
-                        return '已完成'
-                        break;
-                case 6:
-                        return '已复核'
-                        break;
-                case 7:
-                        return '已取消'
-                        break
-                case 8:
-                        return '复核中'
-                        break
-        } 
+    // 事件列表注册滚动事件
+    initScrollChange () {
+      let boxBackScroll = this.$refs['scrollBacklogTask'];
+      boxBackScroll.addEventListener('scroll',this.eventListLoadMore,true)
     },
 
-    // 撤销生成送货单确认弹框取消事件
+    // 事件列表加载事件
+    eventListLoadMore () {
+      let boxBackScroll = this.$refs['scrollBacklogTask'];
+      if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
+        // 点击筛选确定后，不加载数据
+        if (this.eventTime) {return};
+        this.eventTime = 1;
+        this.timeTwo = setTimeout(() => {
+          let totalPage = Math.ceil(this.totalCount/this.pageSize);
+          if (this.currentPageNum >= totalPage) {
+           this.isShowNoMoreData = true;
+          } else {
+            this.isShowNoMoreData = false;
+            this.currentPageNum = this.currentPageNum + 1;
+            this.getSaleReturnBarterPageEvent({
+                pageNo: this.currentPageNum,
+                pageSize: this.pageSize,
+                status: '',
+                returnTime: [`${this.startDate}`,`${this.endDate}`],
+                creator: '' // this.userAccount
+            },false)
+          };
+          this.eventTime = 0;
+          console.log('事件列表滚动了',boxBackScroll.scrollTop, boxBackScroll.offsetHeight, boxBackScroll.scrollHeight)
+        },300)
+      }
+    },
+
+    // 确认换货弹框取消事件
     revocationDeliveryOrderModalShowCancelEvent () {
       this.revocationDeliveryOrderModalShow = false;
     },
 
-    // 撤销生成送货单确认弹框确认事件
+    // 确认换货弹框确认事件
     revocationDeliveryOrderModalShowSureEvent () {
-      this.revocationDeliveryOrderModalShow = false
+        this.revocationDeliveryOrderModalShow = false;
+        this.updateSaleReturOrderEvent({
+            id: this.currentOrderId,
+            status: 30
+        },30)
+    },
+
+     // 确认退货弹框取消事件
+    salesReturnOrderModalShowCancelEvent () {
+        this.salesReturnOrderModalShow = false;
+    },
+
+    // 确认退货弹框确认事件
+    salesReturnOrderModalShowSureEvent () {
+        this.salesReturnOrderModalShow = false;
+        this.updateSaleReturOrderEvent({
+            id: this.currentOrderId,
+            status: 30
+        },30)
     },
 
     // 拒绝弹框取消事件
@@ -324,7 +356,19 @@ export default {
     
     // 拒绝弹提交事件
     refuseModalSubmitEvent () {
-        this.refuseModalShow = false
+        this.refuseModalShow = false;
+        if (this.refuseReasonValue === '') {
+            this.$toast({
+                type: 'fail',
+                message: '拒绝理由不能为空'
+            });
+            return
+        };
+        this.updateSaleReturOrderEvent({
+            id: this.currentOrderId,
+            status: 31,
+            content: this.refuseReasonValue
+        },31)
     },
     
     // 进入历史订单事件
@@ -336,7 +380,15 @@ export default {
     calendarConfirm(e) {
         this.showCalendar = false;
         this.startDate = SOtime.time8(new Date(e[0]).getTime());
-        this.endDate = SOtime.time8(new Date(e[e.length-1]).getTime())
+        this.endDate = SOtime.time8(new Date(e[e.length-1]).getTime());
+        this.currentPageNum = 1;
+        this.getSaleReturnBarterPageEvent({
+            pageNo: this.currentPageNum,
+            pageSize: this.pageSize,
+            status: '',
+            returnTime: [`${this.startDate}`,`${this.endDate}`],
+            creator: '' // this.userAccount
+        },true)
     },
     
     // 将时间戳转换为当天的 00:00:00
@@ -349,10 +401,10 @@ export default {
     // 获取开始和结束日期(中间相隔一个月)
     getDateRange() {
         this.defaultDateArr = [];
-        const start = new Date(); 
-        const end = new Date(start);
-        end.setMonth(start.getMonth() + 1);
-        end.setHours(23, 59, 59, 999);
+        const end = new Date(); 
+        const start = new Date(end);
+        start.setMonth(end.getMonth() - 1);
+        start.setHours(23, 59, 59, 999);
         this.startDate = this.formatDate(start);
         this.endDate = this.formatDate(end);
         this.defaultDateArr.push(new Date(this.startDate));
@@ -368,62 +420,140 @@ export default {
     
     //进入订单详情事件
     enterOrderDetailsEvent(item,index) {
-        this.$router.push('/suppliesChangingOrRefundingDetails')
+        this.$router.push({
+            path: '/suppliesChangingOrRefundingDetails', 
+            query: {
+                orderId: item.id
+            }
+        })
+    },
+
+    // 更新订单状态(拒绝-31、确认-30)
+    updateSaleReturOrderEvent(data,status) {
+        this.loadingShow = true;
+        this.infoText = '提交中···';
+        updateSaleReturOrder(data).then((res) => {
+            this.infoText = '';
+            this.loadingShow = false;
+            if ( res && res.data.code == 0) {
+                if (res.data.data) {
+                    this.$toast({
+                        type: 'success',
+                        message: '提交成功'
+                    });
+                    this.fullOrderList.splice(this.currentOrderIndex,1);
+                } else {
+                    this.$toast({
+                        type: 'fail',
+                        message: res.data.msg
+                    })
+                }
+            } else {
+               this.$toast({
+                    type: 'fail',
+                    message: res.data.msg
+                })
+            }
+        })
+        .catch((err) => {
+            this.infoText = '';
+            this.loadingShow = false;
+            this.$toast({
+                type: 'fail',
+                message: err
+            })
+        })
     },
 
     // 拒绝退换事件
     refuseEvent(item,index) {
+      this.currentOrderId = item.id;
+      this.currentOrderIndex = index;
       this.refuseModalShow = true; 
     },
 
     // 确认退换事件
     sureEvent(item,index) {
-        this.revocationDeliveryOrderModalShow = true;
+        this.currentOrderId = item.id;
+        this.currentOrderIndex = index;
+        if (item['type'] == 1) {
+            this.revocationDeliveryOrderModalShow = true;
+        } else {
+            this.salesReturnOrderModalShow = true
+        }
     },
 
-    // 获取订单列表
-    queryTaskList (taskType,page,pageSize) {
-        this.loadingShow = true;
-        this.overlayShow = true;
-        this.backlogEmptyShow = false;
-        this.completedEmptyShow = false;
-        this.isShowBacklogTaskNoMoreData = false;
-        this.isShowCompletetedTaskNoMoreData = false;
-		getAllTaskList({proId : this.proId, workerId: this.workerId,taskType,system:6,page,pageSize})
-        .then((res) => {
+    // 提取产品清单信息
+    extractProductInventoryMessage (items) {
+        if (items.length == 0) {
+            return ''
+        };
+        let temporaryArray = [];
+        for (let item of items) {
+            temporaryArray.push(item.productName);
+        };
+        return temporaryArray.join("、")
+    },
+
+    // 查询订单列表
+    getSaleReturnBarterPageEvent(data,flag) {
+        this.orderList = [];
+        this.isShowNoData = false;
+        if (flag) {
+            this.fullOrderList = [];
+            this.loadingShow = true;
+            this.infoText = '加载中···';
+            this.bottomLoadingShow = false;
+        } else {
             this.loadingShow = false;
-            this.overlayShow = false;
-            if (res && res.data.code == 200) {
-                if (taskType == 1) {
-                    this.backlogTaskList = res.data.data.list;
-                    this.totalCount = res.data.data.total;
-                    this.fullBacklogTaskList = this.fullBacklogTaskList.concat(this.backlogTaskList);
-                    if (this.fullBacklogTaskList.length == 0) {
-                        this.backlogEmptyShow = true
-                    }
-                } else if (taskType == 2) {
-                    this.completedTaskList = res.data.data.list;
-                    this.totalCount = res.data.data.total;
-                    this.fullCompletedTaskList = this.fullCompletedTaskList.concat(this.completedTaskList);
-                    if (this.fullCompletedTaskList.length == 0) {
-                        this.completedEmptyShow = true
-                    }
-                }
+            this.infoText = '';
+            this.bottomLoadingShow = true;
+        };
+        getSaleReturnBarterPage(data).then((res) => {
+            if ( res && res.data.code == 0) {
+                this.orderList = res.data.data.list;
+                this.totalCount = res.data.data.total;
+                this.orderList.forEach((item)=>{
+                    item.createTime = SOtime.time3(item.createTime);
+                    item.returnTime = SOtime.time8(item.returnTime);
+                });
+                this.fullOrderList = this.fullOrderList.concat(this.orderList);
+                if (this.fullOrderList.length == 0) {
+                    this.isShowNoData = true
+                } else {
+                    this.isShowNoData = false
+                };
             } else {
+                this.$toast({
+                    type: 'fail',
+                    message: res.data.msg
+                })
+            };
+            if (flag) {
+                this.loadingShow = false;
+                this.infoText = '';
+            } else {
+                this.bottomLoadingShow = false;
+                let totalPage = Math.ceil(this.totalCount/this.pageSize);
+                if (this.currentPageNum >= totalPage) {
+                    this.isShowNoMoreData = true;
+                } else {
+                    this.isShowNoMoreData = false;
+                }	
+            }
+        })
+        .catch((err) => {
+            if (flag) {
+                this.loadingShow = false;
+                this.infoText = '';
+            } else {
+                this.bottomLoadingShow = false;
+            };
             this.$toast({
                 type: 'fail',
-                message: res.data.msg
+                message: err
             })
-            }
-      })
-      .catch((err) => {
-        this.loadingShow = false;
-        this.overlayShow = false;
-        this.$toast({
-          type: 'fail',
-          message: err
         })
-      })
     }
   }
 };
@@ -851,6 +981,20 @@ export default {
                     }
                 }
             }
+        };
+        .bottom-loading-show {
+            font-size: 12px;
+            color: #BEC7D1;
+            width: 100%;
+            text-align: center;
+            line-height: 30px
+        };
+        .no-more-data {
+            font-size: 12px;
+            color: #BEC7D1;
+            width: 100%;
+            text-align: center;
+            line-height: 30px
         }
     }
   }

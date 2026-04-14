@@ -100,7 +100,7 @@ export default {
       defaultDateArr: [],
       startDate: '',
       endDate: '',
-      minDate: new Date('2026-03-16'),
+      minDate: new Date('2025-03-16'),
       maxDate: new Date('2027-03-16'),
       orderList: [],
       fullOrderList: []

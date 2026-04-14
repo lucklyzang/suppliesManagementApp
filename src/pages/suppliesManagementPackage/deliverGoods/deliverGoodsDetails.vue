@@ -16,7 +16,8 @@
                     :class="{
                         'stayDeliveryStyle ' : orderMessage.status == 10, 
                         'deliveryingStyle' : orderMessage.status == 20,
-                        'alreadyDeliveryStyle' : orderMessage.status == 60
+                        'alreadyDeliveryStyle' : orderMessage.status == 60 && sourcePath == '/suppliesDeliverGoodsList',
+                        'aleradyComplete': orderMessage.status == 60 && sourcePath == '/suppliesDeliverHistoryGoodsList'
                     }"
                 >
                     <span>{{ stateTransfer(orderMessage['status']) }}</span>
@@ -78,7 +79,7 @@
 					</div>
 					<div class="create-delivery-date-left">
 						<span>交货日期:</span>
-						<span>{{ orderMessage['outTime'] }}</span>
+						<span>{{ orderMessage['requestTime'] }}</span>
 					</div>
 				</div>
 				<div class="create-delivery-date">
@@ -98,43 +99,49 @@
 					</div>
 					<div class="create-delivery-date-left">
 						<span>关联订单:</span>
-						<span>{{ orderMessage['orderId'] }}</span>
+						<span>{{ orderMessage['orderNo'] }}</span>
 					</div>
 				</div>
 			</div>
-            <div class="dashed-box"></div>
+            <div class="dashed-box">
+                <span class="circle-box"></span>
+            </div>
             <div class="order-message">
 				<div class="create-delivery-date">
 					<div class="create-delivery-date-left">
 						<span>配送人:</span>
-						<span>05-31 17:21</span>
+						<span>{{ orderMessage['courierName'] ? orderMessage['courierName'] : ''}}</span>
 					</div>
 					<div class="create-delivery-date-left">
 						<span>联系方式:</span>
-						<span>05-31</span>
+						<span>{{ orderMessage['courierMobile'] ? orderMessage['courierMobile'] : ''}}</span>
 					</div>
 				</div>
 				<div class="product-list remark-box">
 					<span>备注:</span>
-					<span>沙龙课傻了傻了时间</span>
+					<span>{{ orderMessage['remark'] }}</span>
 				</div>
                 <div class="product-list remark-box delivery-time">
 					<span>送货时间:</span>
-					<span>沙龙课傻了傻了时间</span>
+					<span>{{ orderMessage['outTime'] }}</span>
 				</div>
 			</div>
-            <div class="dashed-box"></div>
+            <div class="dashed-box">
+                <span class="circle-box"></span>
+            </div>
             <div class="signature-message">
                 <div class="signature-title">
                     签字:
                 </div>
-                <div class="signature-content"></div>
+                <div class="signature-content" v-show="orderMessage['signatureImage']">
+                    <img :src="orderMessage['signatureImage']" alt="">
+                </div>
             </div>
             <div class="photograph-message">
                 <div class="photograph-title">
                     拍照:
                 </div>
-                <div class="photograph-content">
+                <div class="photograph-content" v-show="orderMessage['deliveryImages']">
                     <div class="image-list">
                         <img :src="productDefaultImage" />
                     </div>
@@ -144,7 +151,7 @@
                 <div class="delivery-time-title">
                     送达时间:
                 </div>
-                <div class="delivery-time-content">2025-02-03 16:00</div>
+                <div class="delivery-time-content">{{ orderMessage['deliveryTime'] }}</div>
             </div>
         </div>
     </div>
@@ -171,18 +178,21 @@ export default {
       productDefaultImage: require('@/common/images/home/revocation-info-icon.png'),
       orderMessage: {},
       materialList: [],
-      orderId: ''
+      sourcePath: ''
     }
   },
 
   mounted() {
     // 控制设备物理返回按键
-    this.deviceReturn('/suppliesDeliverGoodsList');
+    this.deviceReturn(this.sourcePath);
     this.orderId = this.$route.query.orderId;
     this.parallelFunction()
   },
 
-  beforeRouteEnter(to, from, next) {
+   beforeRouteEnter(to, from, next) {
+    next(vm=>{
+        vm.sourcePath = from.path
+    });
     next() 
   },
 
@@ -217,7 +227,7 @@ export default {
     ...mapMutations([]),
 
     onClickLeft () {
-        this.$router.push({path: '/suppliesDeliverGoodsList'})
+        this.$router.push({path: this.sourcePath})
     },
 
     stateTransfer (num) {
@@ -229,7 +239,11 @@ export default {
                     return '送货中'
                     break;
                 case 60:
-                    return '已送货'
+                    if (this.sourcePath == '/suppliesDeliverGoodsList') {
+                        return '已送货'
+                    } else {
+                        return '已完成'  
+                    }
                     break;
         } 
     },
@@ -279,7 +293,9 @@ export default {
                     this.materialList = this.orderMessage['items'];
                     this.allChooseProductPrice = this.orderMessage['totalProductPrice'];
                     this.orderMessage['createTime'] = SOtime.time3(this.orderMessage['createTime']);
-                    this.orderMessage['requestTime'] = SOtime.time8(this.orderMessage['requestTime']);
+                    this.orderMessage['requestTime'] = this.orderMessage['requestTime'] ? SOtime.time8(this.orderMessage['requestTime']) : '';
+                    this.orderMessage['deliveryTime'] = this.orderMessage['deliveryTime'] ? SOtime.time3(this.orderMessage['deliveryTime']) : '';
+                    this.orderMessage['outTime'] = this.orderMessage['outTime'] ? SOtime.time3(this.orderMessage['outTime']) : '';
                 }
             }
         })
@@ -374,6 +390,10 @@ export default {
                 background: rgba(59,157,249,0.12) !important;
                 color: #3B9DF9 !important;
             };
+            .aleradyComplete {
+                background: rgba(158,161,182,1) !important;
+                color: #101010 !important;
+            }
         };
         .order-details-title {
             padding: 0 12px;
@@ -503,13 +523,11 @@ export default {
             box-sizing: border-box;
             .create-delivery-date {
                     display: flex;
-                    align-items: center;
                     margin-top: 16px;
                     .create-delivery-date-left {
                         flex: 1;
                         width: 0;
                         display: flex;
-                        align-items: center;
                         >span {
                             display: inline-block;
                             font-size: 12px;
@@ -518,7 +536,7 @@ export default {
                                 margin-right: 6px;
                             };
                             &:nth-child(2) {
-                                .no-wrap;
+                                word-break: break-all;
                                 flex: 1;
                                 color: #101010;
                             }
@@ -581,6 +599,17 @@ export default {
         };
         .dashed-box {
             border: 1px dashed #BBBBBB;
+            position: relative;
+            .circle-box {
+                position: absolute;
+                top: 50%;
+                left: 0;
+                transform: translateY(-50%);
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: #3B9DF9;
+            }
         };
         .signature-message {
             display: flex;

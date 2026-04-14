@@ -201,7 +201,7 @@ export default {
       defaultDateArr: [],
       startDate: '',
       endDate: '',
-      minDate: new Date('2026-03-16'),
+      minDate: new Date('2025-03-16'),
       maxDate: new Date('2027-03-16'),
       currentStatusText: '全部状态',
       currentStatusIndex: 0,
@@ -234,6 +234,18 @@ export default {
   mounted() {
     // 控制设备物理返回按键
     this.deviceReturn('/suppliesHome');
+    if (this.$route.query.status) {
+        if (this.$route.query.status == '待确认') {
+            let temporaryMessage = this.orderStatusList.filter((item) => { return item.text == this.$route.query.status });
+            let temporaryIndex = this.orderStatusList.findIndex((item) => { return item.text == this.$route.query.status });
+            if (temporaryMessage.length > 0) {
+                this.needQueryStatusList = [temporaryMessage[0]['value']];
+                this.currentStatusText = temporaryMessage[0]['text'];
+                this.currentStatusValue = temporaryMessage[0]['value'];
+                this.currentStatusIndex = temporaryIndex;
+            }
+        }
+    };
     this.$nextTick(()=> {
       this.initScrollChange()
     });

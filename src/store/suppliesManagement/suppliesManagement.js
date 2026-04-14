@@ -8,7 +8,7 @@ export default {
         }
 	},
 	mutations: {
-		// 保存全局物资管理首页suppliesHomeGlobalTimer
+		// 保存全局物资管理首页
 		changeSuppliesHomeGlobalTimer (state, payLoad) {
             state.suppliesHomeGlobalTimer = payLoad
         },

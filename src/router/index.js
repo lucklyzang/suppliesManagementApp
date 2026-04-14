@@ -179,7 +179,7 @@ router.beforeEach((to, from, next) => {
     let name = to.name;
     if (name === 'login') {
         if (login) {
-            next({ path: '/home' })
+            next({ path: '/suppliesHome' })
         } else {
             next()
         }

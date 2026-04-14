@@ -1,7 +1,6 @@
 <template>
   <div class="page-box" ref="wrapper">
     <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">加载中...</van-loading>
-    <van-overlay :show="overlayShow" z-index="100000" />
     <div class="nav">
         <van-nav-bar title="送达" left-text="返回" left-arrow @click-left="onClickLeft"  :border="false">
         </van-nav-bar>
@@ -89,6 +88,7 @@ import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
 import ElectronicSignature from '@/components/ElectronicSignature'
 import { compress, base64ImgtoFile } from "@/common/js/utils";
+import { saleOutDelivery } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
 export default {
   name: "suppliesDelivery",
   components: {
@@ -99,9 +99,9 @@ export default {
   data() {
     return {
       loadingShow: false,
-      overlayShow: false,
       photoBox: false,
       deleteInfoDialogShow: false,
+      orderId: '',
       imgIndex: '',
       resultImgList: [],
       imgOnlinePathArr: []
@@ -111,6 +111,7 @@ export default {
   mounted() {
     // 控制设备物理返回按键
     this.deviceReturn('/suppliesDeliverGoodsList');
+    this.orderId = this.$route.query.orderId;
   },
 
   beforeRouteEnter(to, from, next) {
@@ -137,7 +138,7 @@ export default {
         return this.userInfo['deptId']
     },
     depId() {
-        return this.userInfo['departmentId']
+      return this.userInfo['departmentId']
     },
     depName() {
         return ''
@@ -269,63 +270,38 @@ export default {
     submitEvent() {
       this.$refs.mychild.commitSure();
       if (this.currentElectronicSignature == this.originalSignature || !this.currentElectronicSignature) {
-          return
+        this.$toast('请签名')
+        return
+      };
+      if (this.resultImgList.length > 0) {
+        this.$toast('最多只能上传5张图片')
+        return
       };
       this.$refs.contentTop.style.zIndex = 0;
       this.loadinText = '上传中,请稍等···';
       this.showLoadingHint = true;
-      this.overlayShow = true;
-      if (!this.isSingleDepartmentSignature) {
-          submitDepartMentServiceSignInfo({
-          taskId: this.taskId,
-          imgType: 0,
-          imgOrsign: this.currentElectronicSignature
-          }).then((res) => {
-              this.showLoadingHint = false;
-              this.overlayShow = false;
-              if (res && res.data.code == 200) {
-                this.changeCurrentElectronicSignature({DtMsg: null});
-                this.updateTaskComplete(this.proId, this.taskId)
-              } else {
-              this.$toast(`${res.data.msg}`)
-              }
-          })
-          .catch((err) => {
-              this.$dialog.alert({
-              message: `${err.message}`,
-              closeOnPopstate: true
-              }).then(() => {
-              });
-              this.showLoadingHint = false;
-              this.overlayShow = false
-          })
-      } else {
-          submitSingleDepartMentServiceSignInfo({
-          proId: this.proId, //项目ID
-          taskId: this.taskId, //任务id
-          depId: this.currentDepartmentId, //部门ID
-          depNo: this.departmentServiceOfficeId, //部门编号
-          imgSign: this.currentElectronicSignature // 签名信息
-          }).then((res) => {
-              this.showLoadingHint = false;
-              this.overlayShow = false;
-              if (res && res.data.code == 200) {
-              this.$toast(`${res.data.data}`);
-              this.backTo()
-              } else {
-              this.$toast(`${res.data.msg}`)
-              }
-          })
-          .catch((err) => {
-              this.$dialog.alert({
-              message: `${err.message}`,
-              closeOnPopstate: true
-              }).then(() => {
-              });
-              this.showLoadingHint = false;
-              this.overlayShow = false
-          })
-      }
+      saleOutDelivery({
+        taskId: this.taskId,
+        imgType: 0,
+        imgOrsign: this.currentElectronicSignature
+      }).then((res) => {
+          this.showLoadingHint = false;
+          this.loadinText = '';
+          if (res && res.data.code == 200) {
+            this.changeCurrentElectronicSignature({DtMsg: null});
+          } else {
+            this.$toast(`${res.data.msg}`)
+          }
+      })
+      .catch((err) => {
+          this.$dialog.alert({
+            message: `${err}`,
+            closeOnPopstate: true
+            }).then(() => {
+          });
+          this.loadinText = '';
+          this.showLoadingHint = true;
+      })
     }
   }
 };

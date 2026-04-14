@@ -119,7 +119,7 @@ export function queryUserList(type) {
 }
 
 // 配送订单
-export function saleOutDelivery(data) {
+export function saleOutDistributiony(data) {
 	return request({
 	    url: '/spd/admin-api/erp/sale-out/delivery',
 	    method: 'put',
@@ -143,4 +143,73 @@ export function saleOutRevoke(data) {
 	    method: 'put',
 		params: data
 	})
+}
+
+// 送货单送达
+export function saleOutDelivery(data) {
+	return request({
+	    url: '/spd/admin-api/erp/sale-out/revoke',
+	    method: 'put',
+		params: data
+	})
+}
+
+// 获取退换货分页
+export function getSaleReturnBarterPage(data) {
+	if (data.returnTime && Array.isArray(data.returnTime)) {
+	  data.returnTime = data.returnTime.map(function(date,index,array){
+			if (index == 0) {
+				return date + ' 00:00:00'
+			} else if (index == 1) {
+				return date + ' 23:59:59'
+			}
+		})
+	};
+	return request({
+	    url: '/spd/admin-api/erp/sale-return/page',
+	    method: 'get',
+			params: data,
+			paramsSerializer: function (params) {
+				return qs.stringify(params, { arrayFormat: 'repeat' })
+			}
+	  })
+}
+
+
+// 获得退换货详情
+export function getSaleReturnBarter(id) {
+	return request({
+	    url: `/spd/admin-api/erp/sale-return/get?id=${id}`,
+	    method: 'get'
+	  })
+}
+
+// 更新退换货状态
+export function updateSaleReturOrder(data) {
+	return request({
+	    url: '/spd/admin-api/erp/sale-return/update-status',
+	    method: 'put',
+		params: data
+	})
+}
+
+// 获取评价分页
+export function getEvaluatePage(data) {getEvaluatePage
+	if (data.returnTime && Array.isArray(data.returnTime)) {
+	  data.returnTime = data.returnTime.map(function(date,index,array){
+			if (index == 0) {
+				return date + ' 00:00:00'
+			} else if (index == 1) {
+				return date + ' 23:59:59'
+			}
+		})
+	};
+	return request({
+	    url: '/spd/admin-api/erp/sale-return/page',
+	    method: 'get',
+			params: data,
+			paramsSerializer: function (params) {
+				return qs.stringify(params, { arrayFormat: 'repeat' })
+			}
+	  })
 }

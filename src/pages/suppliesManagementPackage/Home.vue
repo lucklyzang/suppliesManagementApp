@@ -217,9 +217,19 @@
             // 待办事项列表点击事件
             backlogListEvent (item,index) {
                 if (item.name == '待送货') {
-                    this.$router.push({path: '/suppliesDeliverGoodsList'})
+                    this.$router.push({
+                        path: '/suppliesDeliverGoodsList',
+                        query: {
+                            status: '待送货'
+                        }
+                    })
                 } else if(item.name == '待确认') {
-                    this.$router.push({path: '/suppliesOrderList'})
+                    this.$router.push({
+                        path: '/suppliesOrderList',
+                        query: {
+                            status: '待确认'
+                        }
+                    })
                 }
             },
 

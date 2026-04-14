@@ -78,7 +78,7 @@
 					</div>
 					<div class="create-delivery-date-left">
 						<span>交货日期:</span>
-						<span>{{ orderMessage['orderTime'] }}</span>
+						<span>{{ orderMessage['requestTime'] }}</span>
 					</div>
 				</div>
 				<div class="create-delivery-date">
@@ -210,6 +210,7 @@ export default {
         infoText: '加载中...',
         allChooseProductPrice: 0,
         orderId: '',
+        sourcePath: '',
         saleReturnOrderList: [],
         saleReturnOrderList: [],
         productDefaultImage: require('@/common/images/home/revocation-info-icon.png'),
@@ -221,13 +222,16 @@ export default {
 
   mounted() { 
     // 控制设备物理返回按键
-    this.deviceReturn('/suppliesOrderList');
+    this.deviceReturn(this.sourcePath);
     this.orderId = this.$route.query.orderId;
     this.parallelFunction();
   },
 
   beforeRouteEnter(to, from, next) {
-    next() 
+     next(vm=>{
+        vm.sourcePath = from.path
+    });
+    next()  
   },
 
   watch: {},
@@ -261,7 +265,7 @@ export default {
     ...mapMutations([]),
 
     onClickLeft () {
-        this.$router.push({path: '/suppliesOrderList'})
+        this.$router.push({path: this.sourcePath})
     },
 
     // 求和函数(计算所有添加产品总数量)
@@ -431,8 +435,8 @@ export default {
                     this.orderMessage = item1;
                     this.materialList = this.orderMessage['items'];
                     this.allChooseProductPrice = this.orderMessage['totalProductPrice'];
-                    this.orderMessage['createTime'] = SOtime.time3(this.orderMessage['createTime']);
-                    this.orderMessage['orderTime'] = SOtime.time8(this.orderMessage['orderTime']);
+                    this.orderMessage['createTime'] = this.orderMessage['createTime'] ? SOtime.time3(this.orderMessage['createTime']) : '';
+                    this.orderMessage['requestTime'] = this.orderMessage['requestTime'] ? SOtime.time8(this.orderMessage['requestTime']) : '';
                 };
                 if (item2) {
                     this.orderStatusRecordList = item2;
@@ -499,6 +503,7 @@ export default {
     display: flex;
     flex-direction: column;
     position: relative;
+    overflow: auto;
     .content-box {
         flex: 1;
         box-sizing: border-box;
@@ -577,7 +582,7 @@ export default {
             width: 99%;
             padding: 0 10px;
             box-sizing: border-box;
-            max-height: 564px;
+            height: 564px;
             margin: 0 auto;
             border-radius: 6px;
             background: #F0F2FE;

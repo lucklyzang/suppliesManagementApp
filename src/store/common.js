@@ -59,9 +59,9 @@ export default {
 			}
 		},
 		// 改变原始签名状态
-		changeSuppliesHomeGlobalTimer (state,payLoad) {
-			state.suppliesHomeGlobalTimer = payLoad
-    	},
+		  changeOriginalSignature (state,payLoad) {
+			state.originalSignature = payLoad
+		},
 		//重置公共信息的状态
 		resetCommonInfoState(state) {
 				Object.assign(state, getDefaultCommonState())

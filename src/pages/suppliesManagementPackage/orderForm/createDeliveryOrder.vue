@@ -69,7 +69,7 @@
             </div>
             <div class="shipment-warehouse-list-box" v-show="shipmentWarehouseListShow">
               <div class="shipment-warehouse-list" v-for="(item,index) in shipmentWarehouseListList" @click="shipmentWarehouseListEvent(item,index)" :key="index">
-                <span :class="{'shipmentWarehouseSpanStyle': index == currentShipmentWarehouseIndex }">{{ item.name }}</span>
+                <span :class="{'shipmentWarehouseSpanStyle': index === currentShipmentWarehouseIndex }">{{ item.name }}</span>
               </div>
             </div>
 				  </div>
@@ -176,8 +176,8 @@ export default {
       arrivalDateShow: false,
       arrivalDate: SOtime.time8(new Date().getTime()),
       currentDate: new Date(),
-      currentShipmentWarehouseIndex: 0,
-      currentShipmentWarehouseValue: 0,
+      currentShipmentWarehouseIndex: '',
+      currentShipmentWarehouseValue: '',
       shipmentWarehouseListList:[],
       remarkValue: '',
       productDefaultImage: require('@/common/images/home/revocation-info-icon.png'),
@@ -265,14 +265,14 @@ export default {
       this.currentDate = new Date(this.orderMessage['confirmTime'])
     },
 
-    // 求和函数(计算所有添加产品总价格)
+    // 求和函数(计算所有添加产品总数量)
     reduceTotal() {
         let targetMsg = this.materialList.filter((item) => {
-            return item.inputCount > 0
+          return item.inputCount > 0
         });
         this.allCount = targetMsg.reduce((accumulator, currentValue) => {
-            return accumulator + currentValue.inputCount + currentValue.count
-        }, 0);
+          return accumulator + currentValue.inputCount
+        }, 0)
     },
 
     // 保留两位小数，返回数字类型，修复精度问题
@@ -312,7 +312,8 @@ export default {
         return 
       };
       let deliveryOrderList = [];
-      for (let item of this.materialList) {
+      let temporaryMaterialList = this.materialList.filter((item) => { return Number(item.inputCount) > 0 });
+      for (let item of temporaryMaterialList) {
         deliveryOrderList.push({
           orderItemId: item.id, //销售订单项编号
           warehouseId: this.currentShipmentWarehouseValue, // 仓库编号
@@ -339,6 +340,15 @@ export default {
 
     // 提交事件
     submitEvent() {
+      // 所有产品提交数量都为0时，禁止提交
+      let isCanSubmit = this.materialList.every((item)=>{ return item.inputCount == 0 });
+       if (isCanSubmit) {
+        this.$toast({
+          type: 'fail',
+          message: '添加的产品数量不能为0!'
+        });
+        return 
+      };
       if (this.isExceedStockQuantity) {
         this.$toast({
           type: 'fail',
@@ -354,7 +364,8 @@ export default {
         return 
       };
       let deliveryOrderList = [];
-      for (let item of this.materialList) {
+      let temporaryMaterialList = this.materialList.filter((item) => { return Number(item.inputCount) > 0 });
+      for (let item of temporaryMaterialList) {
         deliveryOrderList.push({
           orderItemId: item.id, //销售订单项编号
           warehouseId: this.currentShipmentWarehouseValue, // 仓库编号
@@ -460,7 +471,6 @@ export default {
                 if (item1) {
                   this.orderMessage = item1;
                   this.materialList = this.orderMessage['items'];
-                  this.allCount = this.orderMessage['totalCount'];
                   this.materialList.forEach((item,index) => {
                     this.$set(this.materialList[index],'inputCount',0);
                   });

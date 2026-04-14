@@ -1,7 +1,6 @@
 <template>
   <div class="page-box" ref="wrapper">
-    <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">加载中...</van-loading>
-    <van-overlay :show="overlayShow" z-index="100000" />
+    <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">{{ infoText }}</van-loading>
     <div class="nav">
         <van-nav-bar title="详情" left-text="返回" left-arrow @click-left="onClickLeft"  :border="false">
         </van-nav-bar>
@@ -9,7 +8,9 @@
     <div class="content">
         <div class="content-box">
             <div class="order-details-top">
-               <van-divider dashed :style="{ color: '#EB7D61', borderColor: '#EB7D61', padding: '0 16px' }">退货</van-divider>
+               <van-divider dashed :style="{ color: orderMessage['type']  == 1 ? '#E8CB51':'#EB7D61', borderColor: orderMessage['type']  == 1 ? '#E8CB51':'#EB7D61', padding: '0 16px' }">
+                   {{ orderMessage['type']  == 1 ? '换货' : '退货' }}
+               </van-divider>
             </div>
             <div class="order-details-title">
 				<div class="content-top-left">
@@ -22,7 +23,7 @@
 				</div>
 				<div class="product-list" v-for="(item) in materialList" :key="item.productName">
 					<div class="product-left">
-                        <img :src="item.productimg" />
+                        <img :src="item['images'] ? item['images'] : productDefaultImage" />
 					</div>
 					<div class="product-center">
 						<div class="product-name">
@@ -33,16 +34,16 @@
 						<div class="product-specification">
 							<div class="product-specification-left">
 								<span>
-									{{ item.specification }}
+									{{ item.specification ? item.specification : '无' }}
 								</span>
 							</div>
 							<div class="product-specification-right">
 								<span>￥</span>
 								<span>
-									{{ item.unitPrice }}
+									{{ formatPrice(item.productPrice) }}
 								</span>
 								<span>
-									{{ `/${item.unit}` }}
+									{{ `/${item.productUnitName}` }}
 								</span>
 							</div>
 						</div>
@@ -50,11 +51,11 @@
 					<div class="product-right">
 						<div class="product-number-box">
 							<span>数量:</span>
-							<span>4</span>
+							<span>{{ item.count }}</span>
 						</div>
 						<div class="product-total-price">
 							<span>总额:</span>
-							<span>{{ `￥20.00` }}</span>
+							<span>{{ `￥${formatPrice(item.totalPrice)}` }}</span>
 						</div>
 					</div>
 				</div>
@@ -63,31 +64,31 @@
 				<div class="create-delivery-date">
 					<div class="create-delivery-date-left">
 						<span>创建时间:</span>
-						<span>05-31 17:21</span>
+						<span>{{ orderMessage['createTime'] }}</span>
 					</div>
 					<div class="create-delivery-date-left">
 						<span>交货日期:</span>
-						<span>05-31</span>
+						<span>{{ orderMessage['requestTime'] }}</span>
 					</div>
 				</div>
 				<div class="create-delivery-date">
 					<div class="create-delivery-date-left">
 						<span>下单医院:</span>
-						<span>打卡善良的凯撒</span>
+						<span></span>
 					</div>
 					<div class="create-delivery-date-left">
 						<span>送货地址:</span>
-						<span>大苏打的</span>
+						<span>{{ orderMessage['address'] ? orderMessage['address'] : '无' }}</span>
 					</div>
 				</div>
                 <div class="create-delivery-date">
 					<div class="create-delivery-date-left">
 						<span>科室电话:</span>
-						<span>打卡善良的凯撒</span>
+						<span>{{ orderMessage['mobile'] }}</span>
 					</div>
 					<div class="create-delivery-date-left">
 						<span>关联订单:</span>
-						<span>大苏打的</span>
+						<span>{{ orderMessage['orderNo'] }}</span>
 					</div>
 				</div>
 			</div>
@@ -96,20 +97,20 @@
 				<div class="create-delivery-date">
 					<div class="create-delivery-date-left">
 						<span>配送人:</span>
-						<span>05-31 17:21</span>
+						<span>{{ orderMessage['courierName'] ? orderMessage['courierName'] : ''}}</span>
 					</div>
 					<div class="create-delivery-date-left">
 						<span>联系方式:</span>
-						<span>05-31</span>
+						<span>{{ orderMessage['courierMobile'] ? orderMessage['courierMobile'] : ''}}</span>
 					</div>
 				</div>
 				<div class="product-list remark-box">
 					<span>备注:</span>
-					<span>沙龙课傻了傻了时间</span>
+					<span>{{ orderMessage['remark'] }}</span>
 				</div>
                 <div class="product-list remark-box delivery-time">
 					<span>送货时间:</span>
-					<span>沙龙课傻了傻了时间</span>
+					<span>{{ orderMessage['outTime'] }}</span>
 				</div>
 			</div>
             <div class="dashed-box"></div>
@@ -117,27 +118,17 @@
                 <div class="signature-title">
                     签字:
                 </div>
-                <div class="signature-content"></div>
+                <div class="signature-content" v-show="orderMessage['signatureImage']">
+                    <img :src="orderMessage['signatureImage']" alt="">
+                </div>
             </div>
             <div class="photograph-message">
                 <div class="photograph-title">
                     拍照:
                 </div>
-                <div class="photograph-content">
+                <div class="photograph-content" v-show="orderMessage['deliveryImages']">
                     <div class="image-list">
-                        <img :src="productimg" />
-                    </div>
-                     <div class="image-list">
-                        <img :src="productimg" />
-                    </div>
-                     <div class="image-list">
-                        <img :src="productimg" />
-                    </div>
-                     <div class="image-list">
-                        <img :src="productimg" />
-                    </div>
-                    <div class="image-list">
-                        <img :src="productimg" />
+                        <img :src="productDefaultImage" />
                     </div>
                 </div>
             </div>
@@ -145,17 +136,17 @@
                 <div class="delivery-time-title">
                     送达时间:
                 </div>
-                <div class="delivery-time-content">2025-02-03 16:00</div>
+                <div class="delivery-time-content">{{ orderMessage['deliveryTime'] }}</div>
             </div>
             <div class="dashed-box"></div>
             <div class="changing-refunding-message">
                 <div class="changing-refunding-reason">
                     <span>退换原因:</span>
-                    <span>下错单了</span>
+                    <span>{{ orderMessage['remark'] }}</span>
                 </div>
                 <div class="changing-refunding-date">
-                    <span>退货时间:</span>
-                    <span>2025-02-03 18:00</span>
+                    <span>{{ orderMessage['type']  == 1 ? '换货时间:' : '退货时间:'}}</span>
+                    <span>{{ orderMessage['returnTime'] }}</span>
                 </div>
             </div>
         </div>
@@ -166,6 +157,8 @@
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
+import { getSaleReturnBarter } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
+import SOtime from '@/common/js/SOtime.js'
 export default {
   name: "suppliesChangingOrRefundingDetails",
   components: {
@@ -175,40 +168,27 @@ export default {
   data() {
     return {
       loadingShow: false,
-      overlayShow: false,
+      infoText: '加载中...',
       allChooseProductPrice: 0,
-      productimg: require('@/common/images/home/add-icon.png'),
-      materialList: [
-        {
-            productName: '洗手液',
-            specification: '500ML',
-            unit: '瓶',
-            unitPrice: '4.5',
-            quantity: 0,
-            checked: false,
-            disabled: false,
-            productimg: require('@/common/images/home/supplies-order-icon.png')
-        },
-        {
-            productName: '一次性垫',
-            specification: '90*40cm',
-            unit: '包',
-            unitPrice: '8.3',
-            quantity: 0,
-            checked: false,
-            disabled: false,
-            productimg: require('@/common/images/home/supplies-order-icon.png')
-        }
-      ]
+      productDefaultImage: require('@/common/images/home/revocation-info-icon.png'),
+      orderMessage: {},
+      orderId: '',
+      sourcePath: '',
+      materialList: []
     }
   },
 
   mounted() {
     // 控制设备物理返回按键
-    this.deviceReturn('/suppliesChangingOrRefundingList');
+    this.deviceReturn(this.sourcePath);
+    this.orderId = this.$route.query.orderId;
+    this.parallelFunction();
   },
 
   beforeRouteEnter(to, from, next) {
+    next(vm=>{
+        vm.sourcePath = from.path
+    });
     next() 
   },
 
@@ -243,40 +223,7 @@ export default {
     ...mapMutations([]),
 
     onClickLeft () {
-        this.$router.push({path: '/suppliesChangingOrRefundingList'})
-    },
-
-    //任务状态转换
-    stateTransfer (num) {
-        switch(num) {
-                case 0:
-                    return '未分配'
-                    break;
-                case 1:
-                        return '未查阅'
-                        break;
-                case 2:
-                        return '未开始'
-                        break;
-                case 3:
-                        return '进行中'
-                        break;
-                case 4:
-                        return '待复核'
-                        break;
-                case 5:
-                        return '已完成'
-                        break;
-                case 6:
-                        return '已复核'
-                        break;
-                case 7:
-                        return '已取消'
-                        break
-                case 8:
-                        return '复核中'
-                        break
-        } 
+        this.$router.push({path: this.sourcePath})
     },
 
     // 保留两位小数，返回数字类型，修复精度问题
@@ -284,6 +231,61 @@ export default {
         if (typeof num !== 'number' || isNaN(num)) return "0.00";
             const value = Math.round(num * 100) / 100;
             return value.toFixed(2);
+    },
+
+    // 查询退换货单详情
+    getSaleReturnBarterEvent() {
+        return new Promise((resolve,reject) => {
+            getSaleReturnBarter(this.orderId).then((res) => {
+                this.loadingShow = false;
+                this.infoText = '';
+                if ( res && res.data.code == 0) {
+                    resolve(res.data.data);
+                } else {
+                    reject(res.data.msg);
+                    this.$toast({
+                        type: 'fail',
+                        message: res.data.msg
+                    })
+                }
+            })
+            .catch((err) => {
+                reject(err)
+            })
+        })
+    },
+
+    // 并行查询退换货单详情
+	parallelFunction () {
+        this.loadingShow = false;
+        this.infoText = '加载中···';
+        Promise.all([this.getSaleReturnBarterEvent()])
+        .then((res) => {
+            this.loadingShow = false;
+            this.infoText = '';
+            if (res && res.length > 0) {
+                this.orderMessage = {};
+                let [item1] = res;
+                if (item1) {
+                    this.orderMessage = item1;
+                    this.materialList = this.orderMessage['items'];
+                    this.allChooseProductPrice = this.orderMessage['totalProductPrice'];
+                    this.orderMessage['createTime'] = SOtime.time3(this.orderMessage['createTime']);
+                    this.orderMessage['requestTime'] = this.orderMessage['requestTime'] ? SOtime.time8(this.orderMessage['requestTime']) : '';
+                    this.orderMessage['deliveryTime'] = this.orderMessage['deliveryTime'] ? SOtime.time3(this.orderMessage['deliveryTime']) : '';
+                    this.orderMessage['returnTime'] = this.orderMessage['returnTime'] ? SOtime.time8(this.orderMessage['returnTime']) : '';
+                    this.orderMessage['outTime'] = this.orderMessage['outTime'] ? SOtime.time3(this.orderMessage['outTime']) : '';
+                }
+            }
+        })
+        .catch((err) => {
+            this.loadingShow = false;
+            this.infoText = '';
+            this.$toast({
+                type: 'fail',
+                message: err
+            })
+        })
     }
   }
 };
@@ -468,13 +470,11 @@ export default {
             box-sizing: border-box;
             .create-delivery-date {
                     display: flex;
-                    align-items: center;
                     margin-top: 16px;
                     .create-delivery-date-left {
                         flex: 1;
                         width: 0;
                         display: flex;
-                        align-items: center;
                         >span {
                             display: inline-block;
                             font-size: 12px;
@@ -483,7 +483,7 @@ export default {
                                 margin-right: 6px;
                             };
                             &:nth-child(2) {
-                                .no-wrap;
+                                word-break: break-all;
                                 flex: 1;
                                 color: #101010;
                             }

@@ -40,7 +40,7 @@
 					<div class="order-list-top">
 						<div class="order-type">
 							<span>送货单号</span>
-							<span>{{ item.orderNumber }}</span>
+							<span>{{ item.no }}</span>
 						</div>
 						<div class="order-status"
 						:class="{
@@ -190,8 +190,7 @@
                 </div>
                 <div class="evaluate-modal-center">
                   <img :src="revocationInfoImage"  />
-                  <div class="modal-center-content">
-                    `请再次确认是否要撤销该<br>【${currentOrderNo}】送货单？`
+                  <div class="modal-center-content" v-html="confirmRevocationMessage">
                   </div>
                 </div>
                 <div class="evaluate-modal-bottom">
@@ -217,8 +216,7 @@
                 </div>
                 <div class="evaluate-modal-center">
                   <img :src="revocationInfoImage"  />
-                  <div class="modal-center-content">
-                   {{  `请再次确认是否要取消该<br>【${currentOrderNo}】送货单?` }}
+                  <div class="modal-center-content" v-html="confirmCancelMessage">
                   </div>
                 </div>
                 <div class="evaluate-modal-bottom">
@@ -242,7 +240,7 @@
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
-import { getSaleOutPage, queryUserList, saleOutDelivery, saleOutCancel, saleOutRevoke } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
+import { getSaleOutPage, queryUserList, saleOutDistributiony, saleOutCancel, saleOutRevoke } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
 import SOtime from '@/common/js/SOtime.js'
 export default {
   name: "suppliesDeliverGoodsList",
@@ -270,7 +268,7 @@ export default {
       defaultDateArr: [],
       startDate: '',
       endDate: '',
-      minDate: new Date('2026-03-16'),
+      minDate: new Date('2025-03-16'),
       maxDate: new Date('2027-03-16'),
       currentStatusText: '全部状态',
       currentStatusIndex: 0,
@@ -282,12 +280,7 @@ export default {
       currentOrderIndex: '',
       currentOrderId: '',
       currentOrderNo: '',
-      deliveryPersonList: [
-          {
-            name: '请选择',
-            value: ''
-          }
-      ],
+      deliveryPersonList: [],
       currentDeliveryPersonIndex: '',
       orderStatusList: [
         {
@@ -316,7 +309,19 @@ export default {
   mounted() {
     // 控制设备物理返回按键
     this.deviceReturn('/suppliesHome');
-      this.$nextTick(()=> {
+    if (this.$route.query.status) {
+        if (this.$route.query.status == '待送货') {
+            let temporaryMessage = this.orderStatusList.filter((item) => { return item.text == this.$route.query.status });
+            let temporaryIndex = this.orderStatusList.findIndex((item) => { return item.text == this.$route.query.status });
+            if (temporaryMessage.length > 0) {
+                this.needQueryStatusList = [temporaryMessage[0]['value']];
+                this.currentStatusText = temporaryMessage[0]['text'];
+                this.currentStatusValue = temporaryMessage[0]['value'];
+                this.currentStatusIndex = temporaryIndex;
+            }
+        }
+    };
+    this.$nextTick(()=> {
       this.initScrollChange()
     });
     this.getDateRange();
@@ -366,6 +371,12 @@ export default {
     },
     depName() {
         return ''
+    },
+    confirmRevocationMessage() {
+      return `请再次确认是否要撤销该<br>【${this.currentOrderNo}】送货单？`;
+    },
+    confirmCancelMessage() {
+      return `请再次确认是否要撤销该<br>【${this.currentOrderNo}】送货单？`;
     }
   },
 
@@ -448,10 +459,10 @@ export default {
     },
 
     // 订单配送事件(已送货-60、送货中-20、待送货-10)
-    saleOutDeliveryEvent (data) {
+    saleOutDistributionyEvent (data) {
         this.loadingShow = true;
         this.infoText = '送货中···';
-        saleOutDelivery(data).then((res) => {
+        saleOutDistributiony(data).then((res) => {
             this.loadingShow = false;
             this.infoText = '';
             if ( res && res.data.code == 0) {
@@ -595,7 +606,7 @@ export default {
                 this.totalCount = res.data.data.total;
                 this.orderList.forEach((item)=>{
                     item.createTime = SOtime.time3(item.createTime);
-                    item.requestTime = SOtime.time8(item.requestTime);
+                    item.requestTime = item.requestTime ? SOtime.time8(item.requestTime) : '';
                 });
                 this.fullOrderList = this.fullOrderList.concat(this.orderList);
                 if (this.fullOrderList.length == 0) {
@@ -707,7 +718,7 @@ export default {
                 return
             }
         };
-        this.saleOutDeliveryEvent({
+        this.saleOutDistributionyEvent({
             id: this.currentOrderId,
             deliveryRemark: this.deliverGoodsValue,
             courier: this.currentdeliveryPerson,
@@ -797,6 +808,9 @@ export default {
     deliverGoodsEvent(item,index) {
         this.currentOrderId = item.id;
         this.currentOrderIndex = index;
+        this.deliverGoodsValue = '';
+        this.currentdeliveryPerson = '';
+        this.contactInformationValue = '';
         this.deliverGoodsModalShow = true;
     },
 
@@ -810,7 +824,12 @@ export default {
 
     // 送达事件
     deliveryEvent(item,index) {
-        this.$router.push('/suppliesDelivery')
+         this.$router.push({
+            path: '/suppliesDelivery', 
+            query: {
+                orderId: item.id
+            }
+        })
     },
 
     // 提取产品清单信息
@@ -1028,6 +1047,8 @@ export default {
                        margin-top: 20px;
                        font-size: 14px;
                        color: #101010;
+                       text-align: center;
+                       line-height: 20px;
                      }
                   };
                   .evaluate-modal-bottom {
