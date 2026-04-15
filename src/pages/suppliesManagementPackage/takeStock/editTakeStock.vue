@@ -30,8 +30,8 @@
 						      <van-icon :name="warehouseListShow ? 'arrow-down' : 'arrow-up'" color="#101010" size="16" />
                 </div>
                 <div class="warehouse-list-box" v-if="warehouseListShow">
-                  <div class="warehouse-list" v-for="(item,index) in warehouseList" @click.stop="warehouseListtEvent(item,index)" :key="index">
-                    <span :class="{'warehouseSpanStyle': index == currentWarehouseIndex }">{{ item }}</span>
+                  <div class="warehouse-list" v-for="(item,index) in shipmentWarehouseList" @click.stop="warehouseListtEvent(item,index)" :key="index">
+                    <span :class="{'warehouseSpanStyle': index == currentWarehouseIndex }">{{ item.name }}</span>
                   </div>
                 </div>
               </div>
@@ -41,7 +41,7 @@
                 盘点日期:
               </div>
               <div class="take-stock-date-content">
-                2026-02-28
+                {{ orderMessage.checkTime }}
               </div>
             </div>
           </div>
@@ -64,21 +64,36 @@
               </div>
             </div>
             <div class="delivery-list-box">
-              <div class="delivery-list" @click="takeStockProductClickEvent">
+              <van-empty description="暂无产品数据" v-show="orderMessage['items'].length == 0" />
+              <div class="delivery-list" @click="takeStockProductClickEvent" v-for="(item) in orderMessage['items']" :key="item.id">
                 <div class="product-content">
-                  <span>面签</span>
+                  <span>{{ item['productName'] }}</span>
                 </div>
                 <div class="specification-content">
-                  <span>5/盒</span>
+                  <span>{{ item['standard'] ? item['standard'] : '无'}}</span>
                 </div>
                 <div class="deliver-number-content">
-                  <span>100</span>
+                  <span>{{ item['count'] }}</span>
                 </div>
                 <div class="sales-return-content">
-                                200
+                    <van-popover
+                      v-model="showPopover"
+                      placement="top"
+                      trigger="click"
+                      @open="showPopoverEvent"
+                      get-container=".sales-return-content"
+                      >
+                      <div>
+                          <p class="p-one">盈亏说明</p>
+                          <p class="p-two">{{ item['remark'] }}</p>
+                      </div>
+                      <template #reference>
+                          {{ item['stockCount'] }}
+                      </template>
+                  </van-popover>
                 </div>
                 <div class="unit-content">
-                  <span>盒</span>
+                  <span>{{ item['productUnitName'] }}</span>
                 </div>
               </div>
             </div>
@@ -165,6 +180,7 @@
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
+import { getwarehouseInfo, getStockCheckRecord } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
 import SOtime from '@/common/js/SOtime.js'
 export default {
   name: "suppliesEditTakeStock",
@@ -176,33 +192,34 @@ export default {
     return {
       loadingShow: false,
       overlayShow: false,
-      backlogEmptyShow: false,
+      showPopover: false,
       productCodeValue: '',
       warehouseListShow: false,
       currentWarehouseName: '请选择',
-      currentWarehouseIndex: 0,
-      warehouseList: [
-        '全部状态',
-        '待确认',
-        '待审核',
-        '已审核'
-      ],
+      currentWarehouseIndex: '',
+      currentShipmentWarehouseValue: '',
+      shipmentWarehouseList: [],
       takeStockModalShow: false,
-      practicalTakeStockValue: '',
-      breakEvenexplainValue: ''
+      orderId: '',
+      orderMessage: {
+        items: []
+      }
     }
   },
 
   mounted() {
     // 控制设备物理返回按键
     this.deviceReturn('/suppliesTakeStockRecord');
+    this.orderId = this.$route.query.orderId;
+    this.getStockCheckRecordEvent();
     const el = this.$refs.myElement;
     //点击库房区域以外的地方时，库房列表收起
 		document.addEventListener('click', (event) => {
 			if (el && !el.contains(event.target)){
 				this.warehouseListShow = false;
 			}
-		}, false)
+		}, false);
+    this.parallelFunction()
   },
 
   beforeRouteEnter(to, from, next) {
@@ -243,9 +260,15 @@ export default {
       this.$router.push({path: '/suppliesTakeStockRecord'})
     },
 
+    // popover打开事件
+    showPopoverEvent () {
+        console.log(1);
+    },
+
     // 库房下拉框点击事件
     warehouseListtEvent (item,index) {
-      this.currentWarehouseName = item;
+      this.currentWarehouseName = item.name;
+      this.currentShipmentWarehouseValue = item.id;
       this.currentWarehouseIndex = index;
       this.warehouseListShow = false;
     },
@@ -265,49 +288,81 @@ export default {
       this.takeStockModalShow = true;
     },
 
-    // 获取订单列表
-    queryTaskList (taskType,page,pageSize) {
-        this.loadingShow = true;
-        this.overlayShow = true;
-        this.backlogEmptyShow = false;
-        this.completedEmptyShow = false;
-        this.isShowBacklogTaskNoMoreData = false;
-        this.isShowCompletetedTaskNoMoreData = false;
-		getAllTaskList({proId : this.proId, workerId: this.workerId,taskType,system:6,page,pageSize})
-        .then((res) => {
-            this.loadingShow = false;
-            this.overlayShow = false;
-            if (res && res.data.code == 200) {
-                if (taskType == 1) {
-                    this.backlogTaskList = res.data.data.list;
-                    this.totalCount = res.data.data.total;
-                    this.fullBacklogTaskList = this.fullBacklogTaskList.concat(this.backlogTaskList);
-                    if (this.fullBacklogTaskList.length == 0) {
-                        this.backlogEmptyShow = true
-                    }
-                } else if (taskType == 2) {
-                    this.completedTaskList = res.data.data.list;
-                    this.totalCount = res.data.data.total;
-                    this.fullCompletedTaskList = this.fullCompletedTaskList.concat(this.completedTaskList);
-                    if (this.fullCompletedTaskList.length == 0) {
-                        this.completedEmptyShow = true
-                    }
-                }
-            } else {
+    // 查询仓库信息
+    getWarehouseInfoEvent() {
+      return new Promise((resolve,reject) => {
+        getwarehouseInfo().then((res) => {
+          this.loadingShow = false;
+          this.infoText = '';
+          if ( res && res.data.code == 0) {
+            resolve(res.data.data)
+          } else {
+            reject(res.data.msg)
             this.$toast({
-                type: 'fail',
-                message: res.data.msg
+              type: 'fail',
+              message: res.data.msg
             })
-            }
-      })
-      .catch((err) => {
-        this.loadingShow = false;
-        this.overlayShow = false;
-        this.$toast({
-          type: 'fail',
-          message: err
+          }
+        })
+        .catch((err) => {
+          reject(err)
         })
       })
+    },
+
+    // 查询盘点单详情
+    getStockCheckRecordEvent() {
+      return new Promise((resolve,reject) => {
+        getStockCheckRecord(this.orderId).then((res) => {
+            this.loadingShow = false;
+            this.infoText = '';
+            if ( res && res.data.code == 0) {
+              resolve(res.data.data)
+            } else {
+              reject(res.data.msg)
+              this.$toast({
+                  type: 'fail',
+                  message: res.data.msg
+              })
+            }
+        })
+        .catch((err) => {
+          reject(err)
+        })
+      })
+    },
+
+    // 并行查询仓库信息、盘点单详情
+	  parallelFunction () {
+        this.loadingShow = false;
+        this.infoText = '加载中···';
+        Promise.all([this.getWarehouseInfoEvent(),this.getStockCheckRecordEvent()])
+        .then((res) => {
+            this.loadingShow = false;
+            this.infoText = '';
+            if (res && res.length > 0) {
+                this.shipmentWarehouseList = [];
+                this.orderMessage = {
+                  items: []
+                };
+                let [item1,item2] = res;
+                if (item1) {
+                  this.shipmentWarehouseList = item1;
+                };
+                if (item2) {
+                  this.orderMessage = item2;
+                  this.orderMessage['checkTime'] = this.orderMessage['checkTime'] ? SOtime.time8(this.orderMessage['checkTime']) : ''
+                }
+            }
+        })
+        .catch((err) => {
+            this.loadingShow = false;
+            this.infoText = '';
+            this.$toast({
+                type: 'fail',
+                message: err
+            })
+        })
     }
   }
 };
@@ -635,6 +690,7 @@ export default {
             .delivery-list-box {
                 flex: 1;
                 overflow: auto;
+                position: relative;
                 .delivery-list {
                     height: 30px;
                     display: flex;
@@ -669,6 +725,13 @@ export default {
                     };
                     .barter-content {
                     }
+                };
+                /deep/ .van-empty {
+                  position: absolute;
+                  top: 50%;
+                  left: 50%;
+                  transform: translate(-50%, -50%);
+                  width: 100%;
                 }
             }
         };

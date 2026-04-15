@@ -68,7 +68,7 @@
 					</div>
 					<div class="create-delivery-date-left">
 						<span>交货日期:</span>
-						<span>{{ orderMessage['requestTime'] }}</span>
+						<span>{{ orderMessage['checkTime'] }}</span>
 					</div>
 				</div>
 				<div class="create-delivery-date">
@@ -92,7 +92,9 @@
 					</div>
 				</div>
 			</div>
-            <div class="dashed-box"></div>
+            <div class="dashed-box">
+                <span class="circle-box"></span>
+            </div>
             <div class="order-message">
 				<div class="create-delivery-date">
 					<div class="create-delivery-date-left">
@@ -113,7 +115,9 @@
 					<span>{{ orderMessage['outTime'] }}</span>
 				</div>
 			</div>
-            <div class="dashed-box"></div>
+            <div class="dashed-box">
+                <span class="circle-box"></span>
+            </div>
             <div class="signature-message">
                 <div class="signature-title">
                     签字:
@@ -138,7 +142,9 @@
                 </div>
                 <div class="delivery-time-content">{{ orderMessage['deliveryTime'] }}</div>
             </div>
-            <div class="dashed-box"></div>
+            <div class="dashed-box">
+                <span class="circle-box"></span>
+            </div>
             <div class="changing-refunding-message">
                 <div class="changing-refunding-reason">
                     <span>退换原因:</span>
@@ -275,6 +281,7 @@ export default {
                     this.orderMessage['deliveryTime'] = this.orderMessage['deliveryTime'] ? SOtime.time3(this.orderMessage['deliveryTime']) : '';
                     this.orderMessage['returnTime'] = this.orderMessage['returnTime'] ? SOtime.time8(this.orderMessage['returnTime']) : '';
                     this.orderMessage['outTime'] = this.orderMessage['outTime'] ? SOtime.time3(this.orderMessage['outTime']) : '';
+                    this.orderMessage['checkTime'] = this.orderMessage['checkTime'] ? SOtime.time3(this.orderMessage['checkTime']) : '';
                 }
             }
         })
@@ -546,6 +553,17 @@ export default {
         };
         .dashed-box {
             border: 1px dashed #BBBBBB;
+            position: relative;
+            .circle-box {
+                position: absolute;
+                top: 50%;
+                left: -1px;
+                transform: translateY(-50%);
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: #3B9DF9;
+            }
         };
         .signature-message {
             display: flex;

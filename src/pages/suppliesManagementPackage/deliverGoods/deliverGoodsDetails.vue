@@ -603,7 +603,7 @@ export default {
             .circle-box {
                 position: absolute;
                 top: 50%;
-                left: 0;
+                left: -1px;
                 transform: translateY(-50%);
                 width: 12px;
                 height: 12px;

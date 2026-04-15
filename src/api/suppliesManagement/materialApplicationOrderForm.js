@@ -89,6 +89,15 @@ export function getwarehouseInfo() {
 	  })
 }
 
+// 获取产品库存分页
+export function getStockPage(data) {
+	return request({
+	    url: '/spd/admin-api/erp/stock/page',
+	    method: 'get',
+		params: data,
+	})	
+}
+
 // 获取出库分页
 export function getSaleOutPage(data) {
 	if (data.outTime && Array.isArray(data.outTime)) {
@@ -194,7 +203,7 @@ export function updateSaleReturOrder(data) {
 }
 
 // 获取评价分页
-export function getEvaluatePage(data) {getEvaluatePage
+export function getEvaluatePage(data) {
 	if (data.returnTime && Array.isArray(data.returnTime)) {
 	  data.returnTime = data.returnTime.map(function(date,index,array){
 			if (index == 0) {
@@ -212,4 +221,42 @@ export function getEvaluatePage(data) {getEvaluatePage
 				return qs.stringify(params, { arrayFormat: 'repeat' })
 			}
 	  })
+}
+
+// 创建产品盘点单
+export function createStockCheck(data) {
+	return request({
+	    url: '/spd/admin-api/erp/stock-check/create',
+	    method: 'post',
+		data
+	})	
+}
+
+// 获得产品盘点单记录分页
+export function getStockCheckRecordsPage(data) {
+	if (data.checkTime && Array.isArray(data.checkTime)) {
+		data.checkTime = data.checkTime.map(function(date,index,array){
+			if (index == 0) {
+				return date + ' 00:00:00'
+			} else if (index == 1) {
+				return date + ' 23:59:59'
+			}
+		})
+	};
+	return request({
+		url: '/spd/admin-api/erp/stock-check/page',
+	    method: 'get',
+		params: data,
+		paramsSerializer: function (params) {
+			return qs.stringify(params, { arrayFormat: 'repeat' })
+		}
+	})	
+}
+
+// 获得产品盘点单记录
+export function getStockCheckRecord(id) {
+	return request({
+	    url: `/spd/admin-api/erp/stock-check/get?id=${id}`,
+	    method: 'get'
+	})	
 }

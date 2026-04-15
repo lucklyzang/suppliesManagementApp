@@ -1,7 +1,6 @@
 <template>
   <div class="page-box" ref="wrapper">
-    <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">加载中...</van-loading>
-    <van-overlay :show="overlayShow" z-index="100000" />
+    <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">{{ infoText }}</van-loading>
     <div class="nav">
         <van-nav-bar title="盘点单" left-text="返回" left-arrow @click-left="onClickLeft" :border="false">
         </van-nav-bar>
@@ -12,17 +11,17 @@
                 <div class="take-stock-record-title-top">
                     <div class="take-stock-date">
                         <span>盘点日期:</span>
-                        <span>2026-02-28</span>
+                        <span>{{ orderMessage.checkTime }}</span>
                     </div>
                     <div class="take-stock-warehouse">
                         <span>盘点库房:</span>
-                        <span>中心库房</span>
+                        <span>{{ orderMessage.warehouseName ?  orderMessage.warehouseName : ''}}</span>
                     </div>
                 </div>
                 <div class="take-stock-record-title-bottom">
                      <div class="take-stock-person">
                         <span>盘点人:</span>
-                        <span>张三</span>
+                        <span>{{ orderMessage.creatorName }}</span>
                     </div>
                 </div>
             </div>
@@ -45,15 +44,16 @@
 					</div>
 				</div>
 				<div class="delivery-list-box">
-					<div class="delivery-list">
+                    <van-empty description="暂无产品数据" v-show="orderMessage['items'].length == 0" />
+					<div class="delivery-list" v-for="(item) in orderMessage['items']" :key="item.id">
 						<div class="product-content">
-							<span>面签</span>
+							<span>{{ item['productName'] }}</span>
 						</div>
 						<div class="specification-content">
-							<span>5/盒</span>
+							<span>{{ item['standard'] ? item['standard'] : '无'}}</span>
 						</div>
 						<div class="deliver-number-content">
-							<span>100</span>
+							<span>{{ item['count'] }}</span>
 						</div>
 						<div class="sales-return-content">
                             <van-popover
@@ -65,29 +65,23 @@
                                 >
                                 <div>
                                     <p class="p-one">盈亏说明</p>
-                                    <p class="p-two">干傻事噶即可</p>
+                                    <p class="p-two">{{ item['remark'] }}</p>
                                 </div>
                                 <template #reference>
-                                    20
+                                    {{ item['stockCount'] }}
                                 </template>
                             </van-popover>
 						</div>
 						<div class="unit-content">
-							<span>盒</span>
+							<span>{{ item['productUnitName'] }}</span>
 						</div>
 					</div>
 				</div>
 			</div> 
         </div>
-        <div class="btn-box">
-            <div class="btn-left">
-            <span>重置</span>
-            </div>
+        <div class="btn-box" v-show="orderMessage['status'] == 10">
             <div class="btn-center">
-            <span>保存</span>
-            </div>
-            <div class="btn-right">
-            <span>提交</span>
+                <span>审核</span>
             </div>
         </div> 
     </div>
@@ -97,6 +91,7 @@
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
+import { getStockCheckRecord } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
 import SOtime from '@/common/js/SOtime.js'
 export default {
   name: "suppliesTakeStockRecordDetails",
@@ -107,15 +102,20 @@ export default {
   data() {
     return {
       loadingShow: false,
-      overlayShow: false,
-      backlogEmptyShow: false,
-      showPopover: false
+      infoText: '加载中...',
+      showPopover: false,
+      orderId: '',
+      orderMessage: {
+        items: []
+      }
     }
   },
 
   mounted() {
     // 控制设备物理返回按键
     this.deviceReturn('/suppliesTakeStockRecord');
+    this.orderId = this.$route.query.orderId;
+    this.getStockCheckRecordEvent()
   },
 
   beforeRouteEnter(to, from, next) {
@@ -129,27 +129,27 @@ export default {
 
   computed: {
     ...mapGetters(["userInfo"]),
-     userName() {
-			  return this.userInfo['nickname']
-			},
-      userAccount() {
-				return this.userInfo['username']
-			},
-			workerId() {
-				return this.userInfo['id']
-			},
-			proName () {
-			  return this.userInfo['deptName']
-			},
-			proId() {
-				return this.userInfo['deptId']
-			},
-			depId() {
-				return this.userInfo['departmentId']
-			},
-			depName() {
-				return ''
-			}
+        userName() {
+            return this.userInfo['nickname']
+        },
+        userAccount() {
+            return this.userInfo['username']
+        },
+        workerId() {
+            return this.userInfo['id']
+        },
+        proName () {
+            return this.userInfo['deptName']
+        },
+        proId() {
+            return this.userInfo['deptId']
+        },
+        depId() {
+            return this.userInfo['departmentId']
+        },
+        depName() {
+            return ''
+        }
   },
 
   methods: {
@@ -164,49 +164,31 @@ export default {
         console.log(1);
     },
 
-    // 获取订单列表
-    queryTaskList (taskType,page,pageSize) {
+    // 查询盘点单详情
+    getStockCheckRecordEvent() {
         this.loadingShow = true;
-        this.overlayShow = true;
-        this.backlogEmptyShow = false;
-        this.completedEmptyShow = false;
-        this.isShowBacklogTaskNoMoreData = false;
-        this.isShowCompletetedTaskNoMoreData = false;
-		getAllTaskList({proId : this.proId, workerId: this.workerId,taskType,system:6,page,pageSize})
-        .then((res) => {
+        this.infoText = '加载中···';
+        getStockCheckRecord(this.orderId).then((res) => {
             this.loadingShow = false;
-            this.overlayShow = false;
-            if (res && res.data.code == 200) {
-                if (taskType == 1) {
-                    this.backlogTaskList = res.data.data.list;
-                    this.totalCount = res.data.data.total;
-                    this.fullBacklogTaskList = this.fullBacklogTaskList.concat(this.backlogTaskList);
-                    if (this.fullBacklogTaskList.length == 0) {
-                        this.backlogEmptyShow = true
-                    }
-                } else if (taskType == 2) {
-                    this.completedTaskList = res.data.data.list;
-                    this.totalCount = res.data.data.total;
-                    this.fullCompletedTaskList = this.fullCompletedTaskList.concat(this.completedTaskList);
-                    if (this.fullCompletedTaskList.length == 0) {
-                        this.completedEmptyShow = true
-                    }
-                }
+            this.infoText = '';
+            if ( res && res.data.code == 0) {
+                this.orderMessage = res.data.data;
+                this.orderMessage['checkTime'] = this.orderMessage['checkTime'] ? SOtime.time8(this.orderMessage['checkTime']) : ''
             } else {
+                this.$toast({
+                    type: 'fail',
+                    message: res.data.msg
+                })
+            }
+        })
+        .catch((err) => {
+            this.loadingShow = false;
+            this.infoText = '';
             this.$toast({
                 type: 'fail',
-                message: res.data.msg
+                message: err
             })
-            }
-      })
-      .catch((err) => {
-        this.loadingShow = false;
-        this.overlayShow = false;
-        this.$toast({
-          type: 'fail',
-          message: err
         })
-      })
     }
   }
 };
@@ -350,6 +332,7 @@ export default {
             .delivery-list-box {
                 flex: 1;
                 overflow: auto;
+                position: relative;
                 .delivery-list {
                     height: 30px;
                     display: flex;
@@ -409,6 +392,13 @@ export default {
                     };
                     .barter-content {
                     }
+                };
+                /deep/ .van-empty {
+                  position: absolute;
+                  top: 50%;
+                  left: 50%;
+                  transform: translate(-50%, -50%);
+                  width: 100%;
                 }
             }
         }
@@ -419,34 +409,8 @@ export default {
           box-sizing: border-box;
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          .btn-left {
-              width: 84px;
-              height: 44px;
-              border: 1px solid #266FFF;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              border-radius: 4px;
-              >span {
-              font-size: 12px;
-              color: #3B9DF9;
-              }
-          };
+          justify-content: center;
           .btn-center {
-              width: 100px;
-              height: 44px;
-              background: #3B9DF9;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              border-radius: 4px;
-              >span {
-              font-size: 12px;
-              color: #fff;
-              }
-          };
-          .btn-right {
               width: 116px;
               height: 44px;
               display: flex;
