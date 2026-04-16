@@ -63,7 +63,7 @@
 							</div>
 							<div class="create-delivery-date-left">
 								<span>交货日期:</span>
-								<span>{{ item.orderTime }}</span>
+								<span>{{ item.checkTime }}</span>
 							</div>
 						</div>
 						<div class="create-delivery-date delivery-address">
@@ -504,8 +504,8 @@ export default {
                 this.orderList = res.data.data.list;
                 this.totalCount = res.data.data.total;
                 this.orderList.forEach((item)=>{
-                    item.createTime = SOtime.time3(item.createTime);
-                    item.orderTime = SOtime.time8(item.orderTime);
+                    item.createTime = item.createTime ? SOtime.time3(item.createTime) : '';
+                    item.checkTime = item.checkTime ? SOtime.time8(item.checkTime) : '';
                 });
                 this.fullOrderList = this.fullOrderList.concat(this.orderList);
                 if (this.fullOrderList.length == 0) {
@@ -900,6 +900,7 @@ export default {
                     top: 20px;
                     max-height: 160px;
                     overflow: auto;
+                    z-index: 10;
                     .status-list {
                         height: 30px;
                         width: 70px;
@@ -945,6 +946,7 @@ export default {
             overflow: auto;
             padding-bottom: 10px;
             box-sizing: border-box;
+            position: relative;
             .order-list {
                 padding: 0 6px 20px 6px;
                 box-sizing: border-box;
@@ -1116,7 +1118,14 @@ export default {
               width: 100%;
               text-align: center;
               line-height: 30px
-          }
+          };
+            /deep/ .van-empty {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 100%;
+            }
         }
     }
   }

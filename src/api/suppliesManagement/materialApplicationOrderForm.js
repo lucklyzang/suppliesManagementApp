@@ -154,10 +154,10 @@ export function saleOutRevoke(data) {
 	})
 }
 
-// 送货单送达
-export function saleOutDelivery(data) {
+// 送货单送达确认
+export function saleOutDeliveryConfirm(data) {
 	return request({
-	    url: '/spd/admin-api/erp/sale-out/revoke',
+	    url: '/spd/admin-api/erp/sale-out/delivery-confirm',
 	    method: 'put',
 		params: data
 	})
@@ -204,8 +204,8 @@ export function updateSaleReturOrder(data) {
 
 // 获取评价分页
 export function getEvaluatePage(data) {
-	if (data.returnTime && Array.isArray(data.returnTime)) {
-	  data.returnTime = data.returnTime.map(function(date,index,array){
+	if (data.createTime && Array.isArray(data.createTime)) {
+	  data.createTime = data.createTime.map(function(date,index,array){
 			if (index == 0) {
 				return date + ' 00:00:00'
 			} else if (index == 1) {
@@ -214,7 +214,7 @@ export function getEvaluatePage(data) {
 		})
 	};
 	return request({
-	    url: '/spd/admin-api/erp/sale-return/page',
+	    url: '/spd/admin-api/erp/order-evaluate/page',
 	    method: 'get',
 			params: data,
 			paramsSerializer: function (params) {
@@ -230,6 +230,39 @@ export function createStockCheck(data) {
 	    method: 'post',
 		data
 	})	
+}
+
+// 更新库存盘点单
+export function updateStockCheck(data) {
+	return request({
+	    url: '/spd/admin-api/erp/stock-check/update',
+	    method: 'put',
+		data
+	})	
+}
+
+// 更新库存盘点单状态
+export function updateStockCheckStatus(data) {
+	return request({
+		url: '/spd/admin-api/erp/stock-check/update-status',
+		method: 'put',
+		params: data,
+		paramsSerializer: function (params) {
+			return qs.stringify(params, { arrayFormat: 'repeat' })
+		}
+	})
+}
+
+// 删除库存盘点单
+export function deleteStockCheckStatus(data) {
+	return request({
+		url: '/spd/admin-api/erp/stock-check/delete',
+		method: 'put',
+		params: data,
+		paramsSerializer: function (params) {
+			return qs.stringify(params, { arrayFormat: 'repeat' })
+		}
+	})
 }
 
 // 获得产品盘点单记录分页

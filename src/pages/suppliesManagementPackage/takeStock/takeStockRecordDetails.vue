@@ -68,7 +68,9 @@
                                     <p class="p-two">{{ item['remark'] }}</p>
                                 </div>
                                 <template #reference>
-                                    {{ item['stockCount'] }}
+                                    <span :class="{'underSpan': item['stockCount'] < item['count'],'moreSpan': item['stockCount'] > item['count']}">
+                                        {{ item['stockCount'] }}
+                                    </span>
                                 </template>
                             </van-popover>
 						</div>
@@ -80,10 +82,35 @@
 			</div> 
         </div>
         <div class="btn-box" v-show="orderMessage['status'] == 10">
-            <div class="btn-center">
+            <div class="btn-center" @click.stop="auditEvent(item,index)">
                 <span>审核</span>
             </div>
         </div> 
+    </div>
+    <!-- 审核记录弹框 -->
+    <div class="revocation-delivery-order-modal">
+        <van-dialog v-model="auditModalShow" :showConfirmButton="false">
+            <div class="evaluate-model-content">
+                <div class="evaluate-modal-top">
+                    <span>审核</span>
+                    <van-icon name="cross" color="#101010" size="20" @click="auditModalShow = false" />
+                </div>
+                <div class="evaluate-modal-center">
+                  <van-icon name="checked" size="40" color="#289E8E" />
+                  <div class="modal-center-content">请确认审核该记录?</div>
+                </div>
+                <div class="evaluate-modal-bottom">
+                    <div class="evaluate-modal-btn">
+                        <div class="cancel-left" @click.stop="auditModalShowNoPassEvent">
+                            <span>不通过</span>
+                        </div>
+                        <div class="submit-right" @click.stop="auditModalShowPassEvent">
+                            <span>通过</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </van-dialog>
     </div>
   </div>
 </template>
@@ -91,7 +118,7 @@
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
-import { getStockCheckRecord } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
+import { getStockCheckRecord, updateStockCheckStatus } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
 import SOtime from '@/common/js/SOtime.js'
 export default {
   name: "suppliesTakeStockRecordDetails",
@@ -104,6 +131,7 @@ export default {
       loadingShow: false,
       infoText: '加载中...',
       showPopover: false,
+      auditModalShow: false,
       orderId: '',
       orderMessage: {
         items: []
@@ -164,6 +192,64 @@ export default {
         console.log(1);
     },
 
+    // 审核盘点单事件
+    auditEvent(item,index) {
+        this.auditModalShow = true;
+    },
+
+    // 审核记录弹框不通过事件
+    auditModalShowNoPassEvent () {
+      this.auditModalShow = false;
+      this.updateStockCheckStatusEvent(30)
+    },
+
+    // 审核记录弹框通过事件
+    auditModalShowPassEvent () {
+      this.auditModalShow = false;
+      this.updateStockCheckStatusEvent(20)
+    },
+
+    // 更新盘点单状态(20-通过30-未通过)
+    updateStockCheckStatusEvent(status) {
+      this.loadingShow = true;
+      this.infoText = '审核中···';
+      updateStockCheckStatus({
+        ids: [this.orderId],
+        status
+      }).then((res) => {
+          this.loadingShow = false;
+          this.infoText = '';
+          if ( res && res.data.code == 0) {
+            if (res.data.data) {
+                this.onClickLeft();
+                this.$toast({
+                    type: 'success',
+                    message: '审核成功'
+                })
+            } else {
+              this.$toast({
+                type: 'fail',
+                message: res.data.msg
+              })
+            }
+          } else {
+            this.$toast({
+              type: 'fail',
+              message: res.data.msg
+            })
+          }
+      })
+      .catch((err) => {
+        this.loadingShow = false;
+        this.infoText = '';
+        this.$toast({
+          type: 'fail',
+          message: err
+        })
+      })
+    },
+
+
     // 查询盘点单详情
     getStockCheckRecordEvent() {
         this.loadingShow = true;
@@ -199,6 +285,85 @@ export default {
 @import "~@/common/stylus/modifyUi.less";
 .page-box {
   .content-wrapper();
+  .revocation-delivery-order-modal {
+      /deep/ .van-dialog {
+          border-top-left-radius: 4px !important;
+          border-top-right-radius: 4px !important;
+          border-bottom-left-radius: 4px !important;
+          border-bottom-right-radius: 4px !important;
+          .van-dialog__content {
+              .evaluate-model-content {
+                  width: 100%;
+                  .evaluate-modal-top {
+                      height: 37px;
+                      display: flex;
+                      align-items: center;
+                      justify-content: space-between;
+                      padding: 0 10px;
+                      box-sizing: border-box;
+                      background: #F6F9FB;
+                      >span {
+                          font-size: 14px;
+                          color: #101010;
+                      }
+                  };
+                  .evaluate-modal-center {
+                      padding: 25px 40px;
+                      box-sizing: border-box;
+                      display: flex;
+                      flex-direction: column;
+                      justify-content: center;
+                      align-items: center;
+                     .modal-center-content {
+                       margin-top: 30px;
+                       font-size: 20px;
+                       font-weight: bold;
+                       color: #101010;
+                     }
+                  };
+                  .evaluate-modal-bottom {
+                      padding: 20px 40px;
+                      box-sizing: border-box;
+                      display: flex;
+                      align-items: center;
+                      .evaluate-modal-btn {
+                          width: 100%;
+                          display: flex;
+                          align-items: center;
+                          justify-content: space-between;
+                          .cancel-left {
+                              width: 100px;
+                              height: 35px;
+                              display: flex;
+                              align-items: center;
+                              justify-content: center;
+                              border: 1px solid #3B9DF9;
+                              box-sizing: border-box;
+                              border-radius: 8px;
+                              >span {
+                                  font-size: 14px;
+                                  color: #3B9DF9;
+                              }
+                          };
+                          .submit-right {
+                              width: 100px;
+                              height: 35px;
+                              display: flex;
+                              align-items: center;
+                              justify-content: center;
+                              background: #3B9DF9;
+                              border-radius: 8px;
+                              >span {
+                                  font-size: 14px;
+                                  color: #fff
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+      }
+  };
   .nav {
     width: 100%;
     background: #3B9DF9;
@@ -352,6 +517,12 @@ export default {
                             .no-wrap;
                             font-size: 12px;
                             color: #101010;
+                        };
+                        .moreSpan {
+                            color: #11D183 !important
+                        };
+                        .underSpan {
+                            color: #E86F50 !important
                         }
                     };
                     .product-content {

@@ -24,10 +24,10 @@
               <div class="take-stock-warehouse-text">
                 盘点库房:
               </div>
-              <div class="take-stock-warehouse-content" ref="myElement" @click="warehouseListShow = !warehouseListShow">
+              <div class="take-stock-warehouse-content" ref="myElement">
                 <div class="warehouse-message" >
                   <span>{{ currentWarehouseName }}</span>
-						      <van-icon :name="warehouseListShow ? 'arrow-down' : 'arrow-up'" color="#101010" size="16" />
+						      <!-- <van-icon :name="warehouseListShow ? 'arrow-down' : 'arrow-up'" color="#101010" size="16" /> -->
                 </div>
                 <div class="warehouse-list-box" v-if="warehouseListShow">
                   <div class="warehouse-list" v-for="(item,index) in shipmentWarehouseList" @click.stop="warehouseListtEvent(item,index)" :key="index">
@@ -65,7 +65,7 @@
             </div>
             <div class="delivery-list-box">
               <van-empty description="暂无产品数据" v-show="orderMessage['items'].length == 0" />
-              <div class="delivery-list" @click="takeStockProductClickEvent" v-for="(item) in orderMessage['items']" :key="item.id">
+              <div class="delivery-list" @click="takeStockProductClickEvent(item,index)" v-for="(item,index) in orderMessage['items']" :key="item.id">
                 <div class="product-content">
                   <span>{{ item['productName'] }}</span>
                 </div>
@@ -73,24 +73,10 @@
                   <span>{{ item['standard'] ? item['standard'] : '无'}}</span>
                 </div>
                 <div class="deliver-number-content">
-                  <span>{{ item['count'] }}</span>
+                  <span>{{ item['stockCount'] }}</span>
                 </div>
-                <div class="sales-return-content">
-                    <van-popover
-                      v-model="showPopover"
-                      placement="top"
-                      trigger="click"
-                      @open="showPopoverEvent"
-                      get-container=".sales-return-content"
-                      >
-                      <div>
-                          <p class="p-one">盈亏说明</p>
-                          <p class="p-two">{{ item['remark'] }}</p>
-                      </div>
-                      <template #reference>
-                          {{ item['stockCount'] }}
-                      </template>
-                  </van-popover>
+                <div class="sales-return-content" :class="{'underSpan': item['actualCount'] < item['stockCount'],'moreSpan': item['actualCount'] > item['stockCount']}">
+                  {{ item['actualCount'] }}
                 </div>
                 <div class="unit-content">
                   <span>{{ item['productUnitName'] }}</span>
@@ -99,10 +85,10 @@
             </div>
           </div>
           <div class="btn-box">
-              <div class="btn-left">
+              <div class="btn-left" @click="resetDataEvent">
                 <span>重置</span>
               </div>
-              <div class="btn-center">
+              <div class="btn-center" @click="saveDataEvent">
                 <span>保存</span>
               </div>
               <div class="btn-right">
@@ -118,15 +104,15 @@
                 <div class="evaluate-modal-top">
                   <div class="product-name">
                     <span>产品:</span>
-                    <span>棉签</span>
+                    <span>{{ stockDialogMessage['productName'] }}</span>
                   </div>
                   <div class="specification-name">
                     <span>规格型号:</span>
-                    <span>棉签</span>
+                    <span>{{ stockDialogMessage['standard'] ? stockDialogMessage['standard'] : '无'}}</span>
                   </div>
                   <div class="unit-name">
                     <span>单位:</span>
-                    <span>棉签</span>
+                    <span>{{ stockDialogMessage['unitName'] }}</span>
                   </div>
                 </div>
                 <div class="evaluate-modal-center">
@@ -135,7 +121,7 @@
                           账面数:
                         </div>
                         <div class="evaluate-content">
-                          100
+                          {{ stockDialogMessage['stockCount'] }}
                         </div>
                     </div>
                     <div class="evaluate-box contact-information">
@@ -144,7 +130,8 @@
                         </div>
                         <div class="evaluate-content">
                             <van-field
-                                v-model="practicalTakeStockValue"
+                                type="digit"
+                                v-model="stockDialogMessage['actualCount']"
                                 placeholder="请输入"
                             />
                         </div>
@@ -154,10 +141,10 @@
                             <span>盈亏说明:</span>
                         </div>
                         <div class="evaluate-content">
-                             <van-field
-                                v-model="breakEvenexplainValue"
-                                placeholder="请输入"
-                            />
+                            <van-field
+                              v-model="stockDialogMessage['remark']"
+                              placeholder="请输入"
+                          />
                         </div>
                     </div>
                 </div>
@@ -180,8 +167,9 @@
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
-import { getwarehouseInfo, getStockCheckRecord } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
+import { getwarehouseInfo, getStockCheckRecord, updateStockCheck } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
 import SOtime from '@/common/js/SOtime.js'
+import _ from 'lodash'
 export default {
   name: "suppliesEditTakeStock",
   components: {
@@ -203,7 +191,9 @@ export default {
       orderId: '',
       orderMessage: {
         items: []
-      }
+      },
+      takeStockIndex: '',
+      stockDialogMessage: {}
     }
   },
 
@@ -262,7 +252,12 @@ export default {
 
     // popover打开事件
     showPopoverEvent () {
-        console.log(1);
+      console.log(1);
+    },
+
+    // 重置数据事件
+    resetDataEvent () {
+     this.parallelFunction()
     },
 
     // 库房下拉框点击事件
@@ -281,11 +276,16 @@ export default {
     // 盘点弹框提交事件
     takeStockModalSubmitEvent () {
       this.takeStockModalShow = false;
+      this.$set(this.orderMessage['items'][this.takeStockIndex],'actualCount',this.stockDialogMessage['actualCount']);
+      this.$set(this.orderMessage['items'][this.takeStockIndex],'remark',this.stockDialogMessage['remark']);
     },
 
     // 盘点产品点击事件
-    takeStockProductClickEvent () {
+    takeStockProductClickEvent (item,index) {
       this.takeStockModalShow = true;
+      this.stockDialogMessage = {};
+      this.takeStockIndex = index;
+      this.stockDialogMessage = _.cloneDeep(item)
     },
 
     // 查询仓库信息
@@ -354,8 +354,8 @@ export default {
                   this.orderMessage = item2;
                   this.orderMessage['checkTime'] = this.orderMessage['checkTime'] ? SOtime.time8(this.orderMessage['checkTime']) : '';
                   // 回显库房信息
-                  this.currentWarehouseName =  this.orderMessage['warehouseName'];
-                  this.currentShipmentWarehouseValue = this.orderMessage['warehouseId']
+                  this.currentShipmentWarehouseValue = this.orderMessage['warehouseId'];
+                  this.currentWarehouseName = this.orderMessage['warehouseName'] ? this.orderMessage['warehouseName'] : this.shipmentWarehouseList.filter((item) => { return item.id == this.currentShipmentWarehouseValue})[0]['name'];
                   this.currentWarehouseIndex = this.shipmentWarehouseList.findIndex((item) => { return item.id == this.currentShipmentWarehouseValue});
                 }
             }
@@ -368,6 +368,73 @@ export default {
                 message: err
             })
         })
+    },
+
+    // 保存数据事件(待审核)
+    saveDataEvent () {
+      // 只需要提交账面数与实盘数不一致的产品
+      let temporaryList = this.orderMessage['items'].filter((item) => { return Number(item['stockCount']) !== Number(item['actualCount'])});
+      if (temporaryList.length == 0) {
+        this.$toast({
+          type: 'fail',
+          message: '账面数与实盘数一致,无需盘点'
+        });
+        return
+      };
+      let needItems = [];
+      for (let item of temporaryList) {
+        needItems.push({
+          warehouseId: item['warehouseId'], //仓库编号
+          productId: item['productId'], // 产品编号
+          productPrice: item['salePrice'], // 产品单价
+          stockCount: Number(item['stockCount']), //账面数量
+          actualCount: Number(item['actualCount']), //实际数量
+          count: Math.floor(Number(item['actualCount']) - Number(item['stockCount'])), // 盈亏数量
+          remark: item['remark']// 备注
+        })
+      };
+      this.updateStockCheckEvent(needItems)
+    },
+
+    // 更新盘点单
+    updateStockCheckEvent(items) {
+      this.loadingShow = true;
+      this.infoText = '保存中···';
+      updateStockCheck({
+        checkTime: new Date(this.orderMessage['checkTime']).getTime(), // 出库时间
+        warehouseId: this.currentShipmentWarehouseValue, // 仓库编号
+        items, //出库项列表
+        id: this.orderId //盘点单号
+      }).then((res) => {
+          this.loadingShow = false;
+          this.infoText = '';
+          if ( res && res.data.code == 0) {
+            if (res.data.data) {
+              this.$toast({
+                type: 'success',
+                message: '保存成功'
+              })
+            } else {
+              this.$toast({
+                type: 'fail',
+                message: res.data.msg
+              })
+            }
+          } else {
+            this.$toast({
+              type: 'fail',
+              message: res.data.msg
+            })
+          }
+      })
+      .catch((err) => {
+        this.loadingShow = false;
+        this.infoText = '';
+        this.$toast({
+          type: 'fail',
+          message: err
+        })
+      })
     }
   }
 };
@@ -451,6 +518,9 @@ export default {
                                width: 70px;
                                text-align: right;
                                margin-right: 4px;
+                              display: flex;
+                              justify-content: flex-end;
+                              align-items: center;
                                 >span {
                                    font-size: 14px;
                                    color: #101010;
@@ -617,6 +687,8 @@ export default {
                   margin-right: 4px;
                   font-size: 12px;
                   color: #BBBBBB;
+                  flex: 1;
+                  .no-wrap()
                 }
               };
               .warehouse-list-box {
@@ -626,6 +698,7 @@ export default {
                 left: 0;
                 top: 34px;
                 max-height: 160px;
+                z-index: 10;
                 overflow: auto;
                 .warehouse-list {
                   height: 30px;
@@ -729,6 +802,12 @@ export default {
                     .sales-return-content {
                     };
                     .barter-content {
+                    };
+                    .moreSpan {
+                      color: #11D183 !important
+                    };
+                    .underSpan {
+                      color: #E86F50 !important
                     }
                 };
                 /deep/ .van-empty {

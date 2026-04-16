@@ -79,7 +79,7 @@
 					</div>
 					<div class="create-delivery-date-left">
 						<span>交货日期:</span>
-						<span>{{ orderMessage['requestTime'] }}</span>
+						<span>{{ orderMessage['checkTime'] }}</span>
 					</div>
 				</div>
 				<div class="create-delivery-date">
@@ -293,7 +293,7 @@ export default {
                     this.materialList = this.orderMessage['items'];
                     this.allChooseProductPrice = this.orderMessage['totalProductPrice'];
                     this.orderMessage['createTime'] = SOtime.time3(this.orderMessage['createTime']);
-                    this.orderMessage['requestTime'] = this.orderMessage['requestTime'] ? SOtime.time8(this.orderMessage['requestTime']) : '';
+                    this.orderMessage['checkTime'] = this.orderMessage['checkTime'] ? SOtime.time8(this.orderMessage['checkTime']) : '';
                     this.orderMessage['deliveryTime'] = this.orderMessage['deliveryTime'] ? SOtime.time3(this.orderMessage['deliveryTime']) : '';
                     this.orderMessage['outTime'] = this.orderMessage['outTime'] ? SOtime.time3(this.orderMessage['outTime']) : '';
                 }

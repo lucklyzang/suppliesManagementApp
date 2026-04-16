@@ -64,7 +64,7 @@
 							</div>
 							<div class="create-delivery-date-left">
 								<span>交货日期:</span>
-								<span>{{ item.requestTime }}</span>
+								<span>{{ item.checkTime }}</span>
 							</div>
 						</div>
 						<div class="create-delivery-date delivery-address">
@@ -109,7 +109,7 @@
 						</div>
 					</div>
 				</div>
-                <van-empty description="您还没有相关订单" v-show="isShowNoData" />
+                <van-empty description="您还没有相关送货单" v-show="isShowNoData" />
                 <div v-show="bottomLoadingShow" class="bottom-loading-show">
                     加载中...
                 </div>
@@ -606,7 +606,7 @@ export default {
                 this.totalCount = res.data.data.total;
                 this.orderList.forEach((item)=>{
                     item.createTime = SOtime.time3(item.createTime);
-                    item.requestTime = item.requestTime ? SOtime.time8(item.requestTime) : '';
+                    item.checkTime = item.checkTime ? SOtime.time8(item.checkTime) : '';
                 });
                 this.fullOrderList = this.fullOrderList.concat(this.orderList);
                 if (this.fullOrderList.length == 0) {
@@ -809,7 +809,7 @@ export default {
         this.currentOrderId = item.id;
         this.currentOrderIndex = index;
         this.deliverGoodsValue = '';
-        this.currentdeliveryPerson = '';
+        this.currentdeliveryPerson = '请选择';
         this.contactInformationValue = '';
         this.deliverGoodsModalShow = true;
     },
@@ -953,6 +953,9 @@ export default {
                                width: 70px;
                                text-align: right;
                                margin-right: 4px;
+                               display: flex;
+                               justify-content: flex-end;
+                               align-items: center;
                                 >span {
                                    font-size: 14px;
                                    color: #101010;
@@ -1163,6 +1166,7 @@ export default {
                     top: 20px;
                     max-height: 160px;
                     overflow: auto;
+                    z-index: 10;
                     .status-list {
                         height: 30px;
                         width: 70px;
@@ -1208,6 +1212,7 @@ export default {
             overflow: auto;
             padding-bottom: 10px;
             box-sizing: border-box;
+            position: relative;
             .order-list {
                 padding: 0 6px 20px 6px;
                 box-sizing: border-box;
@@ -1399,7 +1404,14 @@ export default {
               width: 100%;
               text-align: center;
               line-height: 30px
-          }
+           };
+           /deep/ .van-empty {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 100%;
+            }
         }
     }
   }

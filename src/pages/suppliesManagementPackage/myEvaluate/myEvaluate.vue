@@ -24,21 +24,21 @@
 				<div class="order-list" v-for="(item,index) in orderList" :key="index" @click="enterOrderDetailsEvent(item,index)">
 					<div class="evaluate-date">
                         <div class="evaluate-date-left">
-                            {{ item.orderType }}
+                            中心医院
                         </div>
                         <div class="evaluate-date-right">
                             <span>评价日期:</span>
-                            <span>{{ item.deliveryDate }}</span>
+                            <span>{{ item.createTime }}</span>
                         </div>
 					</div>
 					<div class="evaluate-message">
                         <div class="evaluate-value">
                             <span>评分</span>
-                            <van-rate v-model="item.value" color="#F2A15F" readonly />
+                            <van-rate v-model="item.score" :count="item.score" color="#F2A15F" readonly />
                         </div>
                         <div class="related-order">
                             <span>关联订单:</span>
-                            <span>{{ item.deliveryDate }}</span>
+                            <span>{{ item.orderNo }}</span>
                         </div>
 					</div>
 					<div class="evaluate-content">
@@ -46,16 +46,16 @@
                            评价:
                         </div>
                         <div class="evaluate-content-right">
-                            进行安理会的金卡伦敦黄金卡的哈考虑的话
+                            {{ item.content }}
                         </div>
 					</div>
 				</div>
+                <van-empty description="您还没有相关评价" v-show="isShowNoData" />
+                <div v-show="bottomLoadingShow" class="bottom-loading-show">
+                    加载中...
+                </div>
+                <div class="no-more-data" v-show="isShowNoMoreData && !loadingShow && !isShowNoData">没有更多数据了!</div>
 			</div>
-            <van-empty description="您还没有相关订单" v-show="isShowNoData" />
-            <div v-show="bottomLoadingShow" class="bottom-loading-show">
-                加载中...
-            </div>
-            <div class="no-more-data" v-show="isShowNoMoreData && !loadingShow && !isShowNoData">没有更多数据了!</div>
         </div>
     </div>
     <!-- 日历 --> 
@@ -106,9 +106,7 @@ export default {
     this.getEvaluatePageEvent({
         pageNo: this.currentPageNum,
         pageSize: this.pageSize,
-        status: '',
-        returnTime: [`${this.startDate}`,`${this.endDate}`],
-        creator: ''// this.userAccount
+        createTime: [`${this.startDate}`,`${this.endDate}`]
     },true)
   },
 
@@ -159,9 +157,7 @@ export default {
         this.getEvaluatePageEvent({
             pageNo: this.currentPageNum,
             pageSize: this.pageSize,
-            status: '',
-            returnTime: [`${this.startDate}`,`${this.endDate}`],
-            creator: '' // this.userAccount
+            createTime: [`${this.startDate}`,`${this.endDate}`]
         },true)
     },
     
@@ -215,9 +211,7 @@ export default {
             this.getEvaluatePageEvent({
                 pageNo: this.currentPageNum,
                 pageSize: this.pageSize,
-                status: '',
-                returnTime: [`${this.startDate}`,`${this.endDate}`],
-                creator: '' // this.userAccount
+                createTime: [`${this.startDate}`,`${this.endDate}`]
             },false)
           };
           this.eventTime = 0;
@@ -245,8 +239,7 @@ export default {
                 this.orderList = res.data.data.list;
                 this.totalCount = res.data.data.total;
                 this.orderList.forEach((item)=>{
-                    item.createTime = SOtime.time3(item.createTime);
-                    item.returnTime = SOtime.time8(item.returnTime);
+                    item.createTime = item.createTime ? SOtime.time8(item.createTime) : '';
                 });
                 this.fullOrderList = this.fullOrderList.concat(this.orderList);
                 if (this.fullOrderList.length == 0) {
@@ -371,6 +364,7 @@ export default {
             overflow: auto;
             padding-bottom: 10px;
             box-sizing: border-box;
+            position: relative;
             .order-list {
                 padding: 20px 8px;
                 box-sizing: border-box;
@@ -423,6 +417,7 @@ export default {
                     .related-order {
                         flex: 1;
                         display: flex;
+                        align-items: center;
                         width: 0;
                         >span {
                             font-size: 12px;
@@ -451,20 +446,27 @@ export default {
                     }
                 }
             }
-        };
-        .bottom-loading-show {
-            font-size: 12px;
-            color: #BEC7D1;
-            width: 100%;
-            text-align: center;
-            line-height: 30px
-        };
-        .no-more-data {
-            font-size: 12px;
-            color: #BEC7D1;
-            width: 100%;
-            text-align: center;
-            line-height: 30px
+            .bottom-loading-show {
+                font-size: 12px;
+                color: #BEC7D1;
+                width: 100%;
+                text-align: center;
+                line-height: 30px
+            };
+            .no-more-data {
+                font-size: 12px;
+                color: #BEC7D1;
+                width: 100%;
+                text-align: center;
+                line-height: 30px
+            };
+            /deep/ .van-empty {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 100%;
+            }
         }
     }
   }

@@ -46,7 +46,7 @@
 							</div>
 							<div class="create-delivery-date-left">
 								<span>盘点库房:</span>
-								<span></span>
+								<span>{{ item['warehouseName'] }}</span>
 							</div>
 						</div>
 						<div class="product-list remark-box">
@@ -68,7 +68,7 @@
 						</div>
 					</div>
 				</div>
-                <van-empty description="您还没有相关订单" v-show="isShowNoData" />
+                <van-empty description="您还没有相关盘点记录" v-show="isShowNoData" />
                 <div v-show="bottomLoadingShow" class="bottom-loading-show">
                     加载中...
                 </div>
@@ -86,7 +86,7 @@
                 </div>
                 <div class="evaluate-modal-center">
                   <van-icon name="checked" size="40" color="#289E8E" />
-                  <div class="modal-center-content">请确认审核该记录</div>
+                  <div class="modal-center-content">请确认审核该记录?</div>
                 </div>
                 <div class="evaluate-modal-bottom">
                     <div class="evaluate-modal-btn">
@@ -101,6 +101,31 @@
             </div>
         </van-dialog>
     </div>
+    <!-- 确认删除弹框 -->
+    <div class="delete-order-modal">
+        <van-dialog v-model="deleteOrderModalShow" :showConfirmButton="false">
+            <div class="evaluate-model-content">
+                <div class="evaluate-modal-top">
+                    <span></span>
+                    <van-icon name="cross" color="#101010" size="20" @click="deleteOrderModalShow = false" />
+                </div>
+                <div class="evaluate-modal-center">
+                  <img :src="revocationInfoImage"  />
+                  <div class="modal-center-content">确定要删除吗吗？</div>
+                </div>
+                <div class="evaluate-modal-bottom">
+                    <div class="evaluate-modal-btn">
+                        <div class="cancel-left" @click.stop="deleteOrderModalShowCancelEvent">
+                            <span>取消</span>
+                        </div>
+                        <div class="submit-right" @click.stop="deleteOrderModalShowSureEvent">
+                            <span>确定</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </van-dialog>
+    </div>
     <!-- 日历 --> 
     <van-calendar v-model="showCalendar" :min-date="minDate" :max-date="maxDate" :default-date="defaultDateArr" type="range" @confirm="calendarConfirm" />
   </div>
@@ -109,7 +134,7 @@
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
-import { getStockCheckRecordsPage } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
+import { getStockCheckRecordsPage, updateStockCheckStatus, deleteStockCheckStatus } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
 import SOtime from '@/common/js/SOtime.js'
 export default {
   name: "suppliesTakeStockRecord",
@@ -137,6 +162,9 @@ export default {
       minDate: new Date('2025-03-16'),
       maxDate: new Date('2027-03-16'),
       refuseReasonValue: '',
+      currentOrderIndex: '',
+      currentOrderId: '',
+      deleteOrderModalShow: false,
       eventTime: 0,
       orderList: [],
       fullOrderList: []
@@ -156,7 +184,7 @@ export default {
         pageSize: this.pageSize,
         status: '',
         checkTime: [`${this.startDate}`,`${this.endDate}`],
-        creator: ''// this.userAccount
+        creator:  '' // this.userAccount
     },true)
   },
 
@@ -295,6 +323,89 @@ export default {
         })
     },
 
+    // 更新盘点单状态(20-通过30-未通过)
+    updateStockCheckStatusEvent(status) {
+      this.loadingShow = true;
+      this.infoText = '审核中···';
+      updateStockCheckStatus({
+        ids: [this.currentOrderId],
+        status
+      }).then((res) => {
+          this.loadingShow = false;
+          this.infoText = '';
+          if ( res && res.data.code == 0) {
+            if (res.data.data) {
+                this.fullOrderList.forEach((item,index) => {
+                    if (item.id == this.currentOrderId) {
+                        item.status = status
+                    }
+                });
+                this.$toast({
+                    type: 'success',
+                    message: '审核成功'
+                })
+            } else {
+              this.$toast({
+                type: 'fail',
+                message: res.data.msg
+              })
+            }
+          } else {
+            this.$toast({
+              type: 'fail',
+              message: res.data.msg
+            })
+          }
+      })
+      .catch((err) => {
+        this.loadingShow = false;
+        this.infoText = '';
+        this.$toast({
+          type: 'fail',
+          message: err
+        })
+      })
+    },
+
+    // 删除库存盘点单
+    deleteStockCheckStatusEvent() {
+      this.loadingShow = true;
+      this.infoText = '审核中···';
+      deleteStockCheckStatus({
+        ids: [this.currentOrderId],
+      }).then((res) => {
+          this.loadingShow = false;
+          this.infoText = '';
+          if ( res && res.data.code == 0) {
+            if (res.data.data) {
+                this.fullOrderList.splice(this.currentOrderIndex,1);
+                this.$toast({
+                    type: 'success',
+                    message: '删除成功'
+                })
+            } else {
+              this.$toast({
+                type: 'fail',
+                message: res.data.msg
+              })
+            }
+          } else {
+            this.$toast({
+              type: 'fail',
+              message: res.data.msg
+            })
+          }
+      })
+      .catch((err) => {
+        this.loadingShow = false;
+        this.infoText = '';
+        this.$toast({
+          type: 'fail',
+          message: err
+        })
+      })
+    },
+
     //任务状态转换
     stateTransfer (num) {
         switch(num) {
@@ -304,7 +415,7 @@ export default {
             case 20:
                 return '已通过'
                 break;
-            case 2:
+            case 30:
                 return '未通过'
                 break;
         } 
@@ -313,11 +424,24 @@ export default {
     // 审核记录弹框不通过事件
     auditModalShowNoPassEvent () {
       this.auditModalShow = false;
+      this.updateStockCheckStatusEvent(30)
     },
 
     // 审核记录弹框通过事件
     auditModalShowPassEvent () {
-      this.auditModalShow = false
+      this.auditModalShow = false;
+      this.updateStockCheckStatusEvent(20)
+    },
+
+    // 确认删除弹框取消事件
+    deleteOrderModalShowCancelEvent () {
+        this.deleteOrderModalShow = false
+    },
+
+    // 确认删除弹框确认事件
+    deleteOrderModalShowSureEvent () {
+        this.deleteOrderModalShow = false;
+        this.deleteStockCheckStatusEvent()
     },
 
     // 进入盘点单详情事件
@@ -336,13 +460,12 @@ export default {
         this.startDate = SOtime.time8(new Date(e[0]).getTime());
         this.endDate = SOtime.time8(new Date(e[e.length-1]).getTime());
         this.currentPageNum = 1;
-        this.getPlanOrderPageEvent({
+        this.getStockCheckRecordsPageEvent({
             pageNo: this.currentPageNum,
             pageSize: this.pageSize,
             status: '',
-            statusList: this.currentStatusValue === '' ? this.needQueryStatusList : [this.currentStatusValue],
-            orderTime: [`${this.startDate}`,`${this.endDate}`],
-            creator: '' // this.userAccount
+            checkTime: [`${this.startDate}`,`${this.endDate}`],
+            creator: '' //this.userAccount
         },true)
     },
     
@@ -375,17 +498,26 @@ export default {
     
     // 删除盘点单事件
     deleteOrderEvent(item,index) {
-        this.revocationDeliveryOrderModalShow = true;
+        this.currentOrderIndex = index;
+        this.currentOrderId = item['id'];
+        this.deleteOrderModalShow = true;
     },
     
 
-    // 编辑盘点单事件k
+    // 编辑盘点单事件
     editEvent(item,index) {
-        this.$router.push({path: '/suppliesEditTakeStock'})
+        this.$router.push({
+            path: '/suppliesEditTakeStock', 
+            query: {
+                orderId: item.id
+            }
+        })
     },
 
     // 审核盘点单事件
     auditEvent(item,index) {
+        this.currentOrderIndex = index;
+        this.currentOrderId = item['id'];
         this.auditModalShow = true;
     }
   }
@@ -476,6 +608,98 @@ export default {
           }
       }
   };
+  .delete-order-modal {
+      /deep/ .van-dialog {
+          border-top-left-radius: 4px !important;
+          border-top-right-radius: 4px !important;
+          border-bottom-left-radius: 4px !important;
+          border-bottom-right-radius: 4px !important;
+          .van-dialog__content {
+              .evaluate-model-content {
+                  width: 100%;
+                  .evaluate-modal-top {
+                      height: 37px;
+                      display: flex;
+                      align-items: center;
+                      justify-content: space-between;
+                      padding: 0 10px;
+                      box-sizing: border-box;
+                      background: #F6F9FB;
+                      >span {
+                          font-size: 14px;
+                          color: #101010;
+                      }
+                  };
+                  .evaluate-modal-center {
+                      padding: 20px 10px;
+                      box-sizing: border-box;
+                      display: flex;
+                      flex-direction: column;
+                      justify-content: center;
+                      align-items: center;
+                      >img {
+                        width: 70px;
+                        height: 70px;
+                      };
+                     .modal-center-content {
+                       margin: 20px 0;
+                       font-size: 14px;
+                       color: #101010;
+                     };
+                     .modal-center-info {
+                        >span {
+                           font-size: 12px;
+                           color: #989999;
+                           &:nth-child(2) {
+                              margin-left: 4px;
+                              color: #02e902; 
+                           } 
+                        }
+                     }
+                  };
+                  .evaluate-modal-bottom {
+                      padding: 15px 70px;
+                      box-sizing: border-box;
+                      display: flex;
+                      align-items: center;
+                      .evaluate-modal-btn {
+                          width: 100%;
+                          display: flex;
+                          align-items: center;
+                          justify-content: space-between;
+                          .cancel-left {
+                              width: 74px;
+                              height: 28px;
+                              display: flex;
+                              align-items: center;
+                              justify-content: center;
+                              border: 1px solid #BBBBBB;
+                              box-sizing: border-box;
+                              border-radius: 5px;
+                              >span {
+                                  font-size: 12px;
+                                  color: #BBBBBB;
+                              }
+                          };
+                          .submit-right {
+                              width: 74px;
+                              height: 28px;
+                              display: flex;
+                              align-items: center;
+                              justify-content: center;
+                              background: #3B9DF9;
+                              border-radius: 5px;
+                              >span {
+                                  font-size: 12px;
+                                  color: #fff
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+      }
+  };
   .nav {
     width: 100%;
     background: #3B9DF9;
@@ -552,6 +776,7 @@ export default {
             overflow: auto;
             padding-bottom: 10px;
             box-sizing: border-box;
+            position: relative;
             .order-list {
                 padding: 0 6px 20px 6px;
                 box-sizing: border-box;
@@ -596,7 +821,7 @@ export default {
                     };
                     .stayAuditStyle {
                         background: rgba(251,229,223,1) !important;
-                        color: #03EB7D61 !important;
+                        color: #EB7D61 !important;
                     };
                     .underAuditStyle {
                         background: rgba(59,157,249,0.21) !important;
@@ -748,7 +973,14 @@ export default {
               width: 100%;
               text-align: center;
               line-height: 30px
-          }
+          };
+          /deep/ .van-empty {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            }
         }
     }
   }

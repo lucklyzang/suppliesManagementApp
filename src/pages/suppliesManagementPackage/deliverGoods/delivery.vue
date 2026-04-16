@@ -88,7 +88,7 @@ import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
 import ElectronicSignature from '@/components/ElectronicSignature'
 import { compress, base64ImgtoFile } from "@/common/js/utils";
-import { saleOutDelivery } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
+import { saleOutDeliveryConfirm } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
 export default {
   name: "suppliesDelivery",
   components: {
@@ -149,7 +149,7 @@ export default {
     ...mapMutations(['changeCurrentElectronicSignature']),
 
     onClickLeft () {
-        this.$router.push({path: '/suppliesDeliverGoodsList'})
+      this.$router.push({path: '/suppliesDeliverGoodsList'})
     },
 
     // 图片上传预览
@@ -280,15 +280,27 @@ export default {
       this.$refs.contentTop.style.zIndex = 0;
       this.loadinText = '上传中,请稍等···';
       this.showLoadingHint = true;
-      saleOutDelivery({
-        taskId: this.taskId,
-        imgType: 0,
-        imgOrsign: this.currentElectronicSignature
+      saleOutDeliveryConfirm({
+        id: this.orderId,
+        deliveryImages: this.resultImgList, // 送达图片列表
+        signatureImage: this.currentElectronicSignature //签字图片
       }).then((res) => {
           this.showLoadingHint = false;
           this.loadinText = '';
-          if (res && res.data.code == 200) {
-            this.changeCurrentElectronicSignature({DtMsg: null});
+          if (res && res.data.code == 0) {
+            if (res.data.data) {
+              this.$toast({
+                type: 'success',
+                message: '提交成功'
+              });
+              this.changeCurrentElectronicSignature({DtMsg: null});
+              this.onClickLeft()
+            } else {
+              this.$toast({
+                type: 'fail',
+                message: `${res.data.msg}`
+              })
+            }
           } else {
             this.$toast(`${res.data.msg}`)
           }

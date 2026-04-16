@@ -83,7 +83,7 @@
 					</div>
 				</div>
 			</div>
-            <van-empty description="您还没有相关订单" v-show="isShowNoData" />
+            <van-empty description="您还没有相关退换货单" v-show="isShowNoData" />
             <div v-show="bottomLoadingShow" class="bottom-loading-show">
                 加载中...
             </div>
@@ -823,6 +823,7 @@ export default {
             overflow: auto;
             padding-bottom: 10px;
             box-sizing: border-box;
+            position: relative;
             .order-list {
                 padding: 0 6px 20px 6px;
                 box-sizing: border-box;
@@ -996,6 +997,13 @@ export default {
             width: 100%;
             text-align: center;
             line-height: 30px
+        };
+        /deep/ .van-empty {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
         }
     }
   }

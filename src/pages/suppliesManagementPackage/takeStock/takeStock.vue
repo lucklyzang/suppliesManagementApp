@@ -77,7 +77,7 @@
                 <div class="deliver-number-content">
                   <span>{{ item['count'] }}</span>
                 </div>
-                <div class="sales-return-content">
+                <div class="sales-return-content" :class="{'underSpan': item['practicalTakeStockValue'] < item['count'],'moreSpan': item['practicalTakeStockValue'] > item['count']}">
                   {{ item['practicalTakeStockValue'] }}
                 </div>
                 <div class="unit-content">
@@ -142,6 +142,7 @@
                         </div>
                         <div class="evaluate-content">
                             <van-field
+                                type="digit"
                                 v-model="stockDialogMessage['practicalTakeStockValue']"
                                 placeholder="请输入"
                             />
@@ -270,16 +271,38 @@ export default {
 
     // 重置数据事件
     resetDataEvent () {
-      this.productCodeValue = '';
-      this.currentWarehouseName = '请选择';
-      this.currentShipmentWarehouseValue = '';
-      this.currentWarehouseIndex = '';
-      this.stockProductList = [];
+      this.getStockPageEvent({
+        pageNo: this.currentPageNum,
+        pageSize: this.pageSize,
+        productId: this.productCodeValue, // 产品编号
+        warehouseId: this.currentShipmentWarehouseValue //仓库编号
+      })
     },
 
-    // 保存数据事件
+    // 保存数据事件(待审核)
     saveDataEvent () {
-      this.createStockCheckEvent();
+      // 只需要提交账面数与实盘数不一致的产品
+      let temporaryList = this.stockProductList.filter((item) => { return Number(item['count']) !== Number(item['practicalTakeStockValue'])});
+      if (temporaryList.length == 0) {
+        this.$toast({
+          type: 'fail',
+          message: '账面数与实盘数一致,无需盘点'
+        });
+        return
+      };
+      let needItems = [];
+      for (let item of temporaryList) {
+        needItems.push({
+          warehouseId: item['warehouseId'], //仓库编号
+          productId: item['productId'], // 产品编号
+          productPrice: item['salePrice'], // 产品单价
+          stockCount: Number(item['count']), //账面数量
+          actualCount: Number(item['practicalTakeStockValue']), //实际数量
+          count: Math.floor(Number(item['practicalTakeStockValue']) - Number(item['count'])), // 盈亏数量
+          remark: item['breakEvenexplainValue']// 备注
+        })
+      };
+      this.createStockCheckEvent(10,needItems)
     },
 
     // 提交数据事件
@@ -370,7 +393,7 @@ export default {
           if ( res && res.data.code == 0) {
             this.stockProductList = res.data.data.list;
             this.stockProductList.forEach(item => {
-              item['practicalTakeStockValue'] = 0;
+              item['practicalTakeStockValue'] = item['count'];
               item['breakEvenexplainValue'] = ''
             });
             this.totalCount = res.data.data.total;
@@ -397,9 +420,9 @@ export default {
       this.loadingShow = true;
       this.infoText = '提交中···';
       createStockCheck({
-        checkTime: this.takeStockDate + " 00:00:00",
-        id: this.currentShipmentWarehouseValue,
-        items,
+        checkTime: this.takeStockDate + " 00:00:00", // 出库时间
+        warehouseId: this.currentShipmentWarehouseValue, // 仓库编号
+        items, //出库项列表
         status 
       }).then((res) => {
           this.loadingShow = false;
@@ -515,6 +538,9 @@ export default {
                                width: 70px;
                                text-align: right;
                                margin-right: 4px;
+                              display: flex;
+                              justify-content: flex-end;
+                              align-items: center;
                                 >span {
                                    font-size: 14px;
                                    color: #101010;
@@ -681,6 +707,8 @@ export default {
                   margin-right: 4px;
                   font-size: 12px;
                   color: #BBBBBB;
+                  flex: 1;
+                  .no-wrap()
                 }
               };
               .warehouse-list-box {
@@ -794,6 +822,12 @@ export default {
                     .sales-return-content {
                     };
                     .barter-content {
+                    };
+                    .moreSpan {
+                      color: #11D183 !important
+                    };
+                    .underSpan {
+                        color: #E86F50 !important
                     }
                 };
                 /deep/ .van-empty {
