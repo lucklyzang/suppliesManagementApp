@@ -1,6 +1,6 @@
 <template>
   <div class="page-box" ref="wrapper">
-    <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">加载中...</van-loading>
+    <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">{{ loadinText }}</van-loading>
     <div class="nav">
         <van-nav-bar title="送达" left-text="返回" left-arrow @click-left="onClickLeft"  :border="false">
         </van-nav-bar>
@@ -88,7 +88,9 @@ import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
 import ElectronicSignature from '@/components/ElectronicSignature'
 import { compress, base64ImgtoFile } from "@/common/js/utils";
-import { saleOutDeliveryConfirm } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
+import { saleOutDeliveryConfirm, fileUpload } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
+import axios from 'axios'
+import store from '@/store'
 export default {
   name: "suppliesDelivery",
   components: {
@@ -99,12 +101,15 @@ export default {
   data() {
     return {
       loadingShow: false,
+      loadinText: '加载中...',
       photoBox: false,
       deleteInfoDialogShow: false,
       orderId: '',
       imgIndex: '',
       resultImgList: [],
-      imgOnlinePathArr: []
+      resultImgFileList: [],
+      resulImgOnlinePathArr: [],
+      onlineElectronicSignature: ''
     }
   },
 
@@ -121,7 +126,7 @@ export default {
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo","currentElectronicSignature","originalSignature"]),
+    ...mapGetters(["userInfo","currentElectronicSignature","originalSignature","baseURL"]),
     userName() {
         return this.userInfo['nickname']
     },
@@ -180,6 +185,7 @@ export default {
           img.onload = function () {
             let src = compress(img);
             _this.resultImgList.push(src);
+            _this.resultImgFileList.push(file);
             _this.photoBox = false;
             _this.overlayShow = false
           };
@@ -217,6 +223,7 @@ export default {
           img.onload = function () {
             let src = compress(img);
             _this.resultImgList.push(src);
+            _this.resultImgFileList.push(file);
             _this.photoBox = false;
             _this.overlayShow = false
           };
@@ -242,7 +249,8 @@ export default {
 
     // 确定删除提示框确定事件
     sureDeleteEvent () {
-      this.resultImgList.splice(this.imgIndex, 1)
+      this.resultImgList.splice(this.imgIndex, 1);
+      this.resultImgFileList.splice(this.imgIndex, 1);
     },
 
     // 拍照取消
@@ -266,53 +274,124 @@ export default {
       this.$router.push({path: '/suppliesDeliverGoodsList'});
     },
 
+    // 上传文件事件
+    fileUploadEvent(path,text) {
+        this.loadingShow = true;
+        this.infoText = '上传中';
+        return new Promise((resolve, reject) => {
+          let formData = new FormData();
+          formData.append('file', path);
+          axios({
+            url: `${this.baseURL}/spd/admin-api/infra/file/upload`,
+            method: 'post',
+            data: formData,
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              'Authorization': `${store.getters.token}`
+            }
+          }).then((res) => {
+            this.loadingShow = false;
+            this.infoText = '';
+            if (res.data.code == 0) {
+              if (res.data.data) {
+                resolve();
+                if (text == '图片') {
+                  this.resulImgOnlinePathArr.push(res.data.data);
+                } else {
+                  this.onlineElectronicSignature = res.data.data;
+                }
+              } else {
+                this.resulImgOnlinePathArr = [];
+                this.$toast({
+                  message: `${res.data.msg}`,
+                  type: 'fail'
+                });
+                reject()
+              }
+            } else {
+              this.resulImgOnlinePathArr = [];
+              this.$toast({
+                message: `${res.data.msg}`,
+                type: 'fail'
+              });
+              reject()
+            }
+          })
+          .catch((err) => {
+            this.resulImgOnlinePathArr = [];
+            this.loadingShow = false;
+            this.infoText = '';
+            this.$toast({
+              message: `${err}`,
+              type: 'fail'
+            });
+            reject()
+          })
+      })
+    },
+
     // 提交事件
-    submitEvent() {
+    async submitEvent() {
       this.$refs.mychild.commitSure();
       if (this.currentElectronicSignature == this.originalSignature || !this.currentElectronicSignature) {
         this.$toast('请签名')
         return
       };
-      if (this.resultImgList.length > 0) {
+      if (this.resultImgList.length > 6) {
         this.$toast('最多只能上传5张图片')
         return
       };
+      // 上传图片到服务器
+      if (this.resultImgFileList.length > 0) {
+        for (let path of this.resultImgFileList) {
+          await this.fileUploadEvent(path,'图片')
+        }
+      };
+      // 上传签名到服务器
+      if (this.currentElectronicSignature) {
+        await this.fileUploadEvent(base64ImgtoFile(this.currentElectronicSignature),'签名')
+      };
+      this.loadText ='提交中';
+      this.loadingShow = true;
       this.$refs.contentTop.style.zIndex = 0;
-      this.loadinText = '上传中,请稍等···';
-      this.showLoadingHint = true;
       saleOutDeliveryConfirm({
-        id: this.orderId,
-        deliveryImages: this.resultImgList, // 送达图片列表
-        signatureImage: this.currentElectronicSignature //签字图片
+        id: Number(this.orderId),
+        deliveryImages: this.resulImgOnlinePathArr, // 送达图片列表
+        signatureImage: this.onlineElectronicSignature //签字图片
       }).then((res) => {
-          this.showLoadingHint = false;
-          this.loadinText = '';
-          if (res && res.data.code == 0) {
-            if (res.data.data) {
-              this.$toast({
-                type: 'success',
-                message: '提交成功'
-              });
-              this.changeCurrentElectronicSignature({DtMsg: null});
-              this.onClickLeft()
-            } else {
-              this.$toast({
-                type: 'fail',
-                message: `${res.data.msg}`
-              })
-            }
+        this.loadingShow = false;
+        this.loadinText = '';
+        if (res && res.data.code == 0) {
+          if (res.data.data) {
+            this.$toast({
+              type: 'success',
+              message: '提交成功'
+            });
+            this.changeCurrentElectronicSignature({DtMsg: null});
+            this.onClickLeft()
           } else {
-            this.$toast(`${res.data.msg}`)
+            this.$dialog.alert({
+              message: `${res.data.msg}`,
+              closeOnPopstate: true
+            }).then(() => {})
           }
+        } else {
+          this.$dialog.alert({
+            message: `${res.data.msg}`,
+            closeOnPopstate: true
+          }).then(() => {})
+        };
+        this.resulImgOnlinePathArr = [];
       })
       .catch((err) => {
-          this.$dialog.alert({
-            message: `${err}`,
-            closeOnPopstate: true
-            }).then(() => {
-          });
-          this.loadinText = '';
-          this.showLoadingHint = true;
+        this.resulImgOnlinePathArr = [];
+        this.$dialog.alert({
+          message: `${err}`,
+          closeOnPopstate: true
+          }).then(() => {
+        });
+        this.loadinText = '';
+        this.loadingShow = true;
       })
     }
   }

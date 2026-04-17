@@ -493,17 +493,8 @@ export default {
                     flex-direction: column;
                     justify-content: center;
                     .product-number-box {
+                        display: flex;
                         margin-bottom: 12px;
-                        >span {
-                            font-size: 12px;
-                            color: #101010;
-                            &:nth-child(1) {
-                                margin-right: 10px;
-                            }
-                        }
-                    };
-                    .product-total-price {
-                        text-align: center;
                         >span {
                             font-size: 12px;
                             color: #101010;
@@ -511,6 +502,22 @@ export default {
                                 margin-right: 10px;
                             };
                             &:nth-child(2) {
+                                flex: 1;
+                                word-break: break-all
+                            }
+                        }
+                    };
+                    .product-total-price {
+                        display: flex;
+                        >span {
+                            font-size: 12px;
+                            color: #101010;
+                            &:nth-child(1) {
+                                margin-right: 10px;
+                            };
+                            &:nth-child(2) {
+                                flex: 1;
+                                word-break: break-all;
                                 color: #F44E23;							
                             }
                         }

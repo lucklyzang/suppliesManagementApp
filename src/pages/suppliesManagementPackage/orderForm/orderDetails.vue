@@ -78,7 +78,7 @@
 					</div>
 					<div class="create-delivery-date-left">
 						<span>交货日期:</span>
-						<span>{{ orderMessage['checkTime'] }}</span>
+						<span>{{ orderMessage['orderTime'] }}</span>
 					</div>
 				</div>
 				<div class="create-delivery-date">
@@ -436,7 +436,7 @@ export default {
                     this.materialList = this.orderMessage['items'];
                     this.allChooseProductPrice = this.orderMessage['totalProductPrice'];
                     this.orderMessage['createTime'] = this.orderMessage['createTime'] ? SOtime.time3(this.orderMessage['createTime']) : '';
-                    this.orderMessage['checkTime'] = this.orderMessage['checkTime'] ? SOtime.time8(this.orderMessage['checkTime']) : '';
+                    this.orderMessage['orderTime'] = this.orderMessage['orderTime'] ? SOtime.time8(this.orderMessage['orderTime']) : '';
                 };
                 if (item2) {
                     this.orderStatusRecordList = item2;
@@ -643,21 +643,13 @@ export default {
                     }
                 };
                 .product-right {
+                    width: 110px;
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
                     .product-number-box {
+                        display: flex;
                         margin-bottom: 12px;
-                        >span {
-                            font-size: 12px;
-                            color: #101010;
-                            &:nth-child(1) {
-                                margin-right: 10px;
-                            }
-                        }
-                    };
-                    .product-total-price {
-                        text-align: center;
                         >span {
                             font-size: 12px;
                             color: #101010;
@@ -665,6 +657,22 @@ export default {
                                 margin-right: 10px;
                             };
                             &:nth-child(2) {
+                                flex: 1;
+                                word-break: break-all
+                            }
+                        }
+                    };
+                    .product-total-price {
+                        display: flex;
+                        >span {
+                            font-size: 12px;
+                            color: #101010;
+                            &:nth-child(1) {
+                                margin-right: 10px;
+                            };
+                            &:nth-child(2) {
+                                flex: 1;
+                                word-break: break-all;
                                 color: #F44E23;							
                             }
                         }

@@ -30,7 +30,7 @@
                 >
                     <span>{{ item.name }}</span>
                     <p class="message-number">
-                        <span>{{ item.value }}</span>
+                        <span>{{ item.count }}</span>
                     </p>
                 </div> 
             </div>
@@ -49,6 +49,7 @@
 <script>
     import HeaderTop from '@/components/HeaderTop'
     import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction';
+    import { getSaleStatisticsStatusSummary } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
     import SOtime from '@/common/js/SOtime.js'
     import {
         mapGetters,
@@ -64,7 +65,6 @@
         data() {
             return {
                 loadingShow: false,
-                overlayShow: false,
                 quitInfoShow: false,
                 messageNumber: 0,
                 currentMessageNumber: 0,
@@ -73,13 +73,13 @@
                 backlogList: [
                     {
                         name: '待送货',
-                        state: 0,
-                        value: 0
+                        value: 'hasConfirm',
+                        count: 0
                     },
                     {
                         name: '待确认',
-                        state: 1,
-                        value: 0
+                        value: 'noConfirm',
+                        count: 0
                     }
                 ],
                 functionalZoneList: [
@@ -117,24 +117,17 @@
         },
 
         mounted() {
-            this.backlogList.forEach((item,index) => {
-                if (item.name == '待送货') {
-                    item.value = 4;
-                } else if (item.name == '待确认') {
-                    item.value = 18;
-                }
-            });
             // 获取任务数量
-            // if (!this.suppliesHomeGlobalTimer) {
-            //     windowTimer = window.setInterval(() => {
-            //     if (this.isTimeoutContinue) {
-            //         setTimeout(this.getTaskCount(this.proId,this.workerId), 0);
-            //         this.changeSuppliesHomeGlobalTimer(windowTimer)
-            //     } else {
-            //         this.changeSuppliesHomeGlobalTimer(null)
-            //     }
-            //     }, 3000)
-            // }
+            if (!this.suppliesHomeGlobalTimer) {
+                windowTimer = window.setInterval(() => {
+                if (this.isTimeoutContinue) {
+                    setTimeout(this.getSaleStatisticsStatusSummaryEvent());
+                    this.changeSuppliesHomeGlobalTimer(windowTimer)
+                } else {
+                    this.changeSuppliesHomeGlobalTimer(null)
+                }
+                }, 3000)
+            }
         },
 
         watch: {},
@@ -188,23 +181,30 @@
             ]),
             
             // 查询待办事项中各类型任务数量
-            getTaskCount (proId,workerId) {
-                queryTaskCount(proId,workerId).then((res) => {
-                    if (res && res.data.code == 200) {
+            getSaleStatisticsStatusSummaryEvent () {
+                this.isTimeoutContinue = false;
+                getSaleStatisticsStatusSummary().then((res) => {
+                    if (res && res.data.code == 0) {
+                        this.isTimeoutContinue = true;
+                        const {hasConfirm, noConfirm} = res.data.data;
                         this.backlogList.forEach((item,index) => {
-                            if (item.name == '待送货') {
-                                item.value = ''
-                            } else if (item.name == '待确认') {
-                                item.value = ''
+                            if (item.value == 'hasConfirm') {
+                                item.count = hasConfirm
+                            } else if (item.value == 'noConfirm') {
+                                item.value = noConfirm
                             }
+                        })
+                    } else {
+                        this.$toast({
+                            type: 'fail',
+                            message: res.data.msg
                         })
                     }
                 })
                 .catch((err) => {
-                    this.$dialog.alert({
-                        message: `${err.message}`,
-                        closeOnPopstate: true
-                    }).then(() => {
+                    this.$toast({
+                        type: 'fail',
+                        message: err
                     })
                 })
             },

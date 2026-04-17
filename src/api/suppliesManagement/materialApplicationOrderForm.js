@@ -1,6 +1,23 @@
 import request from '@/utils/request'
 import qs from 'qs'
 
+// 上传文件
+export function fileUpload(data) {
+	return request({
+	    url: '/spd/admin-api/infra/file/upload',
+	    method: 'post',
+		data
+	  })
+}
+
+// 各任务类型数量统计
+export function getSaleStatisticsStatusSummary() {
+	return request({
+	    url: '/spd/admin-api/erp/sale-statistics/status-summary',
+	    method: 'get'
+	  })
+}
+
 // 获取计划订单分页
 export function getPlanOrderPage(data) {
 	if (data.orderTime && Array.isArray(data.orderTime)) {
@@ -132,7 +149,7 @@ export function saleOutDistributiony(data) {
 	return request({
 	    url: '/spd/admin-api/erp/sale-out/delivery',
 	    method: 'put',
-		params: data
+		data
 	})
 }
 
@@ -159,7 +176,7 @@ export function saleOutDeliveryConfirm(data) {
 	return request({
 	    url: '/spd/admin-api/erp/sale-out/delivery-confirm',
 	    method: 'put',
-		params: data
+		data
 	})
 }
 

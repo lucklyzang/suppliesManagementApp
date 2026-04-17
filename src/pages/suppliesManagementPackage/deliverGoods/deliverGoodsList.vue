@@ -263,6 +263,7 @@ export default {
       revocationDeliveryOrderModalShow: false,
       cancelDeliveryOrderModalShow: false,
       currentdeliveryPerson: '请选择',
+      currentdeliveryPersonValue: '',
       deliveryPersonShow: false,
       revocationInfoImage: require('@/common/images/home/revocation-info-icon.png'),
       defaultDateArr: [],
@@ -278,6 +279,7 @@ export default {
       deliverGoodsValue: '',
       contactInformationValue: '',
       currentOrderIndex: '',
+      currentAddress: '',
       currentOrderId: '',
       currentOrderNo: '',
       deliveryPersonList: [],
@@ -442,19 +444,19 @@ export default {
                     })
                 }
             } else {
-                this.$toast({
-                    type: 'fail',
-                    message: res.data.msg
-                })
+                this.$dialog.alert({
+                    message: `${res.data.msg}`,
+                    closeOnPopstate: true
+                }).then(() => {})
             }
         })
         .catch((err) => {
             this.loadingShow = false;
             this.infoText = '';
-            this.$toast({
-                type: 'fail',
-                message: err
-            })
+            this.$dialog.alert({
+                message: `${err}`,
+                closeOnPopstate: true
+            }).then(() => {})
         })
     },
 
@@ -481,25 +483,25 @@ export default {
                         message: '送货成功!'
                     })
                 } else {
-                    this.$toast({
-                        type: 'fail',
-                        message: res.data.msg
-                    })
+                    this.$dialog.alert({
+                        message: `${res.data.msg}`,
+                        closeOnPopstate: true
+                    }).then(() => {})
                 }
             } else {
-                this.$toast({
-                    type: 'fail',
-                    message: res.data.msg
-                })
+                this.$dialog.alert({
+                    message: `${res.data.msg}`,
+                    closeOnPopstate: true
+                }).then(() => {})
             }
         })
         .catch((err) => {
             this.loadingShow = false;
             this.infoText = '';
-            this.$toast({
-                type: 'fail',
-                message: err
-            })
+            this.$dialog.alert({
+                message: `${err}`,
+                closeOnPopstate: true
+            }).then(() => {})
         })
     },
 
@@ -518,25 +520,25 @@ export default {
                         message: '取消成功!'
                     })
                 } else {
-                    this.$toast({
-                        type: 'fail',
-                        message: res.data.msg
-                    })
+                    this.$dialog.alert({
+                        message: `${res.data.msg}`,
+                        closeOnPopstate: true
+                    }).then(() => {})
                 }
             } else {
-                this.$toast({
-                    type: 'fail',
-                    message: res.data.msg
-                })
+                this.$dialog.alert({
+                    message: `${res.data.msg}`,
+                    closeOnPopstate: true
+                }).then(() => {})
             }
         })
         .catch((err) => {
             this.loadingShow = false;
             this.infoText = '';
-            this.$toast({
-                type: 'fail',
-                message: err
-            })
+            this.$dialog.alert({
+                message: `${err}`,
+                closeOnPopstate: true
+            }).then(() => {})
         })
     },
 
@@ -563,25 +565,25 @@ export default {
                         message: '撤销成功!'
                     })
                 } else {
-                    this.$toast({
-                        type: 'fail',
-                        message: res.data.msg
-                    })
+                    this.$dialog.alert({
+                        message: `${res.data.msg}`,
+                        closeOnPopstate: true
+                    }).then(() => {})
                 }
             } else {
-                this.$toast({
-                    type: 'fail',
-                    message: res.data.msg
-                })
+                this.$dialog.alert({
+                    message: `${res.data.msg}`,
+                    closeOnPopstate: true
+                }).then(() => {})
             }
         })
         .catch((err) => {
             this.loadingShow = false;
             this.infoText = '';
-            this.$toast({
-                type: 'fail',
-                message: err
-            })
+            this.$dialog.alert({
+                message: `${err}`,
+                closeOnPopstate: true
+            }).then(() => {})
         })
     },
 
@@ -615,10 +617,10 @@ export default {
                     this.isShowNoData = false
                 };
             } else {
-                this.$toast({
-                    type: 'fail',
-                    message: res.data.msg
-                })
+                this.$dialog.alert({
+                    message: `${res.data.msg}`,
+                    closeOnPopstate: true
+                }).then(() => {})
             };
             if (flag) {
                 this.loadingShow = false;
@@ -640,16 +642,17 @@ export default {
             } else {
                 this.bottomLoadingShow = false;
             };
-            this.$toast({
-                type: 'fail',
-                message: err
-            })
+            this.$dialog.alert({
+                message: `${err}`,
+                closeOnPopstate: true
+            }).then(() => {})
         })
     },
 
     // 配送人列表点击事件
     deliveryPersonListEvent(item,index) {
         this.currentdeliveryPerson = item.name;
+        this.currentdeliveryPersonValue = item.value;
         this.currentDeliveryPersonIndex = index;
         this.deliveryPersonShow = false;
     },
@@ -677,7 +680,7 @@ export default {
 
     // 取消送货单确认弹框确认事件
     cancelDeliveryOrderModalShowSureEvent () {
-      this.saleOutCancel({
+      this.saleOutCancelEvent({
         id: this.currentOrderId
       });
       this.cancelDeliveryOrderModalShow = false
@@ -720,8 +723,9 @@ export default {
         };
         this.saleOutDistributionyEvent({
             id: this.currentOrderId,
+            address: this.currentAddress,
             deliveryRemark: this.deliverGoodsValue,
-            courier: this.currentdeliveryPerson,
+            courier: this.currentdeliveryPersonValue,
             courierMobile: this.contactInformationValue
         })
     },
@@ -808,8 +812,11 @@ export default {
     deliverGoodsEvent(item,index) {
         this.currentOrderId = item.id;
         this.currentOrderIndex = index;
+        this.currentAddress = item.address;
         this.deliverGoodsValue = '';
         this.currentdeliveryPerson = '请选择';
+        this.currentdeliveryPersonValue = '';
+        this.currentDeliveryPersonIndex = '';
         this.contactInformationValue = '';
         this.deliverGoodsModalShow = true;
     },
@@ -1155,7 +1162,9 @@ export default {
                     >span {
                         margin-right: 4px;
                         font-size: 12px;
-                        color: #101010
+                        color: #101010;
+                        flex: 1;
+                        .no-wrap();
                     }
                 };
                 .status-list-box {

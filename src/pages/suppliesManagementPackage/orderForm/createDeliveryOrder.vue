@@ -45,7 +45,7 @@
                 </div>
                 <div class="surplus-demand">
                   <span>剩余需求数</span>
-                  <span>{{ item.count - item.outCount - item.inputCount }}</span>
+                  <span>{{ item.count - item.outCount }}</span>
                 </div>
               </div>
             </div>
@@ -170,6 +170,7 @@ export default {
       allCount: 0,
       createDeliveryOrderModalShow: false,
       newDeliveryNote: '',
+      minDate: new Date(),
       isExceedStockQuantity: false,
       shipmentWarehouseListShow: false,
       currentShipmentWarehouseText: '请选择',
@@ -296,41 +297,7 @@ export default {
     // 确定继续生成送货单弹框确定事件
     createDeliveryOrderModalShowSubmitEvent () {
       this.createDeliveryOrderModalShow = false;
-      this.resetData();
-      if (this.isExceedStockQuantity) {
-        this.$toast({
-          type: 'fail',
-          message: '出库数量不能超过剩余需求数量!'
-        });
-        return 
-      };
-      if (this.currentShipmentWarehouseText == '请选择') {
-        this.$toast({
-          type: 'fail',
-          message: '请选择出货仓库!'
-        });
-        return 
-      };
-      let deliveryOrderList = [];
-      let temporaryMaterialList = this.materialList.filter((item) => { return Number(item.inputCount) > 0 });
-      for (let item of temporaryMaterialList) {
-        deliveryOrderList.push({
-          orderItemId: item.id, //销售订单项编号
-          warehouseId: this.currentShipmentWarehouseValue, // 仓库编号
-          productId: item.productId, // 产品编号
-          productUnitId: item.productUnitId, // 产品单位编号
-          productPrice: item.productPrice, // 产品单价
-          count: item.inputCount, // 产品数量
-          taxPercent: item.taxPercent, // 税率，百分比
-          remark: item.remark //备注
-        }) 
-      };
-      this.createSaleOutEvent({
-        orderId: this.orderId, //销售订单编号
-        outTime: this.arrivalDate + ' 00:00:00', //出库时间
-        remark: this.remarkValue, //备注
-        items: deliveryOrderList
-      })
+      this.submitEvent()
     },
 
     // 退出事件
@@ -345,14 +312,14 @@ export default {
        if (isCanSubmit) {
         this.$toast({
           type: 'fail',
-          message: '添加的产品数量不能为0!'
+          message: '送货数量不能为0!'
         });
         return 
       };
       if (this.isExceedStockQuantity) {
         this.$toast({
           type: 'fail',
-          message: '出库数量不能超过剩余需求数量!'
+          message: '送货数量不能超过剩余需求数量!'
         });
         return 
       };
@@ -378,7 +345,7 @@ export default {
         }) 
       };
       this.createSaleOutEvent({
-        orderId: this.orderId, //销售订单编号
+        orderId: Number(this.orderId), //销售订单编号
         outTime: this.arrivalDate + ' 00:00:00', //出库时间
         remark: this.remarkValue, //备注
         items: deliveryOrderList
@@ -392,9 +359,9 @@ export default {
       createSaleOut(data).then((res) => {
           this.loadingShow = false;
           this.infoText = '';
-          if ( res && res.data.code == 0) { 
-            this.createDeliveryOrderModalShow = true;
-            this.newDeliveryNote = '';
+          if ( res && res.data.code == 0) {
+            this.getPlanOrderEventNext(); 
+            this.newDeliveryNote = res.data.data;
           } else {
               this.$toast({
                 type: 'fail',
@@ -410,6 +377,64 @@ export default {
               message: err
           })
       })
+    },
+
+    // 查询订单详情(生成送货单后查询使用)
+    getPlanOrderEventNext() {
+      this.loadingShow = false;
+      this.infoText = '加载中···';
+      getPlanOrder(this.orderId).then((res) => {
+          this.loadingShow = false;
+          this.infoText = '';
+          if ( res && res.data.code == 0) {
+            this.createDeliveryOrderModalShow = true;
+            let temporaryMessage = res.data.data['items'];
+            // 成功生成送货单后,更新该订单产品出库数量
+            temporaryMessage.forEach((item,index) => {
+              for (const [innerIndex, innerItem] of this.materialList.entries()) {
+                if (innerItem['id'] == item.id) {
+                  this.$set(this.materialList[innerIndex],'outCount',item['outCount']);
+                  break
+                }
+              }
+            })
+          } else {
+            this.$toast({
+              type: 'fail',
+              message: res.data.msg
+            })
+          }
+      })
+      .catch((err) => {
+        this.loadingShow = false;
+        this.infoText = '';
+        this.$toast({
+          type: 'fail',
+          message: err
+        })
+      })
+    },
+
+    // 查询订单详情
+    getPlanOrderEvent() {
+        return new Promise((resolve,reject) => {
+            getPlanOrder(this.orderId).then((res) => {
+                this.loadingShow = false;
+                this.infoText = '';
+                if ( res && res.data.code == 0) {
+                    resolve(res.data.data);
+                } else {
+                    reject(res.data.msg);
+                    this.$toast({
+                        type: 'fail',
+                        message: res.data.msg
+                    })
+                }
+            })
+            .catch((err) => {
+                reject(err)
+            })
+        })
     },
 
     // 查询订单详情
@@ -840,10 +865,13 @@ export default {
             z-index: 10;
             .shipment-warehouse-list {
                 height: 30px;
-                width: 70px;
+                width: 100%;
                 display: flex;
                 align-items: center;
                 >span {
+                    width: 100%;
+                    display: inline-block;
+                    word-break: break-all;
                     font-size: 12px;
                     color: #101010
                 };
