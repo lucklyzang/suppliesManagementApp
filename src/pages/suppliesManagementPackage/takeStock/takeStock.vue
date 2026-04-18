@@ -366,19 +366,19 @@ export default {
           if ( res && res.data.code == 0) {
             this.shipmentWarehouseList = res.data.data;
           } else {
-              this.$toast({
-                type: 'fail',
-                message: res.data.msg
-              })
+              this.$dialog.alert({
+                message: `${res.data.msg}`,
+                closeOnPopstate: true
+              }).then(() => {})
           }
       })
       .catch((err) => {
         this.loadingShow = false;
         this.infoText = '';
-        this.$toast({
-          type: 'fail',
-          message: err
-        })
+        this.$dialog.alert({
+          message: `${err}`,
+          closeOnPopstate: true
+        }).then(() => {})
       })
     },
 
@@ -399,19 +399,19 @@ export default {
             this.totalCount = res.data.data.total;
             this.totalPage = Math.ceil(this.totalCount/this.pageSize);
           } else {
-              this.$toast({
-                type: 'fail',
-                message: res.data.msg
-              })
+              this.$dialog.alert({
+                message: `${res.data.msg}`,
+                closeOnPopstate: true
+              }).then(() => {})
           }
       })
       .catch((err) => {
         this.loadingShow = false;
         this.infoText = '';
-        this.$toast({
-          type: 'fail',
-          message: err
-        })
+        this.$dialog.alert({
+          message: `${err}`,
+          closeOnPopstate: true
+        }).then(() => {})
       })
     },
 
@@ -439,19 +439,19 @@ export default {
                 message: '保存成功'
               })
           } else {
-              this.$toast({
-                type: 'fail',
-                message: res.data.msg
-              })
+              this.$dialog.alert({
+                message: `${res.data.msg}`,
+                closeOnPopstate: true
+              }).then(() => {})
           }
       })
       .catch((err) => {
         this.loadingShow = false;
         this.infoText = '';
-        this.$toast({
-          type: 'fail',
-          message: err
-        })
+        this.$dialog.alert({
+          message: `${err}`,
+          closeOnPopstate: true
+        }).then(() => {})
       })
     }
   }

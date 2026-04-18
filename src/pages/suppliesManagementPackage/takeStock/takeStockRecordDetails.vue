@@ -227,25 +227,25 @@ export default {
                     message: '审核成功'
                 })
             } else {
-              this.$toast({
-                type: 'fail',
-                message: res.data.msg
-              })
+                this.$dialog.alert({
+                    message: `${res.data.msg}`,
+                    closeOnPopstate: true
+                }).then(() => {})
             }
           } else {
-            this.$toast({
-              type: 'fail',
-              message: res.data.msg
-            })
+            this.$dialog.alert({
+                message: `${res.data.msg}`,
+                closeOnPopstate: true
+            }).then(() => {})
           }
       })
       .catch((err) => {
         this.loadingShow = false;
         this.infoText = '';
-        this.$toast({
-          type: 'fail',
-          message: err
-        })
+        this.$dialog.alert({
+            message: `${err}`,
+            closeOnPopstate: true
+        }).then(() => {})
       })
     },
 
@@ -261,19 +261,19 @@ export default {
                 this.orderMessage = res.data.data;
                 this.orderMessage['checkTime'] = this.orderMessage['checkTime'] ? SOtime.time8(this.orderMessage['checkTime']) : ''
             } else {
-                this.$toast({
-                    type: 'fail',
-                    message: res.data.msg
-                })
+                this.$dialog.alert({
+                    message: `${res.data.msg}`,
+                    closeOnPopstate: true
+                }).then(() => {})
             }
         })
         .catch((err) => {
             this.loadingShow = false;
             this.infoText = '';
-            this.$toast({
-                type: 'fail',
-                message: err
-            })
+            this.$dialog.alert({
+                message: `${err}`,
+                closeOnPopstate: true
+            }).then(() => {})
         })
     }
   }

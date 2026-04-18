@@ -443,25 +443,25 @@ export default {
                     });
                     this.fullOrderList.splice(this.currentOrderIndex,1);
                 } else {
-                    this.$toast({
-                        type: 'fail',
-                        message: res.data.msg
-                    })
+                    this.$dialog.alert({
+                        message: `${res.data.msg}`,
+                        closeOnPopstate: true
+                    }).then(() => {})
                 }
             } else {
-               this.$toast({
-                    type: 'fail',
-                    message: res.data.msg
-                })
+               this.$dialog.alert({
+                    message: `${res.data.msg}`,
+                    closeOnPopstate: true
+                }).then(() => {})
             }
         })
         .catch((err) => {
             this.infoText = '';
             this.loadingShow = false;
-            this.$toast({
-                type: 'fail',
-                message: err
-            })
+            this.$dialog.alert({
+                message: `${err}`,
+                closeOnPopstate: true
+            }).then(() => {})
         })
     },
 
@@ -525,10 +525,10 @@ export default {
                     this.isShowNoData = false
                 };
             } else {
-                this.$toast({
-                    type: 'fail',
-                    message: res.data.msg
-                })
+                this.$dialog.alert({
+                    message: `${res.data.msg}`,
+                    closeOnPopstate: true
+                }).then(() => {})
             };
             if (flag) {
                 this.loadingShow = false;
@@ -550,10 +550,10 @@ export default {
             } else {
                 this.bottomLoadingShow = false;
             };
-            this.$toast({
-                type: 'fail',
-                message: err
-            })
+            this.$dialog.alert({
+                message: `${err}`,
+                closeOnPopstate: true
+            }).then(() => {})
         })
     }
   }

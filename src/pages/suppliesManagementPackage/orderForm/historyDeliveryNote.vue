@@ -149,19 +149,19 @@ export default {
             if ( res && res.data.code == 0) {
                 this.saleReturnOrderDetailsList = res.data.data;
             } else {
-                this.$toast({
-                    type: 'fail',
-                    message: res.data.msg
-                })
+              this.$dialog.alert({
+                message: `${res.data.msg}`,
+                closeOnPopstate: true
+              }).then(() => {})
             }
         })
         .catch((err) => {
             this.infoText = '';
             this.loadingShow = false;
-            this.$toast({
-                type: 'fail',
-                message: err
-            })
+            this.$dialog.alert({
+              message: `${err}`,
+              closeOnPopstate: true
+            }).then(() => {})
         })
     }
   }

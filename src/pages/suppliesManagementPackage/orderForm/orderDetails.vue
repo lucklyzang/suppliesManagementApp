@@ -361,10 +361,10 @@ export default {
                     resolve(res.data.data);
                 } else {
                     reject(res.data.msg);
-                    this.$toast({
-                        type: 'fail',
-                        message: res.data.msg
-                    })
+                    this.$dialog.alert({
+                      message: `${res.data.msg}`,
+                      closeOnPopstate: true
+                    }).then(() => {})
                 }
             })
             .catch((err) => {
@@ -384,10 +384,10 @@ export default {
                     resolve(res.data.data)
                 } else {
                     reject(res.data.msg);
-                    this.$toast({
-                        type: 'fail',
-                        message: res.data.msg
-                    })
+                    this.$dialog.alert({
+                      message: `${res.data.msg}`,
+                      closeOnPopstate: true
+                    }).then(() => {})
                 }
             })
             .catch((err) => {
@@ -406,10 +406,10 @@ export default {
                     resolve(res.data.data)
                 } else {
                     reject(res.data.msg);
-                    this.$toast({
-                        type: 'fail',
-                        message: res.data.msg
-                    })
+                    this.$dialog.alert({
+                      message: `${res.data.msg}`,
+                      closeOnPopstate: true
+                    }).then(() => {})
                 }
             })
             .catch((err) => {
@@ -460,10 +460,10 @@ export default {
         .catch((err) => {
             this.loadingShow = false;
             this.infoText = '';
-            this.$toast({
-                type: 'fail',
-                message: err
-            })
+            this.$dialog.alert({
+                message: `${err}`,
+                closeOnPopstate: true
+            }).then(() => {})
         })
     }
   }

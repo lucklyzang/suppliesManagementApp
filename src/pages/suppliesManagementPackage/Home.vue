@@ -126,7 +126,7 @@
                 } else {
                     this.changeSuppliesHomeGlobalTimer(null)
                 }
-                }, 3000)
+                }, 1000)
             }
         },
 
@@ -195,17 +195,17 @@
                             }
                         })
                     } else {
-                        this.$toast({
-                            type: 'fail',
-                            message: res.data.msg
-                        })
+                        this.$dialog.alert({
+                            message: `${res.data.msg}`,
+                            closeOnPopstate: true
+                        }).then(() => {})
                     }
                 })
                 .catch((err) => {
-                    this.$toast({
-                        type: 'fail',
-                        message: err
-                    })
+                    this.$dialog.alert({
+                        message: `${err}`,
+                        closeOnPopstate: true
+                    }).then(() => {})
                 })
             },
 
