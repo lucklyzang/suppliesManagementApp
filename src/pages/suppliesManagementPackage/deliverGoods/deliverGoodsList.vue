@@ -284,6 +284,7 @@ export default {
       currentOrderNo: '',
       deliveryPersonList: [],
       currentDeliveryPersonIndex: '',
+      scrollTop: 0,
       orderStatusList: [
         {
             value: '',
@@ -308,45 +309,66 @@ export default {
     }
   },
 
-  mounted() {
-    // 控制设备物理返回按键
-    this.deviceReturn('/suppliesHome');
-    if (this.$route.query.status) {
-        if (this.$route.query.status == '待送货') {
-            let temporaryMessage = this.orderStatusList.filter((item) => { return item.text == this.$route.query.status });
-            let temporaryIndex = this.orderStatusList.findIndex((item) => { return item.text == this.$route.query.status });
-            if (temporaryMessage.length > 0) {
-                this.needQueryStatusList = [temporaryMessage[0]['value']];
-                this.currentStatusText = temporaryMessage[0]['text'];
-                this.currentStatusValue = temporaryMessage[0]['value'];
-                this.currentStatusIndex = temporaryIndex;
-            }
-        }
+  beforeRouteLeave(to,from,next) {
+    if (to.name == 'suppliesDeliverGoodsDetails' || to.name =='suppliesDelivery') {
+        from.meta.isBack = true
+    } else {
+        from.meta.isBack = false
     };
+    next()
+  },
+
+  activated() {
     this.$nextTick(()=> {
       this.initScrollChange()
     });
-    this.getDateRange();
-    this.getSaleOutPageEvent({
-        pageNo: this.currentPageNum,
-        pageSize: this.pageSize,
-        status: '',
-        statusList: this.currentStatusValue === '' ? this.needQueryStatusList : [this.currentStatusValue],
-        outTime: [`${this.startDate}`,`${this.endDate}`],
-        creator: ''// this.userAccount
-    },true);
-    this.queryUserListEvent();
-    const el = this.$refs.myElement;
-    //点击状态栏区域以外的地方时，库房列表收起
-    document.addEventListener('click', (event) => {
-        if (el && !el.contains(event.target)){
-            this.orderStatusListShow = false;
-        }
-    }, false)
+    // 从详情页返回
+    if (this.$route.meta.isBack) {
+        this.$route.meta.isBack = false
+    // 从其它页面进入    
+    } else {
+        // 控制设备物理返回按键
+        this.deviceReturn('/suppliesHome');
+        if (this.$route.query.status) {
+            if (this.$route.query.status == '待送货') {
+                let temporaryMessage = this.orderStatusList.filter((item) => { return item.text == this.$route.query.status });
+                let temporaryIndex = this.orderStatusList.findIndex((item) => { return item.text == this.$route.query.status });
+                if (temporaryMessage.length > 0) {
+                    this.needQueryStatusList = [temporaryMessage[0]['value']];
+                    this.currentStatusText = temporaryMessage[0]['text'];
+                    this.currentStatusValue = temporaryMessage[0]['value'];
+                    this.currentStatusIndex = temporaryIndex;
+                }
+            }
+        } else {
+          this.resetStatusEvent();
+        };
+        this.$nextTick(()=> {
+        this.initScrollChange()
+        });
+        this.getDateRange();
+        this.getSaleOutPageEvent({
+            pageNo: this.currentPageNum,
+            pageSize: this.pageSize,
+            status: '',
+            statusList: this.currentStatusValue === '' ? this.needQueryStatusList : [this.currentStatusValue],
+            outTime: [`${this.startDate}`,`${this.endDate}`],
+            creator: ''// this.userAccount
+        },true);
+        this.queryUserListEvent();
+        const el = this.$refs.myElement;
+        //点击状态栏区域以外的地方时，库房列表收起
+        document.addEventListener('click', (event) => {
+            if (el && !el.contains(event.target)){
+                this.orderStatusListShow = false;
+            }
+        }, false)
+    }
   },
 
-  beforeRouteEnter(to, from, next) {
-    next() 
+  mounted() {
+    console.log('mounted')
+    // 控制设备物理返回按键
   },
 
   watch: {},
@@ -391,6 +413,14 @@ export default {
 
     enterHistoryOrderEvent () {
         this.$router.push({path: '/suppliesDeliverHistoryGoodsList'})
+    },
+
+    // 重置状态
+    resetStatusEvent () {
+        this.needQueryStatusList = [10,20,60];
+        this.currentStatusText = '全部状态';
+        this.currentStatusValue = '';
+        this.currentStatusIndex = 0;
     },
 
     // 事件列表注册滚动事件

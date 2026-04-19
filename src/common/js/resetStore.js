@@ -23,7 +23,7 @@ export function getDefaultCommonState() {
 		// 胶囊信息
 		capsuleMessage: {},
 		// 需要缓存组件
-		catch_components: [],
+		catch_components: ['suppliesDeliverGoodsList'],
 		// 当前电子签名信息
 		currentElectronicSignature: '',
 		// 原始电子签名信息

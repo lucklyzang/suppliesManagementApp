@@ -1,9 +1,9 @@
 <template>
   <div id="app">
      <transition :name="transitionName" mode="out-in">
-      <keep-alive :include="catch_components">
-        <router-view class="child-view"></router-view>
-      </keep-alive>
+        <keep-alive :include="catch_components">
+          <router-view class="child-view"></router-view>
+        </keep-alive>
     </transition>
   </div>
 </template>
@@ -21,11 +21,16 @@
       ...mapGetters([
         'catch_components',
       ]),
-      cachedRoutes() {
-        return this.$route.matched.filter(r => r.meta && r.meta.keepAlive).map(r => r.name) // 获取需要缓存的路由名称数组
+      keepAliveRoutes() {
+        // 获取当前路由实例
+        const route = this.$route;
+        // 如果 meta 中设置了 keepAlive，返回当前组件名称，否则返回空数组（不缓存）
+        // 注意：这里需要确保你的路由组件都有 name 属性
+        return route.meta.keepAlive ? [route.matched[0].components.default.name] : [];
       }
     },
-    mounted () {},
+    mounted () {
+    },
 
     methods: {
     },

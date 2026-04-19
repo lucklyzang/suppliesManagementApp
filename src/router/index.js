@@ -98,7 +98,11 @@ let baseRoute = [{
     path: '/suppliesDeliverGoodsList',
     name: 'suppliesDeliverGoodsList',
     component: SuppliesDeliverGoodsList,
-    meta: { index: 3 }
+    meta: { 
+      index: 3,
+      keepAlive: true,
+      isBack:false
+    }
   },
   {
     path: '/suppliesDeliverHistoryGoodsList',
