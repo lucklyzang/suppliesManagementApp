@@ -319,6 +319,8 @@ export default {
   },
 
   activated() {
+    // 控制设备物理返回按键
+    this.deviceReturn('/suppliesHome');
     this.$nextTick(()=> {
       this.initScrollChange()
     });
@@ -327,8 +329,6 @@ export default {
         this.$route.meta.isBack = false
     // 从其它页面进入    
     } else {
-        // 控制设备物理返回按键
-        this.deviceReturn('/suppliesHome');
         if (this.$route.query.status) {
             if (this.$route.query.status == '待送货') {
                 let temporaryMessage = this.orderStatusList.filter((item) => { return item.text == this.$route.query.status });
