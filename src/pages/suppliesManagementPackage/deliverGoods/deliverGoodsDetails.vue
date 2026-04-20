@@ -45,7 +45,7 @@
 						<div class="product-specification">
 							<div class="product-specification-left">
 								<span>
-									{{ item.specification ? item.specification : '无' }}
+									{{ item.productStandard ? item.productStandard : '无' }}
 								</span>
 							</div>
 							<div class="product-specification-right">
@@ -79,7 +79,7 @@
 					</div>
 					<div class="create-delivery-date-left">
 						<span>交货日期:</span>
-						<span>{{ orderMessage['checkTime'] }}</span>
+						<span>{{ orderMessage['requestTime'] }}</span>
 					</div>
 				</div>
 				<div class="create-delivery-date">
@@ -142,8 +142,8 @@
                     拍照:
                 </div>
                 <div class="photograph-content" v-show="orderMessage['deliveryImages']">
-                    <div class="image-list">
-                        <img :src="productDefaultImage" />
+                    <div class="image-list" v-for="(item,index) in orderMessage['deliveryImages']" :key="index">
+                        <img :src="item" />
                     </div>
                 </div>
             </div>
@@ -293,7 +293,7 @@ export default {
                     this.materialList = this.orderMessage['items'];
                     this.allChooseProductPrice = this.orderMessage['totalProductPrice'];
                     this.orderMessage['createTime'] = SOtime.time3(this.orderMessage['createTime']);
-                    this.orderMessage['checkTime'] = this.orderMessage['checkTime'] ? SOtime.time8(this.orderMessage['checkTime']) : '';
+                    this.orderMessage['requestTime'] = this.orderMessage['requestTime'] ? SOtime.time8(this.orderMessage['requestTime']) : '';
                     this.orderMessage['deliveryTime'] = this.orderMessage['deliveryTime'] ? SOtime.time3(this.orderMessage['deliveryTime']) : '';
                     this.orderMessage['outTime'] = this.orderMessage['outTime'] ? SOtime.time3(this.orderMessage['outTime']) : '';
                 }
@@ -630,6 +630,9 @@ export default {
             };
             .signature-content {
                 flex: 1;
+                >img {
+                    width: 100%;
+                }
             }
         };
         .photograph-message {
@@ -647,12 +650,10 @@ export default {
                 flex-wrap: wrap;
                 .image-list {
                     width: 24%;
-                    height: 70px;
                     margin-right: 1%;
                     margin-bottom: 6px;
                     >img {
                         width: 100%;
-                        height: 100%;
                     }
                     &:nth-child(4n) {
                         margin-right: 0 !important;

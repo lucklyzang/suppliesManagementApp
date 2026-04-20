@@ -34,7 +34,7 @@
 						<div class="product-specification">
 							<div class="product-specification-left">
 								<span>
-									{{ item.specification ? item.specification : '无' }}
+									{{ item.productStandard ? item.productStandard : '无' }}
 								</span>
 							</div>
 							<div class="product-specification-right">
@@ -131,8 +131,8 @@
                     拍照:
                 </div>
                 <div class="photograph-content" v-show="orderMessage['deliveryImages']">
-                    <div class="image-list">
-                        <img :src="productDefaultImage" />
+                    <div class="image-list" v-for="(item,index) in orderMessage['deliveryImages']" :key="index">
+                        <img :src="item" />
                     </div>
                 </div>
             </div>
@@ -584,6 +584,9 @@ export default {
             };
             .signature-content {
                 flex: 1;
+                >img {
+                    width: 100%;
+                }
             }
         };
         .photograph-message {
@@ -601,12 +604,10 @@ export default {
                 flex-wrap: wrap;
                 .image-list {
                     width: 24%;
-                    height: 70px;
                     margin-right: 1%;
                     margin-bottom: 6px;
                     >img {
                         width: 100%;
-                        height: 100%;
                     }
                     &:nth-child(4n) {
                         margin-right: 0 !important;

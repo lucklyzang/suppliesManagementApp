@@ -44,32 +44,32 @@
 					</div>
 				</div>
 				<div class="delivery-list-box">
-                    <van-empty description="暂无产品数据" v-show="orderMessage['items'].length == 0" />
+                    <van-empty description="暂无产品数据" v-show="isShowNoData" />
 					<div class="delivery-list" v-for="(item) in orderMessage['items']" :key="item.id">
 						<div class="product-content">
 							<span>{{ item['productName'] }}</span>
 						</div>
 						<div class="specification-content">
-							<span>{{ item['standard'] ? item['standard'] : '无'}}</span>
+							<span>{{ item['productStandard'] ? item['productStandard'] : '无'}}</span>
 						</div>
 						<div class="deliver-number-content">
-							<span>{{ item['count'] }}</span>
+							<span>{{ item['stockCount'] }}</span>
 						</div>
-						<div class="sales-return-content">
+						<div  class="sales-return-content">
                             <van-popover
-                                v-model="showPopover"
+                                v-model="showPopoverStatus[item.id]"
                                 placement="top"
                                 trigger="click"
                                 @open="showPopoverEvent"
-                                get-container=".sales-return-content"
-                                >
+                                get-container="parent" 
+                            >
                                 <div>
                                     <p class="p-one">盈亏说明</p>
                                     <p class="p-two">{{ item['remark'] }}</p>
                                 </div>
                                 <template #reference>
-                                    <span :class="{'underSpan': item['stockCount'] < item['count'],'moreSpan': item['stockCount'] > item['count']}">
-                                        {{ item['stockCount'] }}
+                                    <span :class="{'underSpan': item['stockCount'] > item['actualCount'],'moreSpan': item['stockCount'] < item['actualCount']}">
+                                        {{ item['actualCount'] }}
                                     </span>
                                 </template>
                             </van-popover>
@@ -82,7 +82,7 @@
 			</div> 
         </div>
         <div class="btn-box" v-show="orderMessage['status'] == 10">
-            <div class="btn-center" @click.stop="auditEvent(item,index)">
+            <div class="btn-center" @click.stop="auditEvent()">
                 <span>审核</span>
             </div>
         </div> 
@@ -130,7 +130,8 @@ export default {
     return {
       loadingShow: false,
       infoText: '加载中...',
-      showPopover: false,
+      isShowNoData: false,
+      showPopoverStatus: {},
       auditModalShow: false,
       orderId: '',
       orderMessage: {
@@ -189,11 +190,10 @@ export default {
     
     // popover打开事件
     showPopoverEvent () {
-        console.log(1);
     },
 
     // 审核盘点单事件
-    auditEvent(item,index) {
+    auditEvent() {
         this.auditModalShow = true;
     },
 
@@ -221,7 +221,13 @@ export default {
           this.infoText = '';
           if ( res && res.data.code == 0) {
             if (res.data.data) {
-                this.onClickLeft();
+                this.$router.push({
+                    path: '/suppliesTakeStockRecord', 
+                    query: {
+                        orderId: this.orderId,
+                        status
+                    }
+                });
                 this.$toast({
                     type: 'success',
                     message: '审核成功'
@@ -253,13 +259,19 @@ export default {
     // 查询盘点单详情
     getStockCheckRecordEvent() {
         this.loadingShow = true;
+        this.isShowNoData = false;
         this.infoText = '加载中···';
         getStockCheckRecord(this.orderId).then((res) => {
             this.loadingShow = false;
             this.infoText = '';
             if ( res && res.data.code == 0) {
                 this.orderMessage = res.data.data;
-                this.orderMessage['checkTime'] = this.orderMessage['checkTime'] ? SOtime.time8(this.orderMessage['checkTime']) : ''
+                this.orderMessage['checkTime'] = this.orderMessage['checkTime'] ? SOtime.time8(this.orderMessage['checkTime']) : '';
+                if (this.orderMessage['items'].length == 0) {
+                    this.isShowNoData = true;
+                } else {
+                    this.isShowNoData = false;
+                }
             } else {
                 this.$dialog.alert({
                     message: `${res.data.msg}`,

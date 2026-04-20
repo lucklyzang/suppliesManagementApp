@@ -66,7 +66,7 @@
               </div>
             </div>
             <div class="delivery-list-box">
-              <van-empty description="暂无产品数据" v-show="stockProductList.length == 0" />
+              <van-empty description="暂无产品数据" v-show="isShowNoData" />
               <div class="delivery-list" @click="takeStockProductClickEvent(item,index)" v-for="(item,index) in stockProductList" :key="item.id">
                 <div class="product-content">
                   <span>{{ item['productName'] }}</span>
@@ -192,6 +192,7 @@ export default {
     return {
       loadingShow: false,
       infoText: '加载中...',
+      isShowNoData: false,
       currentPageNum: 1,
       pageSize: 20,
       totalCount: 0,
@@ -279,8 +280,12 @@ export default {
       })
     },
 
-    // 保存数据事件(待审核)
+    // 保存数据事件(暂存)
     saveDataEvent () {
+    },
+
+    // 提交数据事件(待审核)
+    submitDataEvent () {
       // 只需要提交账面数与实盘数不一致的产品
       let temporaryList = this.stockProductList.filter((item) => { return Number(item['count']) !== Number(item['practicalTakeStockValue'])});
       if (temporaryList.length == 0) {
@@ -296,6 +301,7 @@ export default {
           warehouseId: item['warehouseId'], //仓库编号
           productId: item['productId'], // 产品编号
           productPrice: item['salePrice'], // 产品单价
+          productStandard: item['standard'], //产品规格
           stockCount: Number(item['count']), //账面数量
           actualCount: Number(item['practicalTakeStockValue']), //实际数量
           count: Math.floor(Number(item['practicalTakeStockValue']) - Number(item['count'])), // 盈亏数量
@@ -303,11 +309,6 @@ export default {
         })
       };
       this.createStockCheckEvent(10,needItems)
-    },
-
-    // 提交数据事件
-    submitDataEvent () {
-      this.createStockCheckEvent();
     },
 
     // 库房下拉框点击事件
@@ -385,6 +386,7 @@ export default {
     // 获取产品库存列表
     getStockPageEvent(data) {
       this.loadingShow = true;
+      this.isShowNoData = false;
       this.infoText = '加载中···';
       this.stockProductList = [];
       getStockPage(data).then((res) => {
@@ -392,6 +394,11 @@ export default {
           this.infoText = '';
           if ( res && res.data.code == 0) {
             this.stockProductList = res.data.data.list;
+            if (this.stockProductList.length == 0) {
+              this.isShowNoData = true;
+            } else {
+              this.isShowNoData = false;
+            };
             this.stockProductList.forEach(item => {
               item['practicalTakeStockValue'] = item['count'];
               item['breakEvenexplainValue'] = ''
@@ -420,7 +427,7 @@ export default {
       this.loadingShow = true;
       this.infoText = '提交中···';
       createStockCheck({
-        checkTime: this.takeStockDate + " 00:00:00", // 出库时间
+        checkTime: new Date(this.takeStockDate).getTime(), // 盘点时间
         warehouseId: this.currentShipmentWarehouseValue, // 仓库编号
         items, //出库项列表
         status 
@@ -436,7 +443,7 @@ export default {
               });
               this.$toast({
                 type: 'success',
-                message: '保存成功'
+                message: '提交成功'
               })
           } else {
               this.$dialog.alert({

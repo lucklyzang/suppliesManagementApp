@@ -211,6 +211,7 @@ export default {
       refuseReasonValue: '',
       currentOrderIndex: '',
       currentOrderId: '',
+      scrollTop: 0,
       orderStatusList: [
         {
             value: '',
@@ -231,41 +232,67 @@ export default {
     }
   },
 
-  mounted() {
-    // 控制设备物理返回按键
-    this.deviceReturn('/suppliesHome');
-    if (this.$route.query.status) {
-        if (this.$route.query.status == '待确认') {
-            let temporaryMessage = this.orderStatusList.filter((item) => { return item.text == this.$route.query.status });
-            let temporaryIndex = this.orderStatusList.findIndex((item) => { return item.text == this.$route.query.status });
-            if (temporaryMessage.length > 0) {
-                this.needQueryStatusList = [temporaryMessage[0]['value']];
-                this.currentStatusText = temporaryMessage[0]['text'];
-                this.currentStatusValue = temporaryMessage[0]['value'];
-                this.currentStatusIndex = temporaryIndex;
-            }
-        }
+  beforeRouteLeave(to,from,next) {
+    if (to.name == 'suppliesOrderDetails' || to.name == 'suppliesCreateDeliveryOrder') {
+        from.meta.isBack = true
+    } else {
+        from.meta.isBack = false
     };
-    this.$nextTick(()=> {
-      this.initScrollChange()
-    });
-    this.getDateRange();
-    this.getPlanOrderPageEvent({
-        pageNo: this.currentPageNum,
-        pageSize: this.pageSize,
-        status: '',
-        statusList: this.currentStatusValue === '' ? this.needQueryStatusList : [this.currentStatusValue],
-        orderTime: [`${this.startDate}`,`${this.endDate}`],
-        creator: ''// this.userAccount
-    },true)
-    const el = this.$refs.myElement;
-    //点击状态栏区域以外的地方时，库房列表收起
-    document.addEventListener('click', (event) => {
-        if (el && !el.contains(event.target)){
-            this.orderStatusListShow = false;
-        }
-    }, false)
+    next()
   },
+
+  activated() {
+    this.deviceReturn('/suppliesHome');  
+    this.$nextTick(()=> {
+        this.initScrollChange()
+    });
+    // 从详情页面或生成送货单页面返回
+    if (this.$route.meta.isBack) {
+        this.$route.meta.isBack = false;
+        // 恢复页面滚动位置
+        this.$nextTick(() => {
+            const boxBackScroll = this.$refs['scrollBacklogTask'];
+            boxBackScroll.scrollTo({
+                top: this.scrollTop,
+                behavior: 'smooth'
+            })
+        })
+    // 从其它页面进入    
+    } else {
+        if (this.$route.query.status) {
+            if (this.$route.query.status == '待确认') {
+                let temporaryMessage = this.orderStatusList.filter((item) => { return item.text == this.$route.query.status });
+                let temporaryIndex = this.orderStatusList.findIndex((item) => { return item.text == this.$route.query.status });
+                if (temporaryMessage.length > 0) {
+                    this.needQueryStatusList = [temporaryMessage[0]['value']];
+                    this.currentStatusText = temporaryMessage[0]['text'];
+                    this.currentStatusValue = temporaryMessage[0]['value'];
+                    this.currentStatusIndex = temporaryIndex;
+                }
+            }
+        } else {
+            this.resetStatusEvent()
+        };
+        this.getDateRange();
+        this.getPlanOrderPageEvent({
+            pageNo: this.currentPageNum,
+            pageSize: this.pageSize,
+            status: '',
+            statusList: this.currentStatusValue === '' ? this.needQueryStatusList : [this.currentStatusValue],
+            orderTime: [`${this.startDate}`,`${this.endDate}`],
+            creator: ''// this.userAccount
+        },true)
+        const el = this.$refs.myElement;
+        //点击状态栏区域以外的地方时，库房列表收起
+        document.addEventListener('click', (event) => {
+            if (el && !el.contains(event.target)){
+                this.orderStatusListShow = false;
+            }
+        }, false)
+    }
+   },
+
+  mounted() {},
 
   beforeRouteEnter(to, from, next) {
     next(vm=>{
@@ -308,6 +335,14 @@ export default {
         this.$router.push({path: '/suppliesHome'})
     },
 
+    // 重置状态
+    resetStatusEvent () {
+        this.needQueryStatusList = [20,30];
+        this.currentStatusText = '全部状态';
+        this.currentStatusValue = '';
+        this.currentStatusIndex = 0;
+    },
+
     // 进入历史订单事件
     enterHistoryOrderEvent () {
         this.$router.push({path: '/suppliesHistoryOrderList'})
@@ -322,6 +357,7 @@ export default {
     // 事件列表加载事件
     eventListLoadMore () {
       let boxBackScroll = this.$refs['scrollBacklogTask'];
+      this.scrollTop = boxBackScroll.scrollTop;
       if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
         // 点击筛选确定后，不加载数据
         if (this.eventTime) {return};
@@ -626,7 +662,7 @@ export default {
     
     // 生成送货单事件
     createDeliveryOrderEvent(item,index) {
-         this.$router.push({
+        this.$router.push({
             path: '/suppliesCreateDeliveryOrder', 
             query: {
                 orderId: item.id

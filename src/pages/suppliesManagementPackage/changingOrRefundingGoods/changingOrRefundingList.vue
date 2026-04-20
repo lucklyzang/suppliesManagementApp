@@ -82,12 +82,12 @@
 						</div>
 					</div>
 				</div>
+                <van-empty description="您还没有相关退换货单" v-show="isShowNoData" />
+                <div v-show="bottomLoadingShow" class="bottom-loading-show">
+                    加载中...
+                </div>
+                <div class="no-more-data" v-show="isShowNoMoreData && !loadingShow && !isShowNoData">没有更多数据了!</div>
 			</div>
-            <van-empty description="您还没有相关退换货单" v-show="isShowNoData" />
-            <div v-show="bottomLoadingShow" class="bottom-loading-show">
-                加载中...
-            </div>
-            <div class="no-more-data" v-show="isShowNoMoreData && !loadingShow && !isShowNoData">没有更多数据了!</div>
         </div>
     </div>
     <!-- 拒绝退换弹框	 -->
@@ -227,27 +227,52 @@ export default {
       refuseReasonValue: '',
       currentOrderId: '',
       currentOrderIndex: '',
+      scrollTop: 0,
       orderList: [],
       eventTime: 0,
       fullOrderList: []
     }
   },
 
-  mounted() {
-    // 控制设备物理返回按键
-    this.deviceReturn('/suppliesHome');
-    this.$nextTick(()=> {
-      this.initScrollChange()
-    });
-    this.getDateRange();
-    this.getSaleReturnBarterPageEvent({
-        pageNo: this.currentPageNum,
-        pageSize: this.pageSize,
-        status: '',
-        returnTime: [`${this.startDate}`,`${this.endDate}`],
-        creator: ''// this.userAccount
-    },true)
+  beforeRouteLeave(to,from,next) {
+    if (to.name == 'suppliesChangingOrRefundingDetails') {
+        from.meta.isBack = true
+    } else {
+        from.meta.isBack = false
+    };
+    next()
   },
+
+   activated() {
+    this.deviceReturn('/suppliesHome');  
+    this.$nextTick(()=> {
+        this.initScrollChange()
+    });
+    // 从详情页面返回
+    if (this.$route.meta.isBack) {
+        this.$route.meta.isBack = false;
+        // 恢复页面滚动位置
+        this.$nextTick(() => {
+            const boxBackScroll = this.$refs['scrollBacklogTask'];
+            boxBackScroll.scrollTo({
+                top: this.scrollTop,
+                behavior: 'smooth'
+            })
+        })
+    // 从其它页面进入    
+    } else {
+        this.getDateRange();
+        this.getSaleReturnBarterPageEvent({
+            pageNo: this.currentPageNum,
+            pageSize: this.pageSize,
+            status: '',
+            returnTime: [`${this.startDate}`,`${this.endDate}`],
+            creator: ''// this.userAccount
+        },true)
+    }
+   },
+
+  mounted() {},
 
   beforeRouteEnter(to, from, next) {
     next() 
@@ -296,6 +321,7 @@ export default {
     // 事件列表加载事件
     eventListLoadMore () {
       let boxBackScroll = this.$refs['scrollBacklogTask'];
+      this.scrollTop = boxBackScroll.scrollTop;
       if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
         // 点击筛选确定后，不加载数据
         if (this.eventTime) {return};
@@ -316,7 +342,6 @@ export default {
             },false)
           };
           this.eventTime = 0;
-          console.log('事件列表滚动了',boxBackScroll.scrollTop, boxBackScroll.offsetHeight, boxBackScroll.scrollHeight)
         },300)
       }
     },
@@ -982,28 +1007,28 @@ export default {
                         }
                     }
                 }
+            };
+            .bottom-loading-show {
+                font-size: 12px;
+                color: #BEC7D1;
+                width: 100%;
+                text-align: center;
+                line-height: 30px
+            };
+            .no-more-data {
+                font-size: 12px;
+                color: #BEC7D1;
+                width: 100%;
+                text-align: center;
+                line-height: 30px
+            };
+            /deep/ .van-empty {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 100%;
             }
-        };
-        .bottom-loading-show {
-            font-size: 12px;
-            color: #BEC7D1;
-            width: 100%;
-            text-align: center;
-            line-height: 30px
-        };
-        .no-more-data {
-            font-size: 12px;
-            color: #BEC7D1;
-            width: 100%;
-            text-align: center;
-            line-height: 30px
-        };
-        /deep/ .van-empty {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 100%;
         }
     }
   }

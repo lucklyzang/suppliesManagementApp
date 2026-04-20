@@ -164,6 +164,7 @@ export default {
       refuseReasonValue: '',
       currentOrderIndex: '',
       currentOrderId: '',
+      scrollTop: 0,
       deleteOrderModalShow: false,
       eventTime: 0,
       orderList: [],
@@ -171,22 +172,55 @@ export default {
     }
   },
 
-  mounted() {
-    // 控制设备物理返回按键
-    this.deviceReturn('/suppliesTakeStock');
-    this.getDateRange();
-    this.$nextTick(()=> {
-      this.initScrollChange()
-    });
-    this.getDateRange();
-    this.getStockCheckRecordsPageEvent({
-        pageNo: this.currentPageNum,
-        pageSize: this.pageSize,
-        status: '',
-        checkTime: [`${this.startDate}`,`${this.endDate}`],
-        creator:  '' // this.userAccount
-    },true)
+  beforeRouteLeave(to,from,next) {
+    if (to.name == 'suppliesTakeStockRecordDetails' || to.name =='suppliesEditTakeStock') {
+        from.meta.isBack = true
+    } else {
+        from.meta.isBack = false
+    };
+    next()
   },
+
+  activated() {
+    this.deviceReturn('/suppliesTakeStock');  
+    this.$nextTick(()=> {
+        this.initScrollChange()
+    });
+    // 从详情页面或编辑页面返回
+    if (this.$route.meta.isBack) {
+        this.$route.meta.isBack = false;
+        // 审核成功,则更改对应列表状态
+        if (this.$route.query) {
+            if (this.$route.query.orderId) {
+                this.fullOrderList.forEach((item,index) => {
+                    if (item.id == this.$route.query.orderId) {
+                        item.status = Number(this.$route.query.status)
+                    }
+                })
+            }
+        };
+        // 恢复页面滚动位置
+        this.$nextTick(() => {
+            const boxBackScroll = this.$refs['scrollBacklogTask'];
+            boxBackScroll.scrollTo({
+                top: this.scrollTop,
+                behavior: 'smooth'
+            })
+        })
+    // 从其它页面进入    
+    } else {
+        this.getDateRange();
+        this.getStockCheckRecordsPageEvent({
+            pageNo: this.currentPageNum,
+            pageSize: this.pageSize,
+            status: '',
+            checkTime: [`${this.startDate}`,`${this.endDate}`],
+            creator:  '' // this.userAccount
+        },true)
+    }
+   },
+
+  mounted() {},
 
   beforeRouteEnter(to, from, next) {
     next(vm=>{
@@ -238,6 +272,7 @@ export default {
     // 事件列表加载事件
     eventListLoadMore () {
       let boxBackScroll = this.$refs['scrollBacklogTask'];
+      this.scrollTop = boxBackScroll.scrollTop;
       if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
         // 点击筛选确定后，不加载数据
         if (this.eventTime) {return};
@@ -257,8 +292,7 @@ export default {
                 creator: ''// this.userAccount
             },false)
           };
-          this.eventTime = 0;
-          console.log('事件列表滚动了',boxBackScroll.scrollTop, boxBackScroll.offsetHeight, boxBackScroll.scrollHeight)
+          this.eventTime = 0
         },300)
       }
     },

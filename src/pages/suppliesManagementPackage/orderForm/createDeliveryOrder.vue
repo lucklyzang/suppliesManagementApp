@@ -346,7 +346,7 @@ export default {
       };
       this.createSaleOutEvent({
         orderId: Number(this.orderId), //销售订单编号
-        outTime: this.arrivalDate + ' 00:00:00', //出库时间
+        requestTime: new Date(this.arrivalDate ).getTime(), //出库时间
         remark: this.remarkValue, //备注
         items: deliveryOrderList
       })

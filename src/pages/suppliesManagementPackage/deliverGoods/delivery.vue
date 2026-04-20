@@ -368,7 +368,12 @@ export default {
               message: '提交成功'
             });
             this.changeCurrentElectronicSignature({DtMsg: null});
-            this.onClickLeft()
+            this.$router.push({
+              path: '/suppliesDeliverGoodsList', 
+              query: {
+                orderId: this.orderId
+              }
+            })
           } else {
             this.$dialog.alert({
               message: `${res.data.msg}`,

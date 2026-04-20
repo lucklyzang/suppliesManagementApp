@@ -46,7 +46,7 @@
 						:class="{
 							'stayDeliveryStyle ' : item.status == 10, 
 							'deliveryingStyle' : item.status == 20,
-                            'alreadyDeliveryStyle' : item.status == 60
+                            'alreadyDeliveryStyle' : item.status == 21
 							}"
 						>
 							<span>{{ stateTransfer(item.status) }}</span>
@@ -64,7 +64,7 @@
 							</div>
 							<div class="create-delivery-date-left">
 								<span>交货日期:</span>
-								<span>{{ item.checkTime }}</span>
+								<span>{{ item.requestTime }}</span>
 							</div>
 						</div>
 						<div class="create-delivery-date delivery-address">
@@ -274,7 +274,7 @@ export default {
       currentStatusText: '全部状态',
       currentStatusIndex: 0,
       currentStatusValue: '',
-      needQueryStatusList: [10,20,60],
+      needQueryStatusList: [10,20,21],
       orderStatusListShow: false,
       deliverGoodsValue: '',
       contactInformationValue: '',
@@ -299,7 +299,7 @@ export default {
             text: '送货中'
         },
         {
-            value: 60,
+            value: 21,
             text: '已送货'
         }
       ],
@@ -324,9 +324,31 @@ export default {
     this.$nextTick(()=> {
       this.initScrollChange()
     });
-    // 从详情页返回
+    // 从详情页或送货页面返回
     if (this.$route.meta.isBack) {
-        this.$route.meta.isBack = false
+        this.$route.meta.isBack = false;
+        // 送货成功,则修改对应列表状态
+        if (this.$route.query) {
+            if (this.$route.query.orderId) {
+                if (this.currentStatusValue === '') {
+                    this.fullOrderList.forEach((item,index) => {
+                        if (item.id == this.$route.query.orderId) {
+                            item.status = 21
+                        }
+                    })
+                } else {
+                    this.fullOrderList.splice(this.currentOrderIndex,1);
+                }
+            }
+        };
+        // 恢复页面滚动位置
+        this.$nextTick(() => {
+            const boxBackScroll = this.$refs['scrollBacklogTask'];
+            boxBackScroll.scrollTo({
+                top: this.scrollTop,
+                behavior: 'smooth'
+            })
+        })
     // 从其它页面进入    
     } else {
         if (this.$route.query.status) {
@@ -366,10 +388,7 @@ export default {
     }
   },
 
-  mounted() {
-    console.log('mounted')
-    // 控制设备物理返回按键
-  },
+  mounted() {},
 
   watch: {},
 
@@ -417,7 +436,7 @@ export default {
 
     // 重置状态
     resetStatusEvent () {
-        this.needQueryStatusList = [10,20,60];
+        this.needQueryStatusList = [10,20,21];
         this.currentStatusText = '全部状态';
         this.currentStatusValue = '';
         this.currentStatusIndex = 0;
@@ -432,6 +451,7 @@ export default {
     // 事件列表加载事件
     eventListLoadMore () {
       let boxBackScroll = this.$refs['scrollBacklogTask'];
+      this.scrollTop = boxBackScroll.scrollTop;
       if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
         // 点击筛选确定后，不加载数据
         if (this.eventTime) {return};
@@ -453,7 +473,6 @@ export default {
             },false)
           };
           this.eventTime = 0;
-          console.log('事件列表滚动了',boxBackScroll.scrollTop, boxBackScroll.offsetHeight, boxBackScroll.scrollHeight)
         },300)
       }
     },
@@ -638,7 +657,7 @@ export default {
                 this.totalCount = res.data.data.total;
                 this.orderList.forEach((item)=>{
                     item.createTime = SOtime.time3(item.createTime);
-                    item.checkTime = item.checkTime ? SOtime.time8(item.checkTime) : '';
+                    item.requestTime = item.requestTime ? SOtime.time8(item.requestTime) : '';
                 });
                 this.fullOrderList = this.fullOrderList.concat(this.orderList);
                 if (this.fullOrderList.length == 0) {
@@ -696,7 +715,7 @@ export default {
                 case 20:
                     return '送货中'
                     break;
-                case 60:
+                case 21:
                     return '已送货'
                     break;
         } 

@@ -98,6 +98,7 @@ export default {
       totalCount: 0,
       showCalendar: false,
       defaultDateArr: [],
+      scrollTop: 0,
       startDate: '',
       endDate: '',
       minDate: new Date('2025-03-16'),
@@ -106,22 +107,46 @@ export default {
       fullOrderList: []
     }
   },
-
-  mounted() {
-    // 控制设备物理返回按键
-    this.deviceReturn('/suppliesOrderList');
-    this.$nextTick(()=> {
-      this.initScrollChange()
-    });
-    this.getDateRange();
-    this.getPlanOrderPageEvent({
-        pageNo: this.currentPageNum,
-        pageSize: this.pageSize,
-        status: 50,
-        orderTime: [`${this.startDate}`,`${this.endDate}`],
-        creator: ''// this.userAccount
-    },true)
+  
+   beforeRouteLeave(to,from,next) {
+    if (to.name == 'suppliesOrderDetails') {
+        from.meta.isBack = true
+    } else {
+        from.meta.isBack = false
+    };
+    next()
   },
+
+  activated() {
+    this.deviceReturn('/suppliesOrderList');  
+    this.$nextTick(()=> {
+        this.initScrollChange()
+    });
+    // 从详情页面返回
+    if (this.$route.meta.isBack) {
+        this.$route.meta.isBack = false;
+        // 恢复页面滚动位置
+        this.$nextTick(() => {
+            const boxBackScroll = this.$refs['scrollBacklogTask'];
+            boxBackScroll.scrollTo({
+                top: this.scrollTop,
+                behavior: 'smooth'
+            })
+        })
+    // 从其它页面进入    
+    } else {
+        this.getDateRange();
+        this.getPlanOrderPageEvent({
+            pageNo: this.currentPageNum,
+            pageSize: this.pageSize,
+            status: 50,
+            orderTime: [`${this.startDate}`,`${this.endDate}`],
+            creator: ''// this.userAccount
+        },true)
+    }
+  },
+
+  mounted() {},
 
   beforeRouteEnter(to, from, next) {
     next() 
@@ -200,6 +225,7 @@ export default {
     // 事件列表加载事件
     eventListLoadMore () {
       let boxBackScroll = this.$refs['scrollBacklogTask'];
+      this.scrollTop = boxBackScroll.scrollTop;
       if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
         // 点击筛选确定后，不加载数据
         if (this.eventTime) {return};

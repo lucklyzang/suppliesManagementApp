@@ -23,7 +23,10 @@ export function getDefaultCommonState() {
 		// 胶囊信息
 		capsuleMessage: {},
 		// 需要缓存组件
-		catch_components: ['suppliesDeliverGoodsList'],
+		catch_components: ['suppliesDeliverGoodsList','suppliesDeliverHistoryGoodsList',
+			'suppliesChangingOrRefundingList','suppliesTakeStockRecord','suppliesOrderList',
+			'suppliesHistoryOrderList'
+		],
 		// 当前电子签名信息
 		currentElectronicSignature: '',
 		// 原始电子签名信息
@@ -40,6 +43,7 @@ export function getDefaultCommonState() {
 // 物资管理store的初始值
 export function getDefaultSuppliesManagementState() {
 	return {
-		suppliesHomeGlobalTimer: null
+		suppliesHomeGlobalTimer: null,
+		takeStockOrderList: [] //暂存盘点信息
 	}
 }

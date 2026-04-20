@@ -70,7 +70,7 @@
                   <span>{{ item['productName'] }}</span>
                 </div>
                 <div class="specification-content">
-                  <span>{{ item['standard'] ? item['standard'] : '无'}}</span>
+                  <span>{{ item['productStandard'] ? item['productStandard'] : '无'}}</span>
                 </div>
                 <div class="deliver-number-content">
                   <span>{{ item['stockCount'] }}</span>
@@ -91,7 +91,7 @@
               <div class="btn-center" @click="saveDataEvent">
                 <span>保存</span>
               </div>
-              <div class="btn-right">
+              <div class="btn-right" @click="submmitDataEvent">
                 <span>提交</span>
               </div>
           </div> 
@@ -370,22 +370,20 @@ export default {
         })
     },
 
-    // 保存数据事件(待审核)
+    // 保存数据事件(暂存)
     saveDataEvent () {
+    },
+
+    // 提交数据
+    submmitDataEvent () {
       // 只需要提交账面数与实盘数不一致的产品
-      let temporaryList = this.orderMessage['items'].filter((item) => { return Number(item['stockCount']) !== Number(item['actualCount'])});
-      if (temporaryList.length == 0) {
-        this.$toast({
-          type: 'fail',
-          message: '账面数与实盘数一致,无需盘点'
-        });
-        return
-      };
+      let temporaryList = this.orderMessage['items'];
       let needItems = [];
       for (let item of temporaryList) {
         needItems.push({
           warehouseId: item['warehouseId'], //仓库编号
           productId: item['productId'], // 产品编号
+          productStandard: item['productStandard'], //产品规格
           productPrice: item['salePrice'], // 产品单价
           stockCount: Number(item['stockCount']), //账面数量
           actualCount: Number(item['actualCount']), //实际数量
@@ -413,7 +411,8 @@ export default {
               this.$toast({
                 type: 'success',
                 message: '保存成功'
-              })
+              });
+              this.onClickLeft();
             } else {
               this.$dialog.alert({
                 message: `${res.data.msg}`,

@@ -68,13 +68,21 @@ let baseRoute = [{
     path: '/suppliesOrderList',
     name: 'suppliesOrderList',
     component: SuppliesOrderList,
-    meta: { index: 3 }
+    meta: { 
+      index: 3,
+      keepAlive: true,
+      isBack:false   
+    }
   },
   {
     path: '/suppliesHistoryOrderList',
     name: 'suppliesHistoryOrderList',
     component: SuppliesHistoryOrderList,
-    meta: { index: 4 }
+    meta: { 
+      index: 4,
+      keepAlive: true,
+      isBack:false    
+    }
   },
   {
     path: '/suppliesOrderDetails',
@@ -108,7 +116,11 @@ let baseRoute = [{
     path: '/suppliesDeliverHistoryGoodsList',
     name: 'suppliesDeliverHistoryGoodsList',
     component: SuppliesDeliverHistoryGoodsList,
-    meta: { index: 4 }
+    meta: { 
+      index: 4,
+      keepAlive: true,
+      isBack:false
+    }
   },
   {
     path: '/suppliesDeliverGoodsDetails',
@@ -126,7 +138,11 @@ let baseRoute = [{
     path: '/suppliesChangingOrRefundingList',
     name: 'suppliesChangingOrRefundingList',
     component: SuppliesChangingOrRefundingList,
-    meta: { index: 3 }
+    meta: { 
+      index: 3,
+      keepAlive: true,
+      isBack:false 
+    }
   },
   {
     path: '/suppliesChangingOrRefundingDetails',
@@ -150,7 +166,11 @@ let baseRoute = [{
     path: '/suppliesTakeStockRecord',
     name: 'suppliesTakeStockRecord',
     component: SuppliesTakeStockRecord,
-    meta: { index: 4 }
+    meta: { 
+      index: 4,
+      keepAlive: true,
+      isBack:false  
+    }
   },
   {
     path: '/suppliesTakeStockRecordDetails',

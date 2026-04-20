@@ -44,7 +44,7 @@
 						<div class="product-specification">
 							<div class="product-specification-left">
 								<span>
-									{{ item.specification ? item.specification : '无' }}
+									{{ item.productStandard ? item.productStandard : '无' }}
 								</span>
 							</div>
 							<div class="product-specification-right">

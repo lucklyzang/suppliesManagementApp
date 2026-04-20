@@ -43,7 +43,7 @@
 							</div>
 							<div class="create-delivery-date-left">
 								<span>交货日期:</span>
-								<span>{{ item.checkTime }}</span>
+								<span>{{ item.requestTime }}</span>
 							</div>
 						</div>
 						<div class="create-delivery-date delivery-address">
@@ -107,6 +107,7 @@ export default {
       pageSize: 20,
       totalCount: 0,
       showCalendar: false,
+      scrollTop: 0,
       defaultDateArr: [],
       startDate: '',
       endDate: '',
@@ -118,21 +119,45 @@ export default {
     }
   },
 
-  mounted() {
-    // 控制设备物理返回按键
-    this.deviceReturn('/suppliesDeliverGoodsList');
-        this.$nextTick(()=> {
-      this.initScrollChange()
-    });
-    this.getDateRange();
-    this.getSaleOutPageEvent({
-        pageNo: this.currentPageNum,
-        pageSize: this.pageSize,
-        status: 60,
-        outTime: [`${this.startDate}`,`${this.endDate}`],
-        creator: ''// this.userAccount
-    },true);
+  beforeRouteLeave(to,from,next) {
+    if (to.name == 'suppliesDeliverGoodsDetails') {
+        from.meta.isBack = true
+    } else {
+        from.meta.isBack = false
+    };
+    next()
   },
+
+  activated() {
+    this.deviceReturn('/suppliesDeliverGoodsList');  
+    this.$nextTick(()=> {
+        this.initScrollChange()
+    });
+    // 从详情页面返回
+    if (this.$route.meta.isBack) {
+        this.$route.meta.isBack = false;
+        // 恢复页面滚动位置
+        this.$nextTick(() => {
+            const boxBackScroll = this.$refs['scrollBacklogTask'];
+            boxBackScroll.scrollTo({
+                top: this.scrollTop,
+                behavior: 'smooth'
+            })
+        })
+    // 从其它页面进入    
+    } else {
+        this.getDateRange();
+        this.getSaleOutPageEvent({
+            pageNo: this.currentPageNum,
+            pageSize: this.pageSize,
+            status: 60,
+            outTime: [`${this.startDate}`,`${this.endDate}`],
+            creator: ''// this.userAccount
+        },true)
+    }
+  },
+
+  mounted() {},
 
   beforeRouteEnter(to, from, next) {
     next() 
@@ -193,6 +218,7 @@ export default {
     // 事件列表加载事件
     eventListLoadMore () {
       let boxBackScroll = this.$refs['scrollBacklogTask'];
+      this.scrollTop = boxBackScroll.scrollTop;
       if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
         // 点击筛选确定后，不加载数据
         if (this.eventTime) {return};
@@ -238,7 +264,7 @@ export default {
                 this.totalCount = res.data.data.total;
                 this.orderList.forEach((item)=>{
                     item.createTime = SOtime.time3(item.createTime);
-                    item.checkTime = item.checkTime ? SOtime.time8(item.checkTime) : '';
+                    item.requestTime = item.requestTime ? SOtime.time8(item.requestTime) : '';
                 });
                 this.fullOrderList = this.fullOrderList.concat(this.orderList);
                 if (this.fullOrderList.length == 0) {

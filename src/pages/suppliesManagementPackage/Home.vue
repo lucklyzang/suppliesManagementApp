@@ -126,7 +126,7 @@
                 } else {
                     this.changeSuppliesHomeGlobalTimer(null)
                 }
-                }, 1000)
+                }, 2000)
             }
         },
 
