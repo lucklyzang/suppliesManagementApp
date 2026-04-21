@@ -29,7 +29,7 @@
                     @click="backlogListEvent(item,index)"
                 >
                     <span>{{ item.name }}</span>
-                    <p class="message-number">
+                    <p class="message-number" v-show="item.count !== null && item.count !== ''">
                         <span>{{ item.count }}</span>
                     </p>
                 </div> 
@@ -191,7 +191,7 @@
                             if (item.value == 'hasConfirm') {
                                 item.count = hasConfirm
                             } else if (item.value == 'noConfirm') {
-                                item.value = noConfirm
+                                item.count = noConfirm
                             }
                         })
                     } else {

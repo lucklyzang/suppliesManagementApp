@@ -44,6 +44,7 @@ export function getDefaultCommonState() {
 export function getDefaultSuppliesManagementState() {
 	return {
 		suppliesHomeGlobalTimer: null,
-		takeStockOrderList: [] //暂存盘点信息
+		takeStockOrderMessage: {}, //暂存盘点信息
+		takeStockEditOrderMessage: [] //暂存编辑盘点信息
 	}
 }

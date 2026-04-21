@@ -65,9 +65,8 @@
                 <span>单位</span>
               </div>
             </div>
-            <div class="delivery-list-box">
-              <van-empty description="暂无产品数据" v-show="isShowNoData" />
-              <div class="delivery-list" @click="takeStockProductClickEvent(item,index)" v-for="(item,index) in stockProductList" :key="item.id">
+            <div class="delivery-list-box" ref="scrollBacklogTask">
+              <div class="delivery-list" @click="takeStockProductClickEvent(item,index)" v-for="(item,index) in fullStockProductList" :key="item.id">
                 <div class="product-content">
                   <span>{{ item['productName'] }}</span>
                 </div>
@@ -84,17 +83,12 @@
                   <span>{{ item['unitName'] }}</span>
                 </div>
               </div>
+              <van-empty description="暂无产品数据" v-show="isShowNoData" />
+              <div v-show="bottomLoadingShow" class="bottom-loading-show">
+                  加载中...
+              </div>
+              <div class="no-more-data" v-show="isShowNoMoreData && !loadingShow && !isShowNoData">没有更多数据了!</div>
             </div>
-          </div>
-          <div class="page-break">
-           <van-pagination
-            v-model="currentPageNum"
-            :total-items="totalCount"
-            :items-per-page="pageSize"
-            :page-count="totalPage"
-            force-ellipses
-            @change="stockPageChangeEvent"
-          />
           </div>
           <div class="btn-box">
               <div class="btn-left" @click="resetDataEvent">
@@ -193,6 +187,8 @@ export default {
       loadingShow: false,
       infoText: '加载中...',
       isShowNoData: false,
+      isShowNoMoreData: false,
+      bottomLoadingShow: false,
       currentPageNum: 1,
       pageSize: 20,
       totalCount: 0,
@@ -204,6 +200,7 @@ export default {
       currentWarehouseIndex: '',
       shipmentWarehouseList: [],
       stockProductList: [],
+      fullStockProductList: [],
       takeStockModalShow: false,
       practicalTakeStockValue: '',
       breakEvenexplainValue: '',
@@ -216,6 +213,9 @@ export default {
   mounted() {
     // 控制设备物理返回按键
     this.deviceReturn('/suppliesHome');
+    this.$nextTick(()=> {
+      this.initScrollChange()
+    });
     this.takeStockDate = SOtime.time8(new Date().getTime());
     const el = this.$refs.myElement;
     //点击库房区域以外的地方时，库房列表收起
@@ -234,7 +234,7 @@ export default {
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo"]),
+    ...mapGetters(["userInfo","takeStockOrderMessage"]),
       userName() {
 			  return this.userInfo['nickname']
 			},
@@ -259,10 +259,46 @@ export default {
   },
 
   methods: {
-    ...mapMutations([]),
+    ...mapMutations(['changeTakeStockOrderMessage']),
 
     onClickLeft () {
       this.$router.push({path: '/suppliesHome'})
+    },
+
+     // 事件列表注册滚动事件
+    initScrollChange () {
+      let boxBackScroll = this.$refs['scrollBacklogTask'];
+      boxBackScroll.addEventListener('scroll',this.eventListLoadMore,true)
+    },
+
+    // 事件列表加载事件
+    eventListLoadMore () {
+      let boxBackScroll = this.$refs['scrollBacklogTask'];
+      this.scrollTop = boxBackScroll.scrollTop;
+      if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
+        // 判断是否有暂存的盘点信息
+        if (JSON.stringify(this.takeStockOrderMessage) != '{}') {
+          // 判断保存前该仓库产品列表信息是否加载完,没加载完，上滑继续加载后面数据
+          if (this.isShowNoMoreData) { 
+            return
+          }
+        };
+        this.timeTwo = setTimeout(() => {
+          let totalPage = Math.ceil(this.totalCount/this.pageSize);
+          if (this.currentPageNum >= totalPage) {
+            this.isShowNoMoreData = true;
+          } else {
+            this.isShowNoMoreData = false;
+            this.currentPageNum = this.currentPageNum + 1;
+            this.getStockPageEvent({
+              pageNo: this.currentPageNum,
+              pageSize: this.pageSize,
+              productId: this.productCodeValue, // 产品编号
+              warehouseId: this.currentShipmentWarehouseValue //仓库编号
+            },false)
+          }
+        },300)
+      }
     },
 
     // 进入盘点记录事件
@@ -272,22 +308,52 @@ export default {
 
     // 重置数据事件
     resetDataEvent () {
-      this.getStockPageEvent({
-        pageNo: this.currentPageNum,
-        pageSize: this.pageSize,
-        productId: this.productCodeValue, // 产品编号
-        warehouseId: this.currentShipmentWarehouseValue //仓库编号
+      if (this.fullStockProductList.length == 0) { return };
+      this.fullStockProductList.forEach((item,index)=>{
+        this.$set(this.fullStockProductList[index],'practicalTakeStockValue',item['count']);
+        this.$set(this.fullStockProductList[index],'breakEvenexplainValue','')
       })
+    },
+
+    // 回显暂存的盘点信息
+    echoStorageTakeStockMessage () {
+      if (JSON.stringify(this.takeStockOrderMessage) != '{}') {
+        this.currentWarehouseName = this.takeStockOrderMessage['currentWarehouseName'],
+        this.currentShipmentWarehouseValue = this.takeStockOrderMessage['currentShipmentWarehouseValue'],
+        this.currentWarehouseIndex =  this.takeStockOrderMessage['currentWarehouseIndex'],
+        this.currentPageNum = this.takeStockOrderMessage['currentPageNum'],
+        this.totalCount = this.takeStockOrderMessage['totalCount'],
+        this.isShowNoMoreData = this.takeStockOrderMessage['isShowNoMoreData'],
+        this.fullStockProductList = this.takeStockOrderMessage['stockProductList']
+      }
     },
 
     // 保存数据事件(暂存)
     saveDataEvent () {
+      if (this.fullStockProductList.length == 0) { return };
+      this.changeTakeStockOrderMessage({
+        currentWarehouseName: this.currentWarehouseName,
+        currentShipmentWarehouseValue: this.currentShipmentWarehouseValue,
+        currentWarehouseIndex:  this.currentWarehouseIndex,
+        currentPageNum: this.currentPageNum,
+        totalCount: this.totalCount,
+        isShowNoMoreData: this.isShowNoMoreData,
+        stockProductList: this.fullStockProductList
+      });
+      this.$toast({
+        type: 'success',
+        message: '暂存成功'
+      });
+      setTimeout(() =>{
+        this.onClickLeft()
+      },1000)
     },
 
     // 提交数据事件(待审核)
     submitDataEvent () {
+      if (this.fullStockProductList.length == 0) { return };
       // 只需要提交账面数与实盘数不一致的产品
-      let temporaryList = this.stockProductList.filter((item) => { return Number(item['count']) !== Number(item['practicalTakeStockValue'])});
+      let temporaryList = this.fullStockProductList.filter((item) => { return Number(item['count']) !== Number(item['practicalTakeStockValue'])});
       if (temporaryList.length == 0) {
         this.$toast({
           type: 'fail',
@@ -313,6 +379,8 @@ export default {
 
     // 库房下拉框点击事件
     warehouseListtEvent (item,index) {
+      // 清空暂存的盘点信息
+      this.changeTakeStockOrderMessage({});
       this.currentWarehouseName = item.name;
       this.currentShipmentWarehouseValue = item.id;
       this.currentWarehouseIndex = index;
@@ -323,18 +391,7 @@ export default {
         pageSize: this.pageSize,
         productId: this.productCodeValue, // 产品编号
         warehouseId: this.currentShipmentWarehouseValue //仓库编号
-      })
-    },
-
-    // 产品库存分页变化事件
-    stockPageChangeEvent (value) {
-      this.currentPageNum = value;
-      this.getStockPageEvent({
-        pageNo: this.currentPageNum,
-        pageSize: this.pageSize,
-        productId: this.productCodeValue, // 产品编号
-        warehouseId: this.currentShipmentWarehouseValue //仓库编号
-      })
+      },true)
     },
 
     // 盘点弹框取消事件
@@ -345,8 +402,8 @@ export default {
     // 盘点弹框提交事件
     takeStockModalSubmitEvent () {
       this.takeStockModalShow = false;
-      this.$set(this.stockProductList[this.takeStockIndex],'practicalTakeStockValue',this.stockDialogMessage['practicalTakeStockValue']);
-      this.$set(this.stockProductList[this.takeStockIndex],'breakEvenexplainValue',this.stockDialogMessage['breakEvenexplainValue']);
+      this.$set(this.fullStockProductList[this.takeStockIndex],'practicalTakeStockValue',this.stockDialogMessage['practicalTakeStockValue']);
+      this.$set(this.fullStockProductList[this.takeStockIndex],'breakEvenexplainValue',this.stockDialogMessage['breakEvenexplainValue']);
     },
 
     // 盘点产品点击事件
@@ -366,6 +423,7 @@ export default {
           this.infoText = '';
           if ( res && res.data.code == 0) {
             this.shipmentWarehouseList = res.data.data;
+            this.echoStorageTakeStockMessage();
           } else {
               this.$dialog.alert({
                 message: `${res.data.msg}`,
@@ -384,37 +442,58 @@ export default {
     },
 
     // 获取产品库存列表
-    getStockPageEvent(data) {
-      this.loadingShow = true;
-      this.isShowNoData = false;
-      this.infoText = '加载中···';
+    getStockPageEvent(data,flag) {
       this.stockProductList = [];
-      getStockPage(data).then((res) => {
+      this.isShowNoData = false;
+      if (flag) {
+          this.fullStockProductList = [];
+          this.loadingShow = true;
+          this.infoText = '加载中···';
+          this.bottomLoadingShow = false;
+      } else {
           this.loadingShow = false;
           this.infoText = '';
+          this.bottomLoadingShow = true;
+      };
+      getStockPage(data).then((res) => {
           if ( res && res.data.code == 0) {
             this.stockProductList = res.data.data.list;
-            if (this.stockProductList.length == 0) {
-              this.isShowNoData = true;
-            } else {
-              this.isShowNoData = false;
-            };
-            this.stockProductList.forEach(item => {
-              item['practicalTakeStockValue'] = item['count'];
-              item['breakEvenexplainValue'] = ''
-            });
             this.totalCount = res.data.data.total;
-            this.totalPage = Math.ceil(this.totalCount/this.pageSize);
+            this.stockProductList.forEach((item,index)=>{
+              this.$set(this.stockProductList[index],'practicalTakeStockValue',item['count']);
+              this.$set(this.stockProductList[index],'breakEvenexplainValue','')
+            });
+            this.fullStockProductList = this.fullStockProductList.concat(this.stockProductList);
+            if (this.fullStockProductList.length == 0) {
+              this.isShowNoData = true
+            } else {
+              this.isShowNoData = false
+            }
           } else {
-              this.$dialog.alert({
-                message: `${res.data.msg}`,
-                closeOnPopstate: true
-              }).then(() => {})
-          }
+            this.$dialog.alert({
+              message: `${res.data.msg}`,
+              closeOnPopstate: true
+            }).then(() => {})
+          };
+          if (flag) {
+            this.loadingShow = false;
+            this.infoText = '';
+          };
+          this.bottomLoadingShow = false;
+          let totalPage = Math.ceil(this.totalCount/this.pageSize);
+          if (this.currentPageNum >= totalPage) {
+            this.isShowNoMoreData = true;
+          } else {
+            this.isShowNoMoreData = false;
+          }	
       })
       .catch((err) => {
-        this.loadingShow = false;
-        this.infoText = '';
+        if (flag) {
+          this.loadingShow = false;
+          this.infoText = '';
+        } else {
+          this.bottomLoadingShow = false;
+        };
         this.$dialog.alert({
           message: `${err}`,
           closeOnPopstate: true
@@ -435,12 +514,10 @@ export default {
           this.loadingShow = false;
           this.infoText = '';
           if ( res && res.data.code == 0) {
-             this.getStockPageEvent({
-                pageNo: this.currentPageNum,
-                pageSize: this.pageSize,
-                productId: this.productCodeValue, // 产品编号
-                warehouseId: this.currentShipmentWarehouseValue //仓库编号
-              });
+              // 清空暂存的盘点信息
+              this.changeTakeStockOrderMessage({});
+              // 重置当前盘点数据
+              this.resetDataEvent();
               this.$toast({
                 type: 'success',
                 message: '提交成功'
@@ -837,18 +914,28 @@ export default {
                         color: #E86F50 !important
                     }
                 };
-                /deep/ .van-empty {
-                  position: absolute;
-                  top: 50%;
-                  left: 50%;
-                  transform: translate(-50%, -50%);
+                .bottom-loading-show {
+                  font-size: 12px;
+                  color: #BEC7D1;
                   width: 100%;
+                  text-align: center;
+                  line-height: 30px
+                };
+                .no-more-data {
+                  font-size: 12px;
+                  color: #BEC7D1;
+                  width: 100%;
+                  text-align: center;
+                  line-height: 30px
+                };
+                /deep/ .van-empty {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 100%;
                 }
             }
-        };
-        .page-break {
-          height: 40px;
-          margin-top: 10px;
         };
         .btn-box {
           height: 80px;

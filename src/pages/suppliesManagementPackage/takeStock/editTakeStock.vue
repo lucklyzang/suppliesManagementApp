@@ -108,11 +108,11 @@
                   </div>
                   <div class="specification-name">
                     <span>规格型号:</span>
-                    <span>{{ stockDialogMessage['standard'] ? stockDialogMessage['standard'] : '无'}}</span>
+                    <span>{{ stockDialogMessage['productStandard'] ? stockDialogMessage['productStandard'] : '无'}}</span>
                   </div>
                   <div class="unit-name">
                     <span>单位:</span>
-                    <span>{{ stockDialogMessage['unitName'] }}</span>
+                    <span>{{ stockDialogMessage['productUnitName'] }}</span>
                   </div>
                 </div>
                 <div class="evaluate-modal-center">
@@ -201,7 +201,6 @@ export default {
     // 控制设备物理返回按键
     this.deviceReturn('/suppliesTakeStockRecord');
     this.orderId = this.$route.query.orderId;
-    this.getStockCheckRecordEvent();
     const el = this.$refs.myElement;
     //点击库房区域以外的地方时，库房列表收起
 		document.addEventListener('click', (event) => {
@@ -219,7 +218,7 @@ export default {
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo"]),
+    ...mapGetters(["userInfo","takeStockEditOrderMessage"]),
       userName() {
 			  return this.userInfo['nickname']
 			},
@@ -244,20 +243,19 @@ export default {
   },
 
   methods: {
-    ...mapMutations([]),
+    ...mapMutations(["changeTakeStockEditOrderMessage"]),
 
     onClickLeft () {
       this.$router.push({path: '/suppliesTakeStockRecord'})
     },
 
     // popover打开事件
-    showPopoverEvent () {
-      console.log(1);
-    },
+    showPopoverEvent () {},
 
     // 重置数据事件
     resetDataEvent () {
-     this.parallelFunction()
+      if (this.orderMessage['items'].length == 0) { return };
+      this.parallelFunction()
     },
 
     // 库房下拉框点击事件
@@ -357,6 +355,7 @@ export default {
                   this.currentShipmentWarehouseValue = this.orderMessage['warehouseId'];
                   this.currentWarehouseName = this.orderMessage['warehouseName'] ? this.orderMessage['warehouseName'] : this.shipmentWarehouseList.filter((item) => { return item.id == this.currentShipmentWarehouseValue})[0]['name'];
                   this.currentWarehouseIndex = this.shipmentWarehouseList.findIndex((item) => { return item.id == this.currentShipmentWarehouseValue});
+                  this.echoStorageTakeStockMessage()
                 }
             }
         })
@@ -370,13 +369,69 @@ export default {
         })
     },
 
+    // 回显暂存的编辑数据
+    echoStorageTakeStockMessage () {
+      if (this.takeStockEditOrderMessage.length > 0) {
+        let temporaryIndex = this.takeStockEditOrderMessage.findIndex((item) => {return item['id'] == this.orderId});
+        if (temporaryIndex != -1) {
+            // 回显盘点产品列表信息
+            this.orderMessage = _.cloneDeep(this.takeStockEditOrderMessage[temporaryIndex]);
+            this.orderMessage['checkTime'] = this.orderMessage['checkTime'];
+            // 回显库房信息
+            this.currentShipmentWarehouseValue = this.orderMessage['currentShipmentWarehouseValue'];
+            this.currentWarehouseName = this.orderMessage['currentWarehouseName'];
+            this.currentWarehouseIndex = this.orderMessage['currentWarehouseIndex'];
+        }
+      }
+    },
+
     // 保存数据事件(暂存)
     saveDataEvent () {
+      if (this.orderMessage['items'].length == 0) { return };
+      let temporaryTakeStockEditOrderMessage = _.cloneDeep(this.takeStockEditOrderMessage);
+      // 存储保存的编辑盘点信息
+      if (this.takeStockEditOrderMessage.length > 0 ) {
+        let temporaryIndex = this.takeStockEditOrderMessage.findIndex((item) => {return item['id'] == this.orderId});
+        if (temporaryIndex != -1) {
+          temporaryTakeStockEditOrderMessage[temporaryIndex]['items'] = this.orderMessage['items'];
+        } else {
+          temporaryTakeStockEditOrderMessage.push(
+            {
+              id: this.orderId,
+              currentShipmentWarehouseValue: this.currentShipmentWarehouseValue,
+              currentWarehouseName: this.currentWarehouseName,
+              currentWarehouseIndex: this.currentWarehouseIndex,
+              checkTime: this.orderMessage['checkTime'],
+              items: this.orderMessage['items']
+            }
+          )
+        };
+      } else {
+        temporaryTakeStockEditOrderMessage.push(
+            {
+              id: this.orderId,
+              currentShipmentWarehouseValue: this.currentShipmentWarehouseValue,
+              currentWarehouseName: this.currentWarehouseName,
+              currentWarehouseIndex: this.currentWarehouseIndex,
+              checkTime: this.orderMessage['checkTime'],
+              items: this.orderMessage['items']
+            }
+          )
+      };
+      this.changeTakeStockEditOrderMessage(temporaryTakeStockEditOrderMessage);
+      console.log('sas',this.takeStockEditOrderMessage);
+      this.$toast({
+        type: 'success',
+        message: '暂存成功'
+      });
+      setTimeout(() =>{
+        this.onClickLeft()
+      },1000)
     },
 
     // 提交数据
     submmitDataEvent () {
-      // 只需要提交账面数与实盘数不一致的产品
+      if (this.orderMessage['items'].length == 0) { return };
       let temporaryList = this.orderMessage['items'];
       let needItems = [];
       for (let item of temporaryList) {
@@ -410,9 +465,14 @@ export default {
             if (res.data.data) {
               this.$toast({
                 type: 'success',
-                message: '保存成功'
+                message: '提交成功'
               });
+              // 清空该任务仓库暂存的编辑信息
+              let temporaryTakeStockEditOrderMessage = _.cloneDeep(this.takeStockEditOrderMessage);
+              let temporaryWarehouseList = temporaryTakeStockEditOrderMessage.filter((item) => { return item.id != this.orderId});
+              this.changeTakeStockEditOrderMessage(temporaryWarehouseList);
               this.onClickLeft();
+              console.log('sa',this.takeStockEditOrderMessage);
             } else {
               this.$dialog.alert({
                 message: `${res.data.msg}`,

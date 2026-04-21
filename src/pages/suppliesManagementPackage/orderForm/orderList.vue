@@ -548,7 +548,7 @@ export default {
                     this.isShowNoData = true
                 } else {
                     this.isShowNoData = false
-                };
+                }
             } else {
                 this.$dialog.alert({
                     message: `${res.data.msg}`,
