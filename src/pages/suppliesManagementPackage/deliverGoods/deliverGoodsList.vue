@@ -154,7 +154,7 @@
                             />
                         </div>
                     </div>
-                    <div class="evaluate-box">
+                    <div class="evaluate-box remark-box">
                         <div class="evaluate-span">
                             <span>备注:</span>
                         </div>
@@ -995,7 +995,7 @@ export default {
                                 display: flex;
                                 .van-cell {
                                     padding: 4px 6px !important;
-                                    line-height: 30px !important;
+                                    line-height: 0 !important;
                                     height: 30px;
                                     border: 1px solid #888888 !important;
                                     border-radius: 3px !important;
@@ -1023,6 +1023,11 @@ export default {
                                 .van-cell {
                                     padding: 6px !important;
                                 }
+                            }
+                        };
+                        .remark-box {
+                            .evaluate-span {
+                                align-items: flex-start !important;
                             }
                         }
                     };

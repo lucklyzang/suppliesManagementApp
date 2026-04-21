@@ -757,14 +757,11 @@ export default {
           }
         };
         .take-stock-nex-title {
-          padding:  0 10px;
+          padding:  6px 10px;
           box-sizing: border-box;
           display: flex;
           align-items: center;
-          height: 40px;
           .take-stock-warehouse {
-            flex: 1;
-            width: 0;
             display: flex;
             align-items: center;
             margin-right: 10px;
@@ -777,6 +774,7 @@ export default {
               flex: 1;
               height: 30px;
               position: relative;
+              word-break: break-all;
               .warehouse-message {
                 width: 120px;
                 display: flex;
@@ -822,8 +820,9 @@ export default {
           };
           .take-stock-date {
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
+            flex: 1;
             .take-stock-date-text {
               font-size: 14px;
               color: #101010;
@@ -832,6 +831,8 @@ export default {
             .take-stock-date-content {
               font-size: 14px;
               color: #101010;
+              flex: 1;
+              word-break: break-all;
             }
           }
         };

@@ -382,7 +382,7 @@ export default {
     /deep/ .van-nav-bar {
         background: transparent !important;
         .van-nav-bar__left {
-            .van-nav-bar__span {
+            .van-nav-bar__text {
               color: #fff !important;
               margin-left: 8px !important;
             };
