@@ -45,7 +45,7 @@
 				</div>
 				<div class="delivery-list-box">
                     <van-empty description="暂无产品数据" v-show="isShowNoData" />
-					<div class="delivery-list" v-for="(item,index) in orderMessage['items']" :key="item.id">
+					<div class="delivery-list" v-for="(item) in orderMessage['items']" :key="item.id">
 						<div class="product-content">
 							<span>{{ item['productName'] }}</span>
 						</div>
@@ -55,24 +55,23 @@
 						<div class="deliver-number-content">
 							<span>{{ item['stockCount'] }}</span>
 						</div>
-						<div class="sales-return-content">
+						<div  class="sales-return-content">
                             <van-popover
-                                :key="item.id"
                                 v-model="showPopoverStatus[item.id]"
                                 placement="top"
                                 trigger="click"
                                 @open="showPopoverEvent"
-                                getContainer=".page-box"
+                                get-container="parent" 
                             >
+                                <div>
+                                    <p class="p-one">盈亏说明</p>
+                                    <p class="p-two">{{ item['remark'] }}</p>
+                                </div>
                                 <template #reference>
                                     <span :class="{'underSpan': item['stockCount'] > item['actualCount'],'moreSpan': item['stockCount'] < item['actualCount']}">
                                         {{ item['actualCount'] }}
                                     </span>
                                 </template>
-                                <div>
-                                    <p class="p-one">盈亏说明</p>
-                                    <p class="p-two">{{ item['remark'] }}</p>
-                                </div>
                             </van-popover>
 						</div>
 						<div class="unit-content">
@@ -188,11 +187,6 @@ export default {
     onClickLeft () {
         this.$router.push({path: '/suppliesTakeStockRecord'})
     },
-
-    getContainer(index) {
-      // this.$refs['popoverContainer' + index] 是一个数组，取第一个元素即为 DOM 节点
-      return this.$refs['popoverContainer' + index][0];
-    },
     
     // popover打开事件
     showPopoverEvent () {
@@ -303,30 +297,6 @@ export default {
 @import "~@/common/stylus/modifyUi.less";
 .page-box {
   .content-wrapper();
-   /deep/ .van-popover {
-        background: #fff !important;
-        .van-popover__content {
-            border-radius: 5px !important;
-            box-shadow: 0px 2px 6px 0px rgba(0,0,0,0.1) !important;
-            >div {
-                width:120px;
-                padding: 10px 8px;
-                box-sizing: border-box;
-                >p {
-                    font-size:12px;
-                    word-break:break-all;
-                };
-                .p-one {
-                    color:#E8CB51;
-                    margin-bottom:8px  
-                };
-                .p-two {
-                    color:#101010;
-                    line-height: 18px; 
-                }
-            }
-        }
-    };
   .revocation-delivery-order-modal {
       /deep/ .van-dialog {
           border-top-left-radius: 4px !important;
@@ -577,6 +547,31 @@ export default {
                         flex: none !important;
                     };
                     .sales-return-content {
+                        /deep/ .van-popover {
+                            background: #fff !important;
+                            top: 29px !important;
+                            .van-popover__content {
+                                border-radius: 5px !important;
+                                box-shadow: 0px 2px 6px 0px rgba(0,0,0,0.1) !important;
+                                >div {
+                                    width:120px;
+                                    padding: 10px 8px;
+                                    box-sizing: border-box;
+                                    >p {
+                                        font-size:12px;
+                                        word-break:break-all;
+                                    };
+                                    .p-one {
+                                        color:#E8CB51;
+                                        margin-bottom:8px
+                                    };
+                                    .p-two {
+                                        color:#101010;
+                                        line-height: 18px; 
+                                    }
+                                }
+                            }
+                        }
                     };
                     .barter-content {
                     }
