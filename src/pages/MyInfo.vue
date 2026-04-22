@@ -137,7 +137,7 @@
 						this.changeOverDueWay(true);
 						removeAllLocalStorage();
 						store.dispatch('resetLoginState');
-						store.dispatch('resetSuppliesManagementInfoState');
+						store.dispatch('resetSuppliesManagementState');
 						if(store.getters.suppliesHomeGlobalTimer) {window.clearInterval(store.getters.suppliesHomeGlobalTimer)};
 						this.$router.push({path: "/"});
 					} else {

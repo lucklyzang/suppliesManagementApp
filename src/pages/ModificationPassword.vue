@@ -191,17 +191,21 @@
 					newPassword: this.newPasswordValue
 				}).then((res) => {
 					this.showLoadingHint = false;
-					if (res && res.data.code == 200) {
-						this.changeOverDueWay(true);
-						setTimeout(()=>{
-							this.$router.push({ path: '/' });
-						},2000);
-						// 清空store和localStorage
-						removeAllLocalStorage();
-						store.dispatch('resetLoginState');
-						store.dispatch('resetSuppliesManagementInfoState');
-						if(store.getters.suppliesHomeGlobalTimer) {window.clearInterval(store.getters.suppliesHomeGlobalTimer)};
-						this.$Alert({message:"修改成功!",type:'success'})
+					if (res && res.data.code == 0) {
+						if (res.data.data) {
+							this.changeOverDueWay(true);
+							setTimeout(()=>{
+								this.$router.push({ path: '/' });
+							},2000);
+							// 清空store和localStorage
+							removeAllLocalStorage();
+							store.dispatch('resetLoginState');
+							store.dispatch('resetSuppliesManagementState');
+							if(store.getters.suppliesHomeGlobalTimer) {window.clearInterval(store.getters.suppliesHomeGlobalTimer)};
+							this.$Alert({message:"修改成功!",type:'success'})
+						} else {
+							this.$Alert({message:`${res.data.msg}!`,type:'error'})
+						}
 					} else {
 						this.$Alert({message:`${res.data.msg}!`,type:'error'})
 					}

@@ -91,7 +91,7 @@ service.interceptors.request.use(
                             isRefreshing = true;
                             // 清空store和localStorage
                             store.dispatch('resetLoginState');
-                            store.dispatch('resetSuppliesManagementInfoState');
+                            store.dispatch('resetSuppliesManagementState');
                             removeAllLocalStorage();
                             if(store.getters.suppliesHomeGlobalTimer) {window.clearInterval(store.getters.suppliesHomeGlobalTimer)};
                         }
@@ -99,7 +99,7 @@ service.interceptors.request.use(
                             router.push({ path: '/' });
                         // 清空store和localStorage
                         store.dispatch('resetLoginState');
-                        store.dispatch('resetSuppliesManagementInfoState');
+                        store.dispatch('resetSuppliesManagementState');
                         removeAllLocalStorage();
                         if(store.getters.suppliesHomeGlobalTimer) {window.clearInterval(store.getters.suppliesHomeGlobalTimer)};
                         isRefreshing = true
@@ -142,7 +142,7 @@ service.interceptors.response.use(
                 if (error.response.hasOwnProperty('status')) {
                     if (error.response.status === 401) {
                         store.dispatch('resetLoginState');
-                        store.dispatch('resetSuppliesManagementInfoState');
+                        store.dispatch('resetSuppliesManagementState');
                         removeAllLocalStorage();
                         if(store.getters.suppliesHomeGlobalTimer) {window.clearInterval(store.getters.suppliesHomeGlobalTimer)};
                         if (!store.getters.overDueWay) { 
