@@ -85,8 +85,7 @@
 			...mapGetters([
 				'userInfo',
 				'statusBarHeight',
-				'navigationBarHeight',
-				'changeOverDueWay'
+				'navigationBarHeight'
 			]),
 			userName() {
 			  return this.userInfo['nickname']
@@ -112,6 +111,7 @@
 		},
 		methods: {
 			...mapMutations([
+				'changeOverDueWay'
 			]),
 			
 			// 顶部导航返回事件
