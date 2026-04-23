@@ -24,7 +24,7 @@
 				<div class="order-list" v-for="(item,index) in orderList" :key="index" @click="enterOrderDetailsEvent(item,index)">
 					<div class="evaluate-date">
                         <div class="evaluate-date-left">
-                            中心医院
+                            无
                         </div>
                         <div class="evaluate-date-right">
                             <span>评价日期:</span>
@@ -383,6 +383,7 @@ export default {
                         font-size: 14px;
                         color: #3B9DF9;
                         margin-right: 6px;
+                        word-break: break-all;
                     };
                     .evaluate-date-right {
                         flex: 1;
@@ -412,6 +413,10 @@ export default {
                             margin-right: 6px;
                             font-size: 12px;
                             color: #9E9E9A;
+                        };
+                        /deep/ .van-rate {
+                            flex: 1;
+                            word-break: break-all;
                         }
                     };
                     .related-order {

@@ -76,7 +76,7 @@
 								<span>{{ item.address }}</span>
 							</div>
 						</div>
-						<div class="product-list remark-box">
+						<div class="remark-box">
 							<span>备注:</span>
 							<span>{{ item.remark ? item.remark : '无' }}</span>
 						</div>
@@ -1059,7 +1059,7 @@ export default {
                                 margin-right: 6px;
                             };
                             &:nth-child(2) {
-                                word-break: break-all;
+                                .no-wrap();
                                 flex: 1;
                                 color: #101010;
                             }
@@ -1111,10 +1111,19 @@ export default {
                         margin-top: 10px;
                     };
                     .remark-box {
+                        display: flex;
                         margin-top: 10px;
                         >span {
+                            display: inline-block;
+                            font-size: 14px;
+                            &:nth-child(1) {
+                                color: #9E9E9A;
+                                margin-right: 6px;
+                            };
                             &:nth-child(2) {
-                                color: #9E9E9A !important;
+                                flex: 1;
+                                word-break: break-all;
+                                color: #9E9E9A;
                             }
                         }
                     }
