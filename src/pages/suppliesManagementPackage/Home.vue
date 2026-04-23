@@ -10,7 +10,7 @@
 		</div>
         <div class="user-box" @click="userInfoEvent">
             <div class="user-photo">
-                <img :src="avatar ? avatar : 'defaultPersonPng'" />
+                <img :src="avatar ? avatar : defaultPersonPng" />
             </div>
             <div class="user-message">
                 <div class="user-name">

@@ -183,11 +183,6 @@ import { base64ImgtoFile } from '@/common/js/utils'
       //确认签名
       commitSure() {
         if (this.originalSignature ==  this.$refs.board.toDataURL("image/png")) {
-          this.$dialog.alert({
-            message: '请签名',
-            closeOnPopstate: false
-          }).then(() => {
-          });
           return
         };
         this.imgUrl = this.$refs.board.toDataURL();

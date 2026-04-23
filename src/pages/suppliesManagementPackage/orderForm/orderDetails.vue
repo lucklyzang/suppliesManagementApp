@@ -33,7 +33,7 @@
 				</div>
 				<div class="product-list" v-for="(item) in materialList" :key="item.productName">
 					<div class="product-left">
-                        <img :src="item['images'] ? item['images'] : productDefaultImage" />
+                        <img :src="item['images'].length > 0 ? item['images'][0] : productDefaultImage" />
 					</div>
 					<div class="product-center">
 						<div class="product-name">
@@ -513,18 +513,22 @@ export default {
         padding: 0px 6px 20px 6px;
         .order-details-top {
             display: flex;
-            height: 50px;
-            align-items: center;
             justify-content: space-between;
-            padding: 0 12px;
+            padding: 10px 12px;
+            align-items: center;
             box-sizing: border-box;
             .order-type {
                 flex: 1;
+                width: 0;
+                display: flex;
                 margin-right: 10px;
-                .no-wrap();
                 >span {
                     font-size: 16px;
                     color: #3B9DF9;
+                    &:last-child {
+                        flex: 1;
+                        word-break: break-all;
+                    }
                 }
             };
             .order-status {

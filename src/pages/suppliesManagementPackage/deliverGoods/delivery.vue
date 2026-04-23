@@ -351,7 +351,8 @@ export default {
       if (this.currentElectronicSignature) {
         await this.fileUploadEvent(base64ImgtoFile(this.currentElectronicSignature),'签名')
       };
-      this.loadText ='提交中';
+      console.log('签名信息',this.onlineElectronicSignature);
+      this.loadinText ='提交中···';
       this.loadingShow = true;
       this.$refs.contentTop.style.zIndex = 0;
       saleOutDeliveryConfirm({

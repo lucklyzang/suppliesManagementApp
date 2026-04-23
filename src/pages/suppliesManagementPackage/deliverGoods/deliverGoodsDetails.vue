@@ -16,6 +16,7 @@
                     :class="{
                         'stayDeliveryStyle ' : orderMessage.status == 10, 
                         'deliveryingStyle' : orderMessage.status == 20,
+                        'haveDeliveryStyle' : orderMessage.status == 21,
                         'alreadyDeliveryStyle' : orderMessage.status == 60 && sourcePath == '/suppliesDeliverGoodsList',
                         'aleradyComplete': orderMessage.status == 60 && sourcePath == '/suppliesDeliverHistoryGoodsList'
                     }"
@@ -34,7 +35,7 @@
 				</div>
 				<div class="product-list" v-for="(item) in materialList" :key="item.productName">
 					<div class="product-left">
-                        <img :src="item['images'] ? item['images'] : productDefaultImage" />
+                        <img :src="item['images'].length > 0 ? item['images'][0] : productDefaultImage" />
 					</div>
 					<div class="product-center">
 						<div class="product-name">
@@ -238,6 +239,9 @@ export default {
                 case 20:
                     return '送货中'
                     break;
+                case 21:
+                    return '已送货'
+                    break;
                 case 60:
                     if (this.sourcePath == '/suppliesDeliverGoodsList') {
                         return '已送货'
@@ -355,18 +359,22 @@ export default {
         padding: 0px 6px 20px 6px;
         .order-details-top {
             display: flex;
-            height: 50px;
-            align-items: center;
             justify-content: space-between;
-            padding: 0 12px;
+            align-items: center;
+            padding: 10px 12px;
             box-sizing: border-box;
             .order-type {
                 flex: 1;
                 margin-right: 10px;
-                .no-wrap();
+                width: 0;
+                display: flex;
                 >span {
                     font-size: 16px;
                     color: #3B9DF9;
+                    &:last-child {
+                        flex: 1;
+                        word-break: break-all;
+                    }
                 }
             };
             .order-status {
@@ -381,6 +389,10 @@ export default {
             .stayDeliveryStyle {
                 background: rgba(251,229,223,1) !important;
                 color: #EB7D61 !important;
+            };
+            .haveDeliveryStyle {
+                background: rgba(59, 157, 249, 0.12) !important;
+                color: #3B9DF9 !important;
             };
             .deliveryingStyle {
                 background: rgba(203,245,228,1) !important;

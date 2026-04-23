@@ -18,7 +18,7 @@
           </div>
           <div class="product-list" v-for="(item,index) in materialList" :key="item.productName">
             <div class="product-left">
-              <img :src="item['images'] ? item['images'] : productDefaultImage" />
+              <img :src="item['images'].length > 0 ? item['images'] : productDefaultImage" />
             </div>
             <div class="product-center">
               <div class="product-name">
@@ -29,7 +29,7 @@
               <div class="product-specification">
                 <div class="product-specification-left">
                   <span>
-                    {{ item.specification ? item.specification : '无' }}
+                    {{ item.productStandard ? item.productStandard : '无' }}
                   </span>
                 </div>
               </div>

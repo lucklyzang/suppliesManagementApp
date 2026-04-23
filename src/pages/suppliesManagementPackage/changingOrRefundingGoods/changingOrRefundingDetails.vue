@@ -23,7 +23,7 @@
 				</div>
 				<div class="product-list" v-for="(item) in materialList" :key="item.productName">
 					<div class="product-left">
-                        <img :src="item['images'] ? item['images'] : productDefaultImage" />
+                        <img :src="item['images'].length > 0 ? item['images'][0] : productDefaultImage" />
 					</div>
 					<div class="product-center">
 						<div class="product-name">
