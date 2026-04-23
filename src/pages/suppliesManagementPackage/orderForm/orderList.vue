@@ -437,7 +437,7 @@ export default {
       this.checkOrderEvent({
         id: this.currentOrderId,
         status: 20
-      },30)
+      },20)
     },
 
     // 拒绝弹框取消事件
@@ -459,7 +459,7 @@ export default {
             id: this.currentOrderId ,
             status: 31,
             content: this.refuseReasonValue
-        },30)
+        },31)
     },
 
     // 更新订单状态(拒绝-31、确认-30、撤销确认-20)
@@ -473,6 +473,11 @@ export default {
                 if (res.data.data) {
                     if (status == 31) {
                         this.fullOrderList.splice(this.currentOrderIndex,1);
+                        if (this.fullOrderList.length == 0) {
+                            this.isShowNoData = true
+                        } else {
+                            this.isShowNoData = false
+                        }
                     } else if (status == 30) {
                         if (this.currentStatusValue === '') {
                             this.fullOrderList.forEach((item,index) => {
@@ -482,6 +487,11 @@ export default {
                             })
                         } else {
                             this.fullOrderList.splice(this.currentOrderIndex,1);
+                            if (this.fullOrderList.length == 0) {
+                                this.isShowNoData = true
+                            } else {
+                                this.isShowNoData = false
+                            }
                         }
                     } else if (status == 20) {
                          if (this.currentStatusValue === '') {
@@ -492,6 +502,11 @@ export default {
                             })
                         } else {
                             this.fullOrderList.splice(this.currentOrderIndex,1);
+                            if (this.fullOrderList.length == 0) {
+                                this.isShowNoData = true
+                            } else {
+                                this.isShowNoData = false
+                            }
                         }
                     };
                     this.$toast({

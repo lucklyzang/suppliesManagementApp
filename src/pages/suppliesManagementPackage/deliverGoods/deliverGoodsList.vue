@@ -324,10 +324,10 @@ export default {
     this.$nextTick(()=> {
       this.initScrollChange()
     });
-    // 从详情页或送货页面返回
+    // 从详情页或送达页返回
     if (this.$route.meta.isBack) {
         this.$route.meta.isBack = false;
-        // 送货成功,则修改对应列表状态
+        // 送达成功,则修改对应列表状态
         if (this.$route.query) {
             if (this.$route.query.orderId) {
                 if (this.currentStatusValue === '') {
@@ -338,6 +338,11 @@ export default {
                     })
                 } else {
                     this.fullOrderList.splice(this.currentOrderIndex,1);
+                    if (this.fullOrderList.length == 0) {
+                        this.isShowNoData = true
+                    } else {
+                        this.isShowNoData = false
+                    };
                 }
             }
         };
@@ -526,6 +531,11 @@ export default {
                         })
                     } else {
                         this.fullOrderList.splice(this.currentOrderIndex,1);
+                        if (this.fullOrderList.length == 0) {
+                            this.isShowNoData = true
+                        } else {
+                            this.isShowNoData = false
+                        };
                     };
                     this.$toast({
                         type: 'success',
@@ -564,6 +574,11 @@ export default {
             if ( res && res.data.code == 0) {
                 if (res.data.data) {
                     this.fullOrderList.splice(this.currentOrderIndex,1);
+                    if (this.fullOrderList.length == 0) {
+                        this.isShowNoData = true
+                    } else {
+                        this.isShowNoData = false
+                    };
                     this.$toast({
                         type: 'success',
                         message: '取消成功!'
@@ -608,6 +623,11 @@ export default {
                         })
                     } else {
                         this.fullOrderList.splice(this.currentOrderIndex,1);
+                        if (this.fullOrderList.length == 0) {
+                            this.isShowNoData = true
+                        } else {
+                            this.isShowNoData = false
+                        };
                     };
                     this.$toast({
                         type: 'success',
@@ -880,7 +900,9 @@ export default {
 
     // 送达事件
     deliveryEvent(item,index) {
-         this.$router.push({
+        this.currentOrderId = item.id;
+        this.currentOrderIndex = index;
+        this.$router.push({
             path: '/suppliesDelivery', 
             query: {
                 orderId: item.id
