@@ -514,7 +514,7 @@ export default {
         })
     },
 
-    // 订单配送事件(已送货-60、送货中-20、待送货-10)
+    // 订单配送事件(已送货-21、送货中-20、待送货-10)
     saleOutDistributionyEvent (data) {
         this.loadingShow = true;
         this.infoText = '送货中···';
@@ -564,7 +564,7 @@ export default {
         })
     },
 
-    // 订单取消事件(已送货-60、送货中-20、待送货-10)
+    // 订单取消事件(已送货-21、送货中-20、待送货-10)
     saleOutCancelEvent (data) {
         this.loadingShow = true;
         this.infoText = '取消中···';
@@ -606,7 +606,7 @@ export default {
         })
     },
 
-    // 订单撤销事件(已送货-60、送货中-20、待送货-10)
+    // 订单撤销事件(已送货-21、送货中-20、待送货-10)
     saleOutRevokeEvent (data) {
         this.loadingShow = true;
         this.infoText = '撤销中···';
@@ -676,7 +676,7 @@ export default {
                 this.orderList = res.data.data.list;
                 this.totalCount = res.data.data.total;
                 this.orderList.forEach((item)=>{
-                    item.createTime = SOtime.time3(item.createTime);
+                    item.createTime = item.createTime ? SOtime.time3(item.createTime) : '';
                     item.requestTime = item.requestTime ? SOtime.time8(item.requestTime) : '';
                 });
                 this.fullOrderList = this.fullOrderList.concat(this.orderList);
