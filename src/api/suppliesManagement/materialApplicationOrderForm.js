@@ -274,7 +274,7 @@ export function updateStockCheckStatus(data) {
 export function deleteStockCheckStatus(data) {
 	return request({
 		url: '/spd/admin-api/erp/stock-check/delete',
-		method: 'put',
+		method: 'delete',
 		params: data,
 		paramsSerializer: function (params) {
 			return qs.stringify(params, { arrayFormat: 'repeat' })

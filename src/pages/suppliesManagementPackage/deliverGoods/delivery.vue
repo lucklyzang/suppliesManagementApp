@@ -277,10 +277,15 @@ export default {
     // 上传文件事件
     fileUploadEvent(path,text) {
         this.loadingShow = true;
-        this.infoText = '上传中';
+        this.loadinText = '上传中';
         return new Promise((resolve, reject) => {
           let formData = new FormData();
           formData.append('file', path);
+          if (text == '图片') {
+            formData.append('path', '')
+          } else {
+            formData.append('path', 'sign')
+          };
           axios({
             url: `${this.baseURL}/spd/admin-api/infra/file/upload`,
             method: 'post',
@@ -291,7 +296,7 @@ export default {
             }
           }).then((res) => {
             this.loadingShow = false;
-            this.infoText = '';
+            this.loadinText = '';
             if (res.data.code == 0) {
               if (res.data.data) {
                 resolve();
@@ -320,7 +325,7 @@ export default {
           .catch((err) => {
             this.resulImgOnlinePathArr = [];
             this.loadingShow = false;
-            this.infoText = '';
+            this.loadinText = '';
             this.$toast({
               message: `${err}`,
               type: 'fail'
@@ -351,7 +356,6 @@ export default {
       if (this.currentElectronicSignature) {
         await this.fileUploadEvent(base64ImgtoFile(this.currentElectronicSignature),'签名')
       };
-      console.log('签名信息',this.onlineElectronicSignature);
       this.loadinText ='提交中···';
       this.loadingShow = true;
       this.$refs.contentTop.style.zIndex = 0;

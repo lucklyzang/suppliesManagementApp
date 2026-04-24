@@ -87,7 +87,7 @@
 								<span>{{ item.orderNo }}</span>
 							</div>
 						</div>
-						<div class="remark-box">
+						<div class="remark-box" v-if="item.status != 10">
 							<span>备注:</span>
 							<span>{{ item.remark }}</span>
 						</div>
@@ -233,7 +233,7 @@
         </van-dialog>
     </div>
     <!-- 日历 --> 
-    <van-calendar v-model="showCalendar" :min-date="minDate" :max-date="maxDate" :default-date="defaultDateArr" type="range" @confirm="calendarConfirm" />
+    <van-calendar color="#3B9DF9" v-model="showCalendar" :min-date="minDate" :max-date="maxDate" :default-date="defaultDateArr" type="range" @confirm="calendarConfirm" />
   </div>
 </template>
 <script>
@@ -270,7 +270,7 @@ export default {
       startDate: '',
       endDate: '',
       minDate: new Date('2025-03-16'),
-      maxDate: new Date('2027-03-16'),
+      maxDate: new Date('2030-03-16'),
       currentStatusText: '全部状态',
       currentStatusIndex: 0,
       currentStatusValue: '',
@@ -1414,7 +1414,7 @@ export default {
                     .delivery-address {
                         margin-top: 10px;
                     };
-                    remark-box {
+                    .remark-box {
                         display: flex;
                         margin-top: 10px;
                         >span {
@@ -1427,7 +1427,7 @@ export default {
                             &:nth-child(2) {
                                 flex: 1;
                                 word-break: break-all;
-                                color: #9E9E9A;
+                                color: #101010;
                             }
                         }
                     }

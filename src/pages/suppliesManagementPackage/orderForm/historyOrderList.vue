@@ -71,7 +71,7 @@
         </div>
     </div>
     <!-- 日历 --> 
-    <van-calendar v-model="showCalendar" :min-date="minDate" :max-date="maxDate" :default-date="defaultDateArr" type="range" @confirm="calendarConfirm" />
+    <van-calendar color="#3B9DF9" v-model="showCalendar" :min-date="minDate" :max-date="maxDate" :default-date="defaultDateArr" type="range" @confirm="calendarConfirm" />
   </div>
 </template>
 <script>
@@ -102,7 +102,7 @@ export default {
       startDate: '',
       endDate: '',
       minDate: new Date('2025-03-16'),
-      maxDate: new Date('2027-03-16'),
+      maxDate: new Date('2030-03-16'),
       orderList: [],
       fullOrderList: []
     }
