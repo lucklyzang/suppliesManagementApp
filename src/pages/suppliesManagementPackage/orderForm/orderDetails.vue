@@ -755,14 +755,14 @@ export default {
             }	
         };
         .delivery-information-list {
-            padding: 0 6px;
+            padding: 0 4px;
             box-sizing: border-box;
             margin-bottom: 10px;
             max-height: 250px;
             display: flex;
             flex-direction: column;
             .delivery-information-text {
-                margin-bottom: 6px;
+                margin-bottom: 8px;
                 padding: 0 3px 0 0;
                 box-sizing: border-box;
                 >span {
@@ -773,11 +773,14 @@ export default {
             .delivery-information-box {
                 flex: 1;
                 overflow: auto;
+                padding-top: 1px;
+                padding-left: 1px;
+                padding-right: 1px;
                 .delivery-information {
                     border-radius: 6px;
                     background-color: rgba(255,255,255,1);
                     box-shadow: 0px 2px 6px 0px rgba(0,0,0,0.07);
-                    padding: 6px 3px;
+                    padding: 6px 4px;
                     box-sizing: border-box;
                     display: flex;
                     justify-content: space-between;
