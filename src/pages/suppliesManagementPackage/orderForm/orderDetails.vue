@@ -106,17 +106,17 @@
 							<div class="delivery-number-message">
 								<div class="delivery-number">
 									<span>送货单号:</span>
-									<span>{{ item.id }}</span>
+									<span>{{ item.no }}</span>
 								</div>
-								<div class="harvest-date">
+								<div class="harvest-date" v-show="item.status == 60">
 									<span>收货日期:</span>
-									<span></span>
+									<span>{{ item.checkTime }}</span>
 								</div>
 							</div>
 							<div class="related-order-number-message">
 								<div class="related-order-number">
-									<span>关联单号:</span>
-									<span>{{ item.orderId }}</span>
+									<span>关联订单号:</span>
+									<span>{{ item.orderNo }}</span>
 								</div>
 								<div class="delivery-date">
 									<span>送货日期:</span>
@@ -229,7 +229,11 @@ export default {
 
   beforeRouteEnter(to, from, next) {
      next(vm=>{
-        vm.sourcePath = from.path
+        if (from.path == '/suppliesHistoryDeliveryNote') {
+            vm.sourcePath = '/suppliesHistoryOrderList'
+        } else {
+            vm.sourcePath = from.path
+        }
     });
     next()  
   },
@@ -316,6 +320,9 @@ export default {
                 break;
             case 20:
                     return '已发货'
+                    break;
+             case 21:
+                    return '已送达'
                     break;
             case 30:
                     return '退换货'
@@ -450,7 +457,8 @@ export default {
                         this.isShowNoData = true
                     } else {
                         this.saleReturnOrderList.forEach((item)=>{
-                            item.outTime = SOtime.time8(item.outTime)
+                            item.outTime = SOtime.time8(item.outTime);
+                            item.checkTime = SOtime.time8(item.checkTime)
                         });
                         this.isShowNoData = false
                     }
@@ -774,6 +782,7 @@ export default {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
+                    margin-bottom: 10px;
                     .delivery-information-left {
                         flex: 1;
                         width: 0;
@@ -782,7 +791,6 @@ export default {
                         justify-content: center;
                         .delivery-number-message {
                             display: flex;
-                            align-items: center;
                             justify-content: space-between;
                             margin-bottom: 10px;
                             .delivery-number {
@@ -790,7 +798,6 @@ export default {
                                 margin-right: 10px;
                                 width: 0;
                                 display: flex;
-                                align-items: center;
                                 >span {
                                     font-size: 14px;
                                     color: #101010;
@@ -798,16 +805,14 @@ export default {
                                         margin-right: 4px;
                                     };
                                     &:nth-child(2) {
-                                        .no-wrap;
+                                        word-break: break-all;
                                         flex: 1;
                                     }
                                 }
                             };
                             .harvest-date {
-                                flex: 1;
-                                width: 0;
+                                width: 42%;
                                 display: flex;
-                                align-items: center;
                                 >span {
                                     font-size: 12px;
                                     color: #777575;
@@ -815,7 +820,7 @@ export default {
                                         margin-right: 4px;
                                     };
                                     &:nth-child(2) {
-                                        .no-wrap;
+                                        word-break: break-all;
                                         flex: 1;
                                     }
                                 }
@@ -823,14 +828,12 @@ export default {
                         };
                         .related-order-number-message {
                             display: flex;
-                            align-items: center;
                             justify-content: space-between;
                             .related-order-number {
                                 flex: 1;
                                 margin-right: 10px;
                                 width: 0;
                                 display: flex;
-                                align-items: center;
                                 >span {
                                     font-size: 12px;
                                     color: #777575;
@@ -838,16 +841,14 @@ export default {
                                         margin-right: 4px;
                                     };
                                     &:nth-child(2) {
-                                        .no-wrap;
+                                        word-break: break-all;
                                         flex: 1;
                                     }
                                 }
                             };
                             .delivery-date {
-                                flex: 1;
-                                width: 0;
+                                width: 42%;;
                                 display: flex;
-                                align-items: center;
                                 >span {
                                     font-size: 12px;
                                     color: #777575;
@@ -855,7 +856,7 @@ export default {
                                         margin-right: 4px;
                                     };
                                     &:nth-child(2) {
-                                        .no-wrap;
+                                        word-break: break-all;
                                         flex: 1;
                                     }
                                 }

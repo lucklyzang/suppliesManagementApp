@@ -21,7 +21,7 @@
 				</div>
 			</div>
             <div class="order-list-box" ref="scrollBacklogTask">
-				<div class="order-list" v-for="(item,index) in orderList" :key="index" @click="enterOrderDetailsEvent(item,index)">
+				<div class="order-list" v-for="(item,index) in fullOrderList" :key="index" @click="enterOrderDetailsEvent(item,index)">
 					<div class="evaluate-date">
                         <div class="evaluate-date-left">
                             无
@@ -329,11 +329,13 @@ export default {
         display: flex;
         flex-direction: column;
         height: 0;
-        padding: 0px 10px 10px 10px;
+        padding: 0px 6px 10px 6px;
         .status-date-box {
             display: flex;
             align-items: center;
             justify-content: space-between;
+            padding: 0 4px;
+            box-sizing: border-box;
             margin-top: 10px;
             .data-box {
                 width: 70%;
@@ -363,6 +365,8 @@ export default {
             flex: 1;
             overflow: auto;
             padding-bottom: 10px;
+            padding-left: 1px;
+            padding-right: 1px;
             box-sizing: border-box;
             position: relative;
             .order-list {

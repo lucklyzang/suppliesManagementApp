@@ -84,7 +84,7 @@
                 <div class="create-delivery-date">
 					<div class="create-delivery-date-left">
 						<span>科室电话:</span>
-						<span>{{ orderMessage['mobile'] }}</span>
+						<span>{{ orderMessage['mobile'] ?  orderMessage['mobile'] : '无'}}</span>
 					</div>
 					<div class="create-delivery-date-left">
 						<span>关联订单:</span>
@@ -103,7 +103,7 @@
 					</div>
 					<div class="create-delivery-date-left">
 						<span>联系方式:</span>
-						<span>{{ orderMessage['courierMobile'] ? orderMessage['courierMobile'] : ''}}</span>
+						<span>{{ orderMessage['courierMobile'] ? orderMessage['courierMobile'] : '无'}}</span>
 					</div>
 				</div>
 				<div class="product-list remark-box">
@@ -443,6 +443,7 @@ export default {
                     }
                 };
                 .product-right {
+                    width: 110px;
                     display: flex;
                     flex-direction: column;
                     justify-content: center;

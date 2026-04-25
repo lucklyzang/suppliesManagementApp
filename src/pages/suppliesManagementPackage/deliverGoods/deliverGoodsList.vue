@@ -62,7 +62,7 @@
 								<span>创建时间:</span>
 								<span>{{ item.createTime }}</span>
 							</div>
-							<div class="create-delivery-date-left">
+							<div class="create-delivery-date-right">
 								<span>交货日期:</span>
 								<span>{{ item.requestTime }}</span>
 							</div>
@@ -72,7 +72,7 @@
 								<span>下单医院:</span>
 								<span></span>
 							</div>
-							<div class="create-delivery-date-left">
+							<div class="create-delivery-date-right">
 								<span>送货地址:</span>
 								<span>{{ item.address }}</span>
 							</div>
@@ -80,9 +80,9 @@
                         <div class="create-delivery-date delivery-address">
                             <div class="create-delivery-date-left">
 								<span>科室电话:</span>
-								<span>{{ item.mobile }}</span>
+								<span>{{ item.mobile ? item.mobile : '无' }}</span>
 							</div>
-							<div class="create-delivery-date-left">
+							<div class="create-delivery-date-right">
 								<span>关联订单:</span>
 								<span>{{ item.orderNo }}</span>
 							</div>
@@ -1221,11 +1221,13 @@ export default {
         display: flex;
         flex-direction: column;
         height: 0;
-        padding: 0px 10px 10px 10px;
+        padding: 0px 6px 10px 6px;
         .status-date-box {
             display: flex;
             align-items: center;
             justify-content: space-between;
+            padding: 0 4px;
+            box-sizing: border-box;
             margin-top: 10px;
             .status-box {
                 width: 70px;
@@ -1296,6 +1298,8 @@ export default {
             flex: 1;
             overflow: auto;
             padding-bottom: 10px;
+            padding-left: 1px;
+            padding-right: 1px;
             box-sizing: border-box;
             position: relative;
             .order-list {
@@ -1335,6 +1339,9 @@ export default {
                         background: rgba(232,203,81,0.16);
                         border-radius: 4px;
                         font-size: 14px;
+                        >span {
+                            font-size: 14px;
+                        }
                     };
                     .stayDeliveryStyle {
                         background: rgba(251,229,223,1) !important;
@@ -1379,7 +1386,7 @@ export default {
                             margin-right: 4px;
                             >span {
                                 display: inline-block;
-                                font-size: 14px;
+                                font-size: 12px;
                                 &:nth-child(1) {
                                     color: #9E9E9A;
                                     margin-right: 6px;
@@ -1398,7 +1405,7 @@ export default {
                             align-items: center;
                             >span {
                                 display: inline-block;
-                                font-size: 14px;
+                                font-size: 12px;
                                 &:nth-child(1) {
                                     color: #9E9E9A;
                                     margin-right: 6px;
@@ -1419,7 +1426,7 @@ export default {
                         margin-top: 10px;
                         >span {
                             display: inline-block;
-                            font-size: 14px;
+                            font-size: 12px;
                             &:nth-child(1) {
                                 color: #9E9E9A;
                                 margin-right: 6px;

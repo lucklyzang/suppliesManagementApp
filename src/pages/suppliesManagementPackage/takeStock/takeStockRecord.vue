@@ -44,7 +44,7 @@
 								<span>盘点日期:</span>
 								<span>{{ item.checkTime }}</span>
 							</div>
-							<div class="create-delivery-date-left">
+							<div class="create-delivery-date-right">
 								<span>盘点库房:</span>
 								<span>{{ item['warehouseName'] }}</span>
 							</div>
@@ -775,12 +775,14 @@ export default {
         display: flex;
         flex-direction: column;
         height: 0;
-        padding: 0px 10px 10px 10px;
+        padding: 0px 6px 10px 6px;
         .status-date-box {
             display: flex;
             align-items: center;
             justify-content: space-between;
             margin-top: 10px;
+            padding: 0 4px;
+            box-sizing: border-box;
             .data-box {
                 width: 70%;
                 display: flex;
@@ -809,6 +811,8 @@ export default {
             flex: 1;
             overflow: auto;
             padding-bottom: 10px;
+            padding-left: 1px;
+            padding-right: 1px;
             box-sizing: border-box;
             position: relative;
             .order-list {
@@ -852,6 +856,9 @@ export default {
                         background: rgba(232,203,81,0.16);
                         color: #fff;
                         border-radius: 4px;
+                        >span {
+                            font-size: 14px;
+                        }
                     };
                     .stayAuditStyle {
                         background: rgba(251,229,223,1) !important;
@@ -878,7 +885,7 @@ export default {
                         display: flex;
                         >span {
                             display: inline-block;
-                            font-size: 14px;
+                            font-size: 12px;
                             &:nth-child(1) {
                                 color: #9E9E9A;
                                 margin-right: 6px;
@@ -900,7 +907,7 @@ export default {
                             margin-right: 4px;
                             >span {
                                 display: inline-block;
-                                font-size: 14px;
+                                font-size: 12px;
                                 &:nth-child(1) {
                                     color: #9E9E9A;
                                     margin-right: 6px;
@@ -919,7 +926,7 @@ export default {
                             align-items: center;
                             >span {
                                 display: inline-block;
-                                font-size: 14px;
+                                font-size: 12px;
                                 &:nth-child(1) {
                                     color: #9E9E9A;
                                     margin-right: 6px;
@@ -927,7 +934,7 @@ export default {
                                 &:nth-child(2) {
                                     .no-wrap();
                                     flex: 1;
-                                    color: #101010;
+                                    color: #9E9E9A;
                                 }
                             }
                         }

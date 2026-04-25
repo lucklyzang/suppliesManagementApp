@@ -9,7 +9,7 @@
         <div class="content-box">
            <div class="delivery-number">
 				<span>送货单号:</span>
-				<span>{{ saleReturnOrderDetailsList.id }}</span>
+				<span>{{ saleReturnOrderDetailsList.no }}</span>
 			</div>
 			<div class="delivery-table">
 				<div class="delivery-table-title">
@@ -38,7 +38,7 @@
 							<span>{{ item.productName }}</span>
 						</div>
 						<div class="specification-content">
-							<span>{{ item.model }}</span>
+							<span>{{ item.productStandard }}</span>
 						</div>
 						<div class="deliver-number-content">
 							<span>{{ item.count }}</span>
