@@ -648,6 +648,7 @@ export default {
         this.currentStatusIndex = index;
         this.orderStatusListShow = false;
         this.currentPageNum = 1;
+        this.needQueryStatusList = [10,20,21];
         this.getPlanOrderPageEvent({
             pageNo: this.currentPageNum,
             pageSize: this.pageSize,
