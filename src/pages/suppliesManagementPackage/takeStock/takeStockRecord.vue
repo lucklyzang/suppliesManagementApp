@@ -127,7 +127,7 @@
         </van-dialog>
     </div>
     <!-- 日历 --> 
-    <van-calendar v-model="showCalendar" :min-date="minDate" :max-date="maxDate" :default-date="defaultDateArr" type="range" @confirm="calendarConfirm" />
+    <van-calendar v-model="showCalendar" :allow-same-day="true" :min-date="minDate" :max-date="maxDate" :default-date="defaultDateArr" type="range" @confirm="calendarConfirm" />
   </div>
 </template>
 <script>

@@ -71,7 +71,7 @@
         </div>
     </div>
     <!-- 日历 --> 
-    <van-calendar color="#3B9DF9" v-model="showCalendar" :min-date="minDate" :max-date="maxDate" :default-date="defaultDateArr" type="range" @confirm="calendarConfirm" />
+    <van-calendar color="#3B9DF9" :allow-same-day="true" v-model="showCalendar" :min-date="minDate" :max-date="maxDate" :default-date="defaultDateArr" type="range" @confirm="calendarConfirm" />
   </div>
 </template>
 <script>
@@ -141,7 +141,8 @@ export default {
             pageSize: this.pageSize,
             status: 50,
             orderTime: [`${this.startDate}`,`${this.endDate}`],
-            creator: ''// this.userAccount
+            creator: '',// this.userAccount
+            departmentId: this.depId
         },true)
     }
   },
@@ -242,7 +243,8 @@ export default {
                 pageSize: this.pageSize,
                 status: 50,
                 orderTime: [`${this.startDate}`,`${this.endDate}`],
-                creator: '' // this.userAccount
+                creator: '', // this.userAccount
+                departmentId: this.depId
             },false)
           };
           this.eventTime = 0;
@@ -262,7 +264,8 @@ export default {
             pageSize: this.pageSize,
             status: 50,
             orderTime: [`${this.startDate}`,`${this.endDate}`],
-            creator: '' // this.userAccount
+            creator: '', // this.userAccount
+            departmentId: this.depId
         },true)
     },
     
