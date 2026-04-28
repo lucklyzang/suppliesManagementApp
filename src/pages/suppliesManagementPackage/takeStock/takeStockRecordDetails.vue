@@ -61,7 +61,7 @@
                                 placement="top"
                                 trigger="click"
                                 @open="showPopoverEvent"
-                                get-container="parent" 
+                                get-container=".content" 
                             >
                                 <div>
                                     <p class="p-one">盈亏说明</p>
@@ -410,6 +410,30 @@ export default {
     display: flex;
     flex-direction: column;
     position: relative;
+    /deep/ .van-popover {
+        background: #fff !important;
+        .van-popover__content {
+            border-radius: 5px !important;
+            box-shadow: 0px 2px 6px 0px rgba(0,0,0,0.1) !important;
+            >div {
+                width:120px;
+                padding: 10px 8px;
+                box-sizing: border-box;
+                >p {
+                    font-size:12px;
+                    word-break:break-all;
+                };
+                .p-one {
+                    color:#E8CB51;
+                    margin-bottom:8px
+                };
+                .p-two {
+                    color:#101010;
+                    line-height: 18px; 
+                }
+            }
+        }
+    };
     .content-box {
         flex: 1;
         box-sizing: border-box;
@@ -547,31 +571,6 @@ export default {
                         flex: none !important;
                     };
                     .sales-return-content {
-                        /deep/ .van-popover {
-                            background: #fff !important;
-                            top: 29px !important;
-                            .van-popover__content {
-                                border-radius: 5px !important;
-                                box-shadow: 0px 2px 6px 0px rgba(0,0,0,0.1) !important;
-                                >div {
-                                    width:120px;
-                                    padding: 10px 8px;
-                                    box-sizing: border-box;
-                                    >p {
-                                        font-size:12px;
-                                        word-break:break-all;
-                                    };
-                                    .p-one {
-                                        color:#E8CB51;
-                                        margin-bottom:8px
-                                    };
-                                    .p-two {
-                                        color:#101010;
-                                        line-height: 18px; 
-                                    }
-                                }
-                            }
-                        }
                     };
                     .barter-content {
                     }
