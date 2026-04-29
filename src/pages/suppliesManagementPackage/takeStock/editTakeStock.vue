@@ -350,7 +350,7 @@ export default {
                 if (item2) {
                   // 回显盘点产品列表信息
                   this.orderMessage = item2;
-                  this.orderMessage['checkTime'] = this.orderMessage['checkTime'] ? SOtime.time8(this.orderMessage['checkTime']) : '';
+                  this.orderMessage['checkTime'] = this.orderMessage['checkTime'] ? SOtime.time8(this.orderMessage['checkTime'],true) : '';
                   // 回显库房信息
                   this.currentShipmentWarehouseValue = this.orderMessage['warehouseId'];
                   this.currentWarehouseName = this.orderMessage['warehouseName'] ? this.orderMessage['warehouseName'] : this.shipmentWarehouseList.filter((item) => { return item.id == this.currentShipmentWarehouseValue})[0]['name'];

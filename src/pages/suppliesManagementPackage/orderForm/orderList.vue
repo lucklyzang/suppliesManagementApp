@@ -69,7 +69,7 @@
 						<div class="create-delivery-date delivery-address">
                             <div class="create-delivery-date-left">
 								<span>下单医院:</span>
-								<span></span>
+								<span>{{ item['customerName'] ? item['customerName'] : '无' }}</span>
 							</div>
 							<div class="create-delivery-date-left">
 								<span>送货地址:</span>
@@ -603,8 +603,8 @@ export default {
     // 日历日期选择确认事件
     calendarConfirm(e) {
         this.showCalendar = false;
-        this.startDate = SOtime.time8(new Date(e[0]).getTime());
-        this.endDate = SOtime.time8(new Date(e[e.length-1]).getTime());
+        this.startDate = SOtime.time8(new Date(e[0]).getTime(),true);
+        this.endDate = SOtime.time8(new Date(e[e.length-1]).getTime(),true);
         this.currentPageNum = 1;
         this.getPlanOrderPageEvent({
             pageNo: this.currentPageNum,
@@ -651,7 +651,7 @@ export default {
         this.currentStatusIndex = index;
         this.orderStatusListShow = false;
         this.currentPageNum = 1;
-        this.needQueryStatusList = [10,20,21];
+        this.needQueryStatusList = [20,30];
         this.getPlanOrderPageEvent({
             pageNo: this.currentPageNum,
             pageSize: this.pageSize,

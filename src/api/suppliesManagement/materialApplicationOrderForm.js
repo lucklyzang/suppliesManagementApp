@@ -308,5 +308,7 @@ export function getStockCheckRecord(id) {
 	return request({
 	    url: `/spd/admin-api/erp/stock-check/get?id=${id}`,
 	    method: 'get'
-	})	
+	})
 }
+
+

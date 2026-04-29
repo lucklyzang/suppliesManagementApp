@@ -18,7 +18,7 @@
           </div>
           <div class="product-list" v-for="(item,index) in materialList" :key="item.productName">
             <div class="product-left">
-              <img :src="item['images'].length > 0 ? item['images'] : productDefaultImage" />
+              <img :src="item['images'] && item['images'].length > 0 ? item['images'] : productDefaultImage" />
             </div>
             <div class="product-center">
               <div class="product-name">
@@ -527,7 +527,7 @@ export default {
     // 到货日期选择框确认事件
     arrivalDateSureEvent (value) {
       this.arrivalDateShow = false;
-      this.arrivalDate = SOtime.time8(new Date(value).getTime());
+      this.arrivalDate = SOtime.time8(new Date(value).getTime(),true);
     }
   }
 };

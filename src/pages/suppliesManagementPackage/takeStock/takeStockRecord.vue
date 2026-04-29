@@ -127,7 +127,7 @@
         </van-dialog>
     </div>
     <!-- 日历 --> 
-    <van-calendar v-model="showCalendar" :allow-same-day="true" :min-date="minDate" :max-date="maxDate" :default-date="defaultDateArr" type="range" @confirm="calendarConfirm" />
+    <van-calendar color="#3B9DF9" v-model="showCalendar" :allow-same-day="true" :min-date="minDate" :max-date="maxDate" :default-date="defaultDateArr" type="range" @confirm="calendarConfirm" />
   </div>
 </template>
 <script>
@@ -316,7 +316,7 @@ export default {
                 this.orderList = res.data.data.list;
                 this.totalCount = res.data.data.total;
                 this.orderList.forEach((item)=>{
-                    item.checkTime = SOtime.time8(item.checkTime);
+                    item.checkTime = SOtime.time8(item.checkTime,true);
                 });
                 this.fullOrderList = this.fullOrderList.concat(this.orderList);
                 if (this.fullOrderList.length == 0) {
@@ -491,8 +491,8 @@ export default {
     // 日历日期选择确认事件
     calendarConfirm(e) {
         this.showCalendar = false;
-        this.startDate = SOtime.time8(new Date(e[0]).getTime());
-        this.endDate = SOtime.time8(new Date(e[e.length-1]).getTime());
+        this.startDate = SOtime.time8(new Date(e[0]).getTime(),true);
+        this.endDate = SOtime.time8(new Date(e[e.length-1]).getTime(),true);
         this.currentPageNum = 1;
         this.getStockCheckRecordsPageEvent({
             pageNo: this.currentPageNum,

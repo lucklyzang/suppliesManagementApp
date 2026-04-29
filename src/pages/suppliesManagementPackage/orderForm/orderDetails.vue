@@ -33,7 +33,7 @@
 				</div>
 				<div class="product-list" v-for="(item) in materialList" :key="item.productName">
 					<div class="product-left">
-                        <img :src="item['images'].length > 0 ? item['images'][0] : productDefaultImage" />
+                        <img :src="item['images'] && item['images'].length > 0 ? item['images'][0] : productDefaultImage" />
 					</div>
 					<div class="product-center">
 						<div class="product-name">
@@ -84,7 +84,7 @@
 				<div class="create-delivery-date">
 					<div class="create-delivery-date-left">
 						<span>下单医院:</span>
-						<span></span>
+						<span>{{ orderMessage['customerName'] ? orderMessage['customerName'] : '无' }}</span>
 					</div>
 					<div class="create-delivery-date-left">
 						<span>送货地址:</span>
@@ -97,9 +97,6 @@
 				</div>
 			</div>
             <div class="delivery-information-list" v-show="orderMessage['status'] == 50">
-				<div class="delivery-information-text">
-					<span>送货信息:</span>
-				</div>
 				<div class="delivery-information-box">
 					<div class="delivery-information" v-for="(item,index) in saleReturnOrderList" :key="item.id" @click="enterChangingOrRefundingDetailsEvent(item,index)">
 						<div class="delivery-information-left">
@@ -448,7 +445,7 @@ export default {
                 if (item2) {
                     this.orderStatusRecordList = item2;
                     this.orderStatusRecordList.forEach((item)=>{
-                        item.createTime = SOtime.time3(item.createTime)
+                        item.createTime = SOtime.time3(item.createTime,true)
                     })
                 };
                 if (item3) {
@@ -457,8 +454,8 @@ export default {
                         this.isShowNoData = true
                     } else {
                         this.saleReturnOrderList.forEach((item)=>{
-                            item.outTime = SOtime.time8(item.outTime);
-                            item.checkTime = SOtime.time8(item.checkTime)
+                            item.outTime = SOtime.time8(item.outTime,true);
+                            item.checkTime = SOtime.time8(item.checkTime,true)
                         });
                         this.isShowNoData = false
                     }
@@ -622,21 +619,23 @@ export default {
                 .product-center {
                     flex: 1;
                     margin-right: 10px;
-                     .no-wrap;
+                    overflow-x: auto;
+					white-space: nowrap;
                     .product-name {
-                        .no-wrap;
-                        margin-bottom: 8px;
+                        overflow-x: auto;
+						white-space: nowrap;
+                        margin-bottom: 14px;
                         >span {
                             width: 100%;
                             display: inline-block;
-                            .no-wrap;
                             font-size: 14px;
                             color: #3B9DF9;
                         }
                     };
                     .product-specification {
                         display: flex;
-                        .no-wrap;
+                        overflow-x: auto;
+						white-space: nowrap;
                         .product-specification-left {
                             margin-right: 10px;
                             >span {
@@ -646,7 +645,6 @@ export default {
                         };
                         .product-specification-right {
                             flex: 1;
-                            .no-wrap;
                             >span {
                                 font-size: 12px;
                                 color: #F44E23;
@@ -661,7 +659,7 @@ export default {
                     justify-content: center;
                     .product-number-box {
                         display: flex;
-                        margin-bottom: 12px;
+                        margin-bottom: 14px;
                         >span {
                             font-size: 12px;
                             color: #101010;
@@ -694,7 +692,7 @@ export default {
         };
         .order-message {
             margin: 10px 0;
-            padding: 0 6px;
+            padding: 0 8px;
             box-sizing: border-box;
             .create-delivery-date {
                     display: flex;
@@ -755,8 +753,6 @@ export default {
             }	
         };
         .delivery-information-list {
-            padding: 0 4px;
-            box-sizing: border-box;
             margin-bottom: 10px;
             max-height: 250px;
             display: flex;
@@ -780,7 +776,7 @@ export default {
                     border-radius: 6px;
                     background-color: rgba(255,255,255,1);
                     box-shadow: 0px 2px 6px 0px rgba(0,0,0,0.07);
-                    padding: 6px 4px;
+                    padding: 6px 8px;
                     box-sizing: border-box;
                     display: flex;
                     justify-content: space-between;
@@ -890,12 +886,12 @@ export default {
             }
         };
         .order-status-record {
-            padding: 0 3px;
+            padding: 0 6px;
             box-sizing: border-box;
             margin-bottom: 6px;
             .order-status-record-text {
                 margin-bottom: 10px;
-                padding: 0 3px;
+                padding: 0 2px;
                 box-sizing: border-box;
                 >span {
                     font-size: 14px;

@@ -216,7 +216,7 @@ export default {
     this.$nextTick(()=> {
       this.initScrollChange()
     });
-    this.takeStockDate = SOtime.time8(new Date().getTime());
+    this.takeStockDate = SOtime.time8(new Date().getTime(),true);
     const el = this.$refs.myElement;
     //点击库房区域以外的地方时，库房列表收起
 		document.addEventListener('click', (event) => {

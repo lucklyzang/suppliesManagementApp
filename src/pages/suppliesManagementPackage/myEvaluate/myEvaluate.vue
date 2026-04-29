@@ -151,8 +151,8 @@ export default {
     // 日历日期选择确认事件
     calendarConfirm(e) {
         this.showCalendar = false;
-        this.startDate = SOtime.time8(new Date(e[0]).getTime());
-        this.endDate = SOtime.time8(new Date(e[e.length-1]).getTime());
+        this.startDate = SOtime.time8(new Date(e[0]).getTime(),true);
+        this.endDate = SOtime.time8(new Date(e[e.length-1]).getTime(),true);
         this.currentPageNum = 1;
         this.getEvaluatePageEvent({
             pageNo: this.currentPageNum,
@@ -239,7 +239,7 @@ export default {
                 this.orderList = res.data.data.list;
                 this.totalCount = res.data.data.total;
                 this.orderList.forEach((item)=>{
-                    item.createTime = item.createTime ? SOtime.time8(item.createTime) : '';
+                    item.createTime = item.createTime ? SOtime.time8(item.createTime,true) : '';
                 });
                 this.fullOrderList = this.fullOrderList.concat(this.orderList);
                 if (this.fullOrderList.length == 0) {

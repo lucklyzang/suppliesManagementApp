@@ -23,7 +23,7 @@
 				</div>
 				<div class="product-list" v-for="(item) in materialList" :key="item.productName">
 					<div class="product-left">
-                        <img :src="item['images'].length > 0 ? item['images'][0] : productDefaultImage" />
+                        <img :src="item['images'] && item['images'].length > 0 ? item['images'][0] : productDefaultImage" />
 					</div>
 					<div class="product-center">
 						<div class="product-name">
@@ -74,7 +74,7 @@
 				<div class="create-delivery-date">
 					<div class="create-delivery-date-left">
 						<span>下单医院:</span>
-						<span></span>
+						<span>{{ orderMessage['customerName'] ? orderMessage['customerName'] : '无' }}</span>
 					</div>
 					<div class="create-delivery-date-left">
 						<span>送货地址:</span>
@@ -410,21 +410,23 @@ export default {
                 .product-center {
                     flex: 1;
                     margin-right: 10px;
-                     .no-wrap;
+                    overflow-x: auto;
+				    white-space: nowrap;
                     .product-name {
-                        .no-wrap;
-                        margin-bottom: 8px;
+                        overflow-x: auto;
+				        white-space: nowrap;
+                        margin-bottom: 14px;
                         >span {
                             width: 100%;
                             display: inline-block;
-                            .no-wrap;
                             font-size: 14px;
                             color: #3B9DF9;
                         }
                     };
                     .product-specification {
                         display: flex;
-                        .no-wrap;
+                        overflow-x: auto;
+				        white-space: nowrap;
                         .product-specification-left {
                             margin-right: 10px;
                             >span {
@@ -434,7 +436,6 @@ export default {
                         };
                         .product-specification-right {
                             flex: 1;
-                            .no-wrap;
                             >span {
                                 font-size: 12px;
                                 color: #F44E23;
@@ -449,7 +450,7 @@ export default {
                     justify-content: center;
                     .product-number-box {
                         display: flex;
-                        margin-bottom: 12px;
+                        margin-bottom: 14px;
                         >span {
                             font-size: 12px;
                             color: #101010;

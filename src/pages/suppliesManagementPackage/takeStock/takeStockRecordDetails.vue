@@ -266,7 +266,7 @@ export default {
             this.infoText = '';
             if ( res && res.data.code == 0) {
                 this.orderMessage = res.data.data;
-                this.orderMessage['checkTime'] = this.orderMessage['checkTime'] ? SOtime.time8(this.orderMessage['checkTime']) : '';
+                this.orderMessage['checkTime'] = this.orderMessage['checkTime'] ? SOtime.time8(this.orderMessage['checkTime'],true) : '';
                 if (this.orderMessage['items'].length == 0) {
                     this.isShowNoData = true;
                 } else {
