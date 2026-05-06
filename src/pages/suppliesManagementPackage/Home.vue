@@ -372,14 +372,26 @@
                             font-size: 12px;              
                             min-width: 17px;
                             max-width: 24px;
-                            aspect-ratio: 1;
                             border-radius: 50%;
                             padding: 0 4px;
                             box-sizing: border-box;
                             >span {
                                 .no-wrap();
                             }                      
-                        }
+                        };
+                        .message-number::before {
+						  content: "";
+						  display: block;
+						  padding-top: 100%;
+						};
+						@supports (aspect-ratio: 1 / 1) {
+						  .message-number {
+						    aspect-ratio: 1 / 1;
+						  };
+						  .message-number::before {
+						    display: none; 
+						  }
+						}
                     };
                     >div:nth-child(5) {
                         width: 35% !important

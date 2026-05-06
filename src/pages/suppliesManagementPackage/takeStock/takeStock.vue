@@ -17,7 +17,7 @@
                 <van-field v-model="productCodeValue" placeholder="请输入" />
               </div>
             </div>
-            <div class="scan-code">
+            <div class="scan-code" @click="scanQRCode">
               <van-icon name="scan" color="#3B9DF9" size="26" />
             </div>
           </div>
@@ -211,6 +211,14 @@ export default {
   },
 
   mounted() {
+    // 二维码回调方法绑定到window下面,提供给外部调用
+    let me = this;
+    window['scanQRcodeCallback'] = (code) => {
+      me.scanQRcodeCallback(code);
+    };
+    window['scanQRcodeCallbackCanceled'] = () => {
+      me.scanQRcodeCallbackCanceled();
+    };
     // 控制设备物理返回按键
     this.deviceReturn('/suppliesHome');
     this.$nextTick(()=> {
@@ -265,7 +273,56 @@ export default {
       this.$router.push({path: '/suppliesHome'})
     },
 
-     // 事件列表注册滚动事件
+    // 巡查任务点击事件
+    patrolTaskEvent (item, index) {
+      if (item.name == '设备巡检') {
+        this.$router.push({path: '/equipmentPatrolDetails'})
+      } else if (item.name == '设备点检') {
+        this.$router.push({path: '/equipmentSpotCheck'})
+      } else if (item.name == '设备管理') {
+        this.$router.push({path: '/equipmentList'})
+      } else if (item.name == '调度管理') {
+        this.$router.push({path: '/equipmentSpotList'}) 
+      }
+    },
+
+    // 扫描二维码方法
+    scanQRCode () {
+      try {
+        window.android.scanQRcode()
+      } catch (err) {
+        this.$dialog.alert({
+          message: err
+        }).then(() => {
+        })
+      }
+    },
+
+    // 摄像头扫码后的回调
+    scanQRcodeCallback(code) {
+      if (code) {
+        try {
+          this.productCodeValue = code
+        } catch (err) {
+          this.$toast({
+            message: `${err}`,
+            type: 'fail'
+          })
+        }  
+      } else {
+        this.$dialog.alert({
+          message: '当前没有扫描到任何信息,请重新扫描'
+        }).then(() => {
+          this.scanQRCode()
+        })
+      }
+    },
+
+    // 摄像头取消扫码后的回调
+    scanQRcodeCallbackCanceled () {
+    },
+
+    // 事件列表注册滚动事件
     initScrollChange () {
       let boxBackScroll = this.$refs['scrollBacklogTask'];
       boxBackScroll.addEventListener('scroll',this.eventListLoadMore,true)
@@ -293,7 +350,7 @@ export default {
             this.getStockPageEvent({
               pageNo: this.currentPageNum,
               pageSize: this.pageSize,
-              productId: this.productCodeValue, // 产品编号
+              productCode: this.productCodeValue, // 产品编号
               warehouseId: this.currentShipmentWarehouseValue //仓库编号
             },false)
           }
@@ -389,7 +446,7 @@ export default {
       this.getStockPageEvent({
         pageNo: this.currentPageNum,
         pageSize: this.pageSize,
-        productId: this.productCodeValue, // 产品编号
+        productCode: this.productCodeValue, // 产品编号
         warehouseId: this.currentShipmentWarehouseValue //仓库编号
       },true)
     },
