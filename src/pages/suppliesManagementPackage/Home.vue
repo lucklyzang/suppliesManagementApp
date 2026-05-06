@@ -29,7 +29,7 @@
                     @click="backlogListEvent(item,index)"
                 >
                     <span>{{ item.name }}</span>
-                    <p class="message-number" v-show="item.count !== null && item.count !== ''">
+                    <p class="message-number"  :class="{'message-number-long-num' : item.count >= 10}" v-show="item.count !== null && item.count !== ''">
                         <span>{{ item.count }}</span>
                     </p>
                 </div> 
@@ -370,8 +370,8 @@
                             background-color: #E86F50;
                             color: #ffffff;              
                             font-size: 12px;              
-                            min-width: 17px;
-                            max-width: 24px;
+                            width: 17px;
+                            height: 17px;
                             border-radius: 50%;
                             padding: 0 4px;
                             box-sizing: border-box;
@@ -379,19 +379,10 @@
                                 .no-wrap();
                             }                      
                         };
-                        .message-number::before {
-						  content: "";
-						  display: block;
-						  padding-top: 100%;
-						};
-						@supports (aspect-ratio: 1 / 1) {
-						  .message-number {
-						    aspect-ratio: 1 / 1;
-						  };
-						  .message-number::before {
-						    display: none; 
-						  }
-						}
+                        .message-number-long-num {
+                            width: 24px !important;
+                            height: 24px !important;
+                        }
                     };
                     >div:nth-child(5) {
                         width: 35% !important
