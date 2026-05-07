@@ -6,7 +6,7 @@ export function getDefaultLoginState() {
 		token: null, //请求token,
 		isLogin: false,
 		overDueWay: false,
-		appPermission: {},
+		userPermissionInfo: {},
 		chooseHospitalArea: {},
 		timeMessage: {},
 		ossMessage: {}

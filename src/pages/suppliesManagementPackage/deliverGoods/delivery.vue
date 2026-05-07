@@ -44,7 +44,7 @@
         <div class="btn-left" @click="cancelEvent">
             <span>取消</span>
         </div>
-        <div class="btn-right" @click="submitEvent">
+        <div class="btn-right" v-preventReClick @click="submitEvent">
             <span>提交</span>
         </div>
     </div>

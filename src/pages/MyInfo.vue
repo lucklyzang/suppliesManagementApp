@@ -39,7 +39,7 @@
 			</div>
 		</div>
 		<div class="bottom-area">
-			<div class="quit-area" @click="signOutEvent">退出登录</div>
+			<div class="quit-area" v-preventReClick @click="signOutEvent">退出登录</div>
 			<div class="version-area">当前版本 1.0.0</div>
 		</div>
 	</div>

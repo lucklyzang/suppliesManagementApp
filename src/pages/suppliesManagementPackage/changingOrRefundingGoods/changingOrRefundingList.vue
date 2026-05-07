@@ -73,10 +73,10 @@
 					</div>
 					<div class="order-list-bottom">
 						<div class="order-list-btn">
-							<div class="delete-left" @click.stop="refuseEvent(item,index)">
+							<div class="delete-left" v-if="userPermissionInfo['permissions'].indexOf('erp:sale-return:update-status') != -1" @click.stop="refuseEvent(item,index)">
 								<span>拒绝</span>
 							</div>
-							<div class="edit-right" @click.stop="sureEvent(item,index)">
+							<div class="edit-right" v-if="userPermissionInfo['permissions'].indexOf('erp:sale-return:update-status') != -1" @click.stop="sureEvent(item,index)">
 								<span>确认</span>
 							</div>
 						</div>
@@ -176,7 +176,7 @@
                         <div class="cancel-left" @click.stop="salesReturnOrderModalShowCancelEvent">
                             <span>取消</span>
                         </div>
-                        <div class="submit-right" @click.stop="salesReturnOrderModalShowSureEvent">
+                        <div class="submit-right" v-preventReClick @click.stop="salesReturnOrderModalShowSureEvent">
                             <span>确定</span>
                         </div>
                     </div>
@@ -281,7 +281,7 @@ export default {
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo"]),
+    ...mapGetters(["userInfo","userPermissionInfo"]),
     userName() {
         return this.userInfo['nickname']
     },

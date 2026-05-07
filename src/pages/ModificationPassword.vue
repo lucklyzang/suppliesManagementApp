@@ -51,7 +51,7 @@
 			</div>
 		</div>
 		<div class="bottom-area">
-			<div class="quit-area" @click="submitModificationEvent">提交修改</div>
+			<div class="quit-area" v-preventReClick @click="submitModificationEvent">提交修改</div>
 		</div>
 	</div>
 </template>

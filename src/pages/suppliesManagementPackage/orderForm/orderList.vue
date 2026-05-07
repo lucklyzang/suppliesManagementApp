@@ -83,16 +83,16 @@
 					</div>
 					<div class="order-list-bottom">
 						<div class="order-list-btn">
-							<div class="delete-left" v-show="item.status == 30" @click.stop="revocationSureEvent(item,index)">
+							<div class="delete-left" v-show="item.status == 30 && userPermissionInfo['permissions'].indexOf('erp:sale-out:update-status') != -1" @click.stop="revocationSureEvent(item,index)">
 								<span>撤销确认</span>
 							</div>
-							<div class="delete-left" v-show="item.status == 20"  @click.stop="refuseEvent(item,index)">
+							<div class="delete-left" v-show="item.status == 20 && userPermissionInfo['permissions'].indexOf('erp:sale-out:update-status') != -1"  @click.stop="refuseEvent(item,index)">
 								<span>拒绝订单</span>
 							</div>
-							<div class="edit-right" v-show="item.status == 30" @click.stop="createDeliveryOrderEvent(item,index)">
+							<div class="edit-right" v-show="item.status == 30 && userPermissionInfo['permissions'].indexOf('erp:sale-out:create') != -1" @click.stop="createDeliveryOrderEvent(item,index)">
 								<span>生成送货单</span>
 							</div>
-							<div class="edit-right" v-show="item.status == 20" @click.stop="sureEvent(item,index)">
+							<div class="edit-right" v-show="item.status == 20 && userPermissionInfo['permissions'].indexOf('erp:dept-order:confirm') != -1" @click.stop="sureEvent(item,index)">
 								<span>确认订单</span>
 							</div>
 						</div>
@@ -305,7 +305,7 @@ export default {
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo"]),
+    ...mapGetters(["userInfo","userPermissionInfo"]),
      userName() {
         return this.userInfo['nickname']
     },

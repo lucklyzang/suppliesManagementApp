@@ -30,7 +30,7 @@ export function getPlanOrderPage(data) {
 		})
 	};
 	return request({
-	    url: '/spd/admin-api/erp/plan-order/page',
+	    url: '/spd/admin-api/erp/sale-order/page',
 	    method: 'get',
 			params: data,
 			paramsSerializer: function (params) {
@@ -42,7 +42,7 @@ export function getPlanOrderPage(data) {
 // 获得计划订单详情
 export function getPlanOrder(id) {
 	return request({
-	    url: `/spd/admin-api/erp/plan-order/get?id=${id}`,
+	    url: `/spd/admin-api/erp/sale-order/get?id=${id}`,
 	    method: 'get'
 	  })
 }

@@ -46,7 +46,7 @@
 
 <script>
 	import { mapGetters, mapMutations } from 'vuex'
-	import { logIn, getUserInfo, getAppPermission } from '@/api/login.js'
+	import { logIn, getUserInfo, getPermissionInfo } from '@/api/login.js'
 	import { setStore, getStore, removeStore } from '@/common/js/utils'
 	export default {
 	components: {
@@ -99,7 +99,7 @@
 				'changeOverDueWay',
 				'changeToken',
 				'changeIsLogin',
-				'storeAppPermission'
+				'storeUserPermissionInfo'
 			]),
 
 			// 获取用户详情
@@ -135,17 +135,17 @@
 			},
 
 			// 获取用户权限
-			getappPermissionEvent () {
+			getPermissionInfoEvent () {
 				return new Promise((resolve,reject) => {
 					this.showLoadingHint = true;
 					this.infoText = '查询中···';
-					getAppPermission(this.userInfo['worker']['account'])
+					getPermissionInfo()
 					.then((res) => {
 						this.showLoadingHint = false;
 						this.infoText = '';
 						if (res && res.data.code == 0) {
 							resolve();
-							this.storeAppPermission(res.data.data);
+							this.storeUserPermissionInfo(res.data.data);
 						} else {
 							reject(res.data.msg);
 							this.$dialog.alert({
@@ -229,7 +229,7 @@
 					// 获取用户详情
 					await this.getUserInfoEvent();
 					// 获取用户权限
-					// await this.getappPermissionEvent();
+					await this.getPermissionInfoEvent();
 					this.changeIsLogin(true);
 					this.changeOverDueWay(false);
 					this.$router.push({ path: "/suppliesHome" })

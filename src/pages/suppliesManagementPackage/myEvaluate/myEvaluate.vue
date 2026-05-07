@@ -21,7 +21,7 @@
 				</div>
 			</div>
             <div class="order-list-box" ref="scrollBacklogTask">
-				<div class="order-list" v-for="(item,index) in fullOrderList" :key="index" @click="enterOrderDetailsEvent(item,index)">
+				<div class="order-list" v-for="(item,index) in fullOrderList" :key="index">
 					<div class="evaluate-date">
                         <div class="evaluate-date-left">
                             无

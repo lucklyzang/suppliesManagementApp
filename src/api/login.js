@@ -16,10 +16,10 @@ export function getUserInfo(userId) {
 	  })
 }
 
-// 获取用户权限
-export function getAppPermission(username) {
+// 获取登录用户的权限信息
+export function getPermissionInfo() {
 	return request({
-	    url: `user/app-permission/${username}`,
+	    url: '/spd/admin-api/system/auth/get-permission-info',
 	    method: 'get'
 	  })
 }

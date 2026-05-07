@@ -56,13 +56,13 @@
 					</div>
 					<div class="order-list-bottom">
 						<div class="order-list-btn">
-							<div class="delete-left" v-show="item.status == 10" @click.stop="deleteOrderEvent(item,index)">
+							<div class="delete-left" v-show="item.status == 10 && userPermissionInfo['permissions'].indexOf('erp:stock-check:delete') != -1" @click.stop="deleteOrderEvent(item,index)">
 								<span>删除</span>
 							</div>
-							<div class="edit-right" v-show="item.status == 10 || item.status == 30" @click.stop="editEvent(item,index)">
+							<div class="edit-right" v-show="(item.status == 10 || item.status == 30) && userPermissionInfo['permissions'].indexOf('erp:stock-check:update') != -1" @click.stop="editEvent(item,index)">
 								<span>编辑</span>
 							</div>
-                            <div class="audit-right" v-show="item.status == 10" @click.stop="auditEvent(item,index)">
+                            <div class="audit-right" v-show="item.status == 10 && userPermissionInfo['permissions'].indexOf('erp:stock-check:update') != -1" @click.stop="auditEvent(item,index)">
 								<span>审核</span>
 							</div>
 						</div>
@@ -232,7 +232,7 @@ export default {
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo"]),
+    ...mapGetters(["userInfo","userPermissionInfo"]),
     userName() {
         return this.userInfo['nickname']
     },

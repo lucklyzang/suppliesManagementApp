@@ -4,7 +4,7 @@
     <div class="nav">
         <van-nav-bar title="盘点" left-text="返回" left-arrow @click-left="onClickLeft" @click-right="enterTakeStockRecordEvent" :border="false">
             <template #right>
-                <span class="history-span">盘点记录</span>
+              <span v-if="userPermissionInfo['permissions'].indexOf('erp:stock-check:query') != -1" class="history-span">盘点记录</span>
             </template>
         </van-nav-bar>
     </div>
@@ -94,10 +94,10 @@
               <div class="btn-left" @click="resetDataEvent">
                 <span>重置</span>
               </div>
-              <div class="btn-center" @click="saveDataEvent">
+              <div class="btn-center" v-preventReClick @click="saveDataEvent">
                 <span>保存</span>
               </div>
-              <div class="btn-right" @click="submitDataEvent">
+              <div class="btn-right" v-preventReClick @click="submitDataEvent">
                 <span>提交</span>
               </div>
           </div> 
@@ -242,7 +242,7 @@ export default {
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo","takeStockOrderMessage"]),
+    ...mapGetters(["userInfo","takeStockOrderMessage","userPermissionInfo"]),
       userName() {
 			  return this.userInfo['nickname']
 			},

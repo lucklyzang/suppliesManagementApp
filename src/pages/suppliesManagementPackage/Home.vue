@@ -36,7 +36,7 @@
             </div>
         </div>
         <div class="functional-zone">
-            <div class="service-list" v-for="(item,index) in functionalZoneList" :key="index" @click="functionalZoneEvent(item,index)">
+            <div class="service-list" v-for="(item,index) in hasAuthSystemsList" :key="index" @click="functionalZoneEvent(item,index)">
                 <div class="list-top">
                     <img :src="item.url" />
                 </div>
@@ -82,28 +82,34 @@
                         count: 0
                     }
                 ],
-                functionalZoneList: [
+                serviceList: [
 					{
 						text: '订单',
-						url: require('@/common/images/home/supplies-order-icon.png')
+						url: require('@/common/images/home/supplies-order-icon.png'),
+                        value: 'erp:dept-order:query'
 					},
 					{
 						text: '送货',
-						url: require('@/common/images/home/supplies-delivery-icon.png')
+						url: require('@/common/images/home/supplies-delivery-icon.png'),
+                        value: 'erp:sale-out:query'
 					},
                     {
 						text: '退换货',
-						url: require('@/common/images/home/supplies-barter-icon.png')
+						url: require('@/common/images/home/supplies-barter-icon.png'),
+                        value: 'erp:sale-return:query'
 					},
 					{
 						text: '盘点',
-						url: require('@/common/images/home/supplies-stock-tacking-icon.png')
+						url: require('@/common/images/home/supplies-stock-tacking-icon.png'),
+                        value: 'erp:stock-check:create'
 					},
                     {
 						text: '评价',
-						url: require('@/common/images/home/supplies-evaluate-icon.png')
+						url: require('@/common/images/home/supplies-evaluate-icon.png'),
+                        value: 'erp:order-evaluate:query'
 					}
 				],
+                hasAuthSystemsList: [],
                 defaultPersonPng: require("@/common/images/home/supplies-default-person.png")
             }
         },
@@ -127,7 +133,8 @@
                     this.changeSuppliesHomeGlobalTimer(null)
                 }
                 }, 2000)
-            }
+            };
+            this.controlServiceManageModuleShowEvent()
         },
 
         watch: {},
@@ -140,7 +147,8 @@
                 'suppliesHomeGlobalTimer',
                 'isEnterGuestBookPageFromHomePage',
                 'lastMessageNumber',
-                'chooseHospitalArea'
+                'chooseHospitalArea',
+                'userPermissionInfo'
             ]),
             userName() {
 			  return this.userInfo['nickname']
@@ -179,6 +187,18 @@
                 'changeOverDueWay',
                 'changeSuppliesHomeGlobalTimer'
             ]),
+
+            // 控制服务管理模块显示隐藏
+			controlServiceManageModuleShowEvent () {
+				this.hasAuthSystemsList = [];
+				if (this.userPermissionInfo.hasOwnProperty('permissions')) {
+					this.serviceList.map((value,index,arr) => {
+						if (this.userPermissionInfo['permissions'].indexOf(value['value']) != -1) {
+							this.hasAuthSystemsList.push(value)
+						}
+					})
+				}
+			},
             
             // 查询待办事项中各类型任务数量
             getSaleStatisticsStatusSummaryEvent () {
@@ -217,6 +237,14 @@
             // 待办事项列表点击事件
             backlogListEvent (item,index) {
                 if (item.name == '待送货') {
+                    if (this.userPermissionInfo.hasOwnProperty('permissions')) {
+						if (this.userPermissionInfo['permissions'].indexOf('erp:sale-out:query') == -1) {
+                            this.$toast({
+						        message: '你没有对应权限!'
+					        })
+							return
+						}
+					};
                     this.$router.push({
                         path: '/suppliesDeliverGoodsList',
                         query: {
@@ -224,6 +252,14 @@
                         }
                     })
                 } else if(item.name == '待确认') {
+                    if (this.userPermissionInfo.hasOwnProperty('permissions')) {
+						if (this.userPermissionInfo['permissions'].indexOf('erp:dept-order:query') == -1) {
+                            this.$toast({
+						        message: '你没有对应权限!'
+					        })
+							return
+						}
+					};
                     this.$router.push({
                         path: '/suppliesOrderList',
                         query: {

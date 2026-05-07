@@ -94,16 +94,16 @@
 					</div>
 					<div class="order-list-bottom">
 						<div class="order-list-btn">
-							<div class="delete-left" v-show="item.status == 20" @click.stop="revocationDeliverGoodsEvent(item,index)">
+							<div class="delete-left" v-show="item.status == 20 && userPermissionInfo['permissions'].indexOf('erp:sale-out:revoke') != -1" @click.stop="revocationDeliverGoodsEvent(item,index)">
 								<span>撤销送货</span>
 							</div>
-							<div class="delete-left" v-show="item.status == 10" @click.stop="cancelDeliverOrderEvent(item,index)">
+							<div class="delete-left" v-show="item.status == 10 && userPermissionInfo['permissions'].indexOf('erp:sale-out:cancel') != -1" @click.stop="cancelDeliverOrderEvent(item,index)">
 								<span>取消送货单</span>
 							</div>
-							<div class="edit-right" v-show="item.status == 10" @click.stop="deliverGoodsEvent(item,index)">
+							<div class="edit-right" v-show="item.status == 10 && userPermissionInfo['permissions'].indexOf('erp:sale-out:delivery') != -1" @click.stop="deliverGoodsEvent(item,index)">
 								<span>送货</span>
 							</div>
-							<div class="edit-other" v-show="item.status == 20" @click.stop="deliveryEvent(item,index)">
+							<div class="edit-other" v-show="item.status == 20 && userPermissionInfo['permissions'].indexOf('erp:sale-out:delivery') != -1" @click.stop="deliveryEvent(item,index)">
 								<span>送达</span>
 							</div>
 						</div>
@@ -398,7 +398,7 @@ export default {
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo"]),
+    ...mapGetters(["userInfo","userPermissionInfo"]),
      userName() {
         return this.userInfo['nickname']
     },

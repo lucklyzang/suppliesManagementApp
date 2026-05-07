@@ -153,7 +153,7 @@
                         <div class="cancel-left" @click.stop="takeStockModalCancelEvent">
                             <span>取消</span>
                         </div>
-                        <div class="submit-right" @click.stop="takeStockModalSubmitEvent">
+                        <div class="submit-right" v-preventReClick @click.stop="takeStockModalSubmitEvent">
                             <span>提交</span>
                         </div>
                     </div>

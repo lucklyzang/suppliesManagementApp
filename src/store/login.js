@@ -23,9 +23,9 @@ export default {
 			state.chooseHospitalArea = JSON.parse(getStore('chooseHospitalArea')) ? JSON.parse(getStore('chooseHospitalArea')) : null;
 			return state.chooseHospitalArea
 		},
-		appPermission:(state) => {
-			state.appPermission = JSON.parse(getStore('appPermission')) ? JSON.parse(getStore('appPermission')) : null;
-			return state.appPermission
+		userPermissionInfo:(state) => {
+			state.userPermissionInfo = JSON.parse(getStore('userPermissionInfo')) ? JSON.parse(getStore('userPermissionInfo')) : null;
+			return state.userPermissionInfo
 		},
 		isLogin: (state) => {
 			state.isLogin = getStore('isLogin') ? getStore('isLogin') === 'false' ? false : true : false;
@@ -70,10 +70,10 @@ export default {
 				state.chooseHospitalArea = playLoad
 			}
 		},
-		storeAppPermission(state, playLoad) {
+		storeUserPermissionInfo(state, playLoad) {
 			if (playLoad && playLoad != 'null') {
-				setStore('appPermission', playLoad);
-				state.appPermission = playLoad
+				setStore('userPermissionInfo', playLoad);
+				state.userPermissionInfo = playLoad
 			}
 		},
 		// 修改token状态
