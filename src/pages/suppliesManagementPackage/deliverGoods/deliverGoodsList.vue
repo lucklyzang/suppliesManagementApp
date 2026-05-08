@@ -94,16 +94,16 @@
 					</div>
 					<div class="order-list-bottom">
 						<div class="order-list-btn">
-							<div class="delete-left" v-show="item.status == 20 && userPermissionInfo['permissions'].indexOf('erp:sale-out:revoke') != -1" @click.stop="revocationDeliverGoodsEvent(item,index)">
+							<div class="delete-left" v-show="item.status == 20 && hasIntersection(['erp:sale-out:revoke'],userPermissionInfo['permissions'])" @click.stop="revocationDeliverGoodsEvent(item,index)">
 								<span>撤销送货</span>
 							</div>
-							<div class="delete-left" v-show="item.status == 10 && userPermissionInfo['permissions'].indexOf('erp:sale-out:cancel') != -1" @click.stop="cancelDeliverOrderEvent(item,index)">
+							<div class="delete-left" v-show="item.status == 10 && hasIntersection(['erp:sale-out:cancel'],userPermissionInfo['permissions'])" @click.stop="cancelDeliverOrderEvent(item,index)">
 								<span>取消送货单</span>
 							</div>
-							<div class="edit-right" v-show="item.status == 10 && userPermissionInfo['permissions'].indexOf('erp:sale-out:delivery') != -1" @click.stop="deliverGoodsEvent(item,index)">
+							<div class="edit-right" v-show="item.status == 10 && hasIntersection(['erp:sale-out:delivery'],userPermissionInfo['permissions'])" @click.stop="deliverGoodsEvent(item,index)">
 								<span>送货</span>
 							</div>
-							<div class="edit-other" v-show="item.status == 20 && userPermissionInfo['permissions'].indexOf('erp:sale-out:delivery') != -1" @click.stop="deliveryEvent(item,index)">
+							<div class="edit-other" v-show="item.status == 20 && hasIntersection(['erp:sale-out:delivery'],userPermissionInfo['permissions'])" @click.stop="deliveryEvent(item,index)">
 								<span>送达</span>
 							</div>
 						</div>
@@ -239,6 +239,7 @@
 <script>
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
+import { hasIntersection } from '@/common/js/utils'
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
 import { getSaleOutPage, queryUserList, saleOutDistributiony, saleOutCancel, saleOutRevoke } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
 import SOtime from '@/common/js/SOtime.js'
@@ -430,6 +431,8 @@ export default {
 
   methods: {
     ...mapMutations([]),
+
+    hasIntersection,
 
     onClickLeft () {
         this.$router.push({path: '/suppliesHome'})
@@ -775,7 +778,6 @@ export default {
     
     // 送货弹框提交事件
     deliverGoodsModalSubmitEvent () {
-        this.deliverGoodsModalShow = false;
         if (this.currentdeliveryPerson === '请选择') {
              this.$toast({
                 type: 'fail',
@@ -790,6 +792,7 @@ export default {
                 return
             }
         };
+        this.deliverGoodsModalShow = false;
         this.saleOutDistributionyEvent({
             id: this.currentOrderId,
             address: this.currentAddress,
@@ -1000,7 +1003,7 @@ export default {
                                         align-items: center;
                                         >span {
                                             display: inline-block;
-                                            width: 70px;
+                                            width: 100%;
                                             font-size: 12px;
                                             color: #101010
                                         };

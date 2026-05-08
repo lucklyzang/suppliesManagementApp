@@ -49,6 +49,7 @@
 <script>
     import HeaderTop from '@/components/HeaderTop'
     import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction';
+    import { hasIntersection } from '@/common/js/utils'
     import { getSaleStatisticsStatusSummary } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
     import SOtime from '@/common/js/SOtime.js'
     import {
@@ -86,27 +87,27 @@
 					{
 						text: '订单',
 						url: require('@/common/images/home/supplies-order-icon.png'),
-                        value: 'erp:dept-order:query'
+                        value: ['erp:dept-order:query','erp:sale-out:query','erp:check-order:query']
 					},
 					{
 						text: '送货',
 						url: require('@/common/images/home/supplies-delivery-icon.png'),
-                        value: 'erp:sale-out:query'
+                        value: ['erp:sale-out:query']
 					},
                     {
 						text: '退换货',
 						url: require('@/common/images/home/supplies-barter-icon.png'),
-                        value: 'erp:sale-return:query'
+                        value: ['erp:sale-return:query']
 					},
 					{
 						text: '盘点',
 						url: require('@/common/images/home/supplies-stock-tacking-icon.png'),
-                        value: 'erp:stock-check:create'
+                        value: ['erp:stock-check:create']
 					},
                     {
 						text: '评价',
 						url: require('@/common/images/home/supplies-evaluate-icon.png'),
-                        value: 'erp:order-evaluate:query'
+                        value: ['erp:order-evaluate:query']
 					}
 				],
                 hasAuthSystemsList: [],
@@ -187,13 +188,14 @@
                 'changeOverDueWay',
                 'changeSuppliesHomeGlobalTimer'
             ]),
+            
 
             // 控制服务管理模块显示隐藏
 			controlServiceManageModuleShowEvent () {
 				this.hasAuthSystemsList = [];
 				if (this.userPermissionInfo.hasOwnProperty('permissions')) {
 					this.serviceList.map((value,index,arr) => {
-						if (this.userPermissionInfo['permissions'].indexOf(value['value']) != -1) {
+						if (hasIntersection(value['value'],this.userPermissionInfo['permissions'])) {
 							this.hasAuthSystemsList.push(value)
 						}
 					})
@@ -238,7 +240,7 @@
             backlogListEvent (item,index) {
                 if (item.name == '待送货') {
                     if (this.userPermissionInfo.hasOwnProperty('permissions')) {
-						if (this.userPermissionInfo['permissions'].indexOf('erp:sale-out:query') == -1) {
+						if (!hasIntersection(['erp:sale-out:query'],this.userPermissionInfo['permissions'])) {
                             this.$toast({
 						        message: '你没有对应权限!'
 					        })
@@ -253,7 +255,7 @@
                     })
                 } else if(item.name == '待确认') {
                     if (this.userPermissionInfo.hasOwnProperty('permissions')) {
-						if (this.userPermissionInfo['permissions'].indexOf('erp:dept-order:query') == -1) {
+						if (!hasIntersection(['erp:sale-out:query','erp:dept-order:query','erp:check-order:query'],this.userPermissionInfo['permissions'])) {
                             this.$toast({
 						        message: '你没有对应权限!'
 					        })

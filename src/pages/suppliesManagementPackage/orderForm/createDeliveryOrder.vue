@@ -115,16 +115,19 @@
                 </div>
                 <div class="evaluate-modal-center">
                    <div class="modal-center-title">
-                     确定要生成送货单吗？
+                    确定要生成送货单吗？
                    </div>
                    <div class="modal-center-content">
                      <span>
-                       订单号不变，选中的物品生成新的送货单，新生成的送货单号为
+                      订单号不变，选中的物品生成新的送货单,
                      </span>
-                     <span>{{ newDeliveryNote }}</span>
+                     <!-- <span>{{ newDeliveryNote }}</span> -->
+                   </div>
+                   <div class="modal-center-other">
+                    您可以在“送货”列表中查看该送货单。
                    </div>
                    <div class="modal-center-info">
-                     您可以继续生成新的送货单
+                    您可以继续生成新的送货单
                    </div>
                 </div>
                 <div class="evaluate-modal-bottom">
@@ -157,6 +160,7 @@ import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
 import { getPlanOrder, getwarehouseInfo, createSaleOut } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
 import SOtime from '@/common/js/SOtime.js'
+import _ from 'lodash'
 export default {
   name: "suppliesCreateDeliveryOrder",
   components: {
@@ -210,6 +214,7 @@ export default {
   watch: { 
       materialList: {
         handler(newVal, oldVal) {
+          console.log('12',newVal[0]);
           if (newVal.length > 0) {
             if (Number(newVal[0]['inputCount']) > Number(newVal[0]['count']) - Number(newVal[0]['outCount'])) {
               this.isExceedStockQuantity = true;
@@ -294,10 +299,29 @@ export default {
       this.createDeliveryOrderModalShow = false;
     },
 
-    // 确定继续生成送货单弹框确定事件
+    // 确定生成送货单弹框确定事件
     createDeliveryOrderModalShowSubmitEvent () {
       this.createDeliveryOrderModalShow = false;
-      this.submitEvent()
+      let deliveryOrderList = [];
+      let temporaryMaterialList = this.materialList.filter((item) => { return Number(item.inputCount) > 0 });
+      for (let item of temporaryMaterialList) {
+        deliveryOrderList.push({
+          orderItemId: item.id, //销售订单项编号
+          warehouseId: this.currentShipmentWarehouseValue, // 仓库编号
+          productId: item.productId, // 产品编号
+          productUnitId: item.productUnitId, // 产品单位编号
+          productPrice: item.productPrice, // 产品单价
+          count: item.inputCount, // 产品数量
+          taxPercent: item.taxPercent, // 税率，百分比
+          remark: item.remark //备注
+        }) 
+      };
+      this.createSaleOutEvent({
+        orderId: Number(this.orderId), //销售订单编号
+        requestTime: new Date(this.arrivalDate ).getTime(), //出库时间
+        remark: this.remarkValue, //备注
+        items: deliveryOrderList
+      })
     },
 
     // 退出事件
@@ -330,26 +354,7 @@ export default {
         });
         return 
       };
-      let deliveryOrderList = [];
-      let temporaryMaterialList = this.materialList.filter((item) => { return Number(item.inputCount) > 0 });
-      for (let item of temporaryMaterialList) {
-        deliveryOrderList.push({
-          orderItemId: item.id, //销售订单项编号
-          warehouseId: this.currentShipmentWarehouseValue, // 仓库编号
-          productId: item.productId, // 产品编号
-          productUnitId: item.productUnitId, // 产品单位编号
-          productPrice: item.productPrice, // 产品单价
-          count: item.inputCount, // 产品数量
-          taxPercent: item.taxPercent, // 税率，百分比
-          remark: item.remark //备注
-        }) 
-      };
-      this.createSaleOutEvent({
-        orderId: Number(this.orderId), //销售订单编号
-        requestTime: new Date(this.arrivalDate ).getTime(), //出库时间
-        remark: this.remarkValue, //备注
-        items: deliveryOrderList
-      })
+      this.createDeliveryOrderModalShow = true
     },
 
     // 生成送货单事件
@@ -360,8 +365,9 @@ export default {
           this.loadingShow = false;
           this.infoText = '';
           if ( res && res.data.code == 0) {
-            this.getPlanOrderEventNext(); 
-            this.newDeliveryNote = res.data.data;
+            this.deviceReturn('/suppliesOrderList');
+            // this.getPlanOrderEventNext(); 
+            // this.newDeliveryNote = res.data.data;
           } else {
               this.$dialog.alert({
                 message: `${res.data.msg}`,
@@ -387,17 +393,23 @@ export default {
           this.loadingShow = false;
           this.infoText = '';
           if ( res && res.data.code == 0) {
-            this.createDeliveryOrderModalShow = true;
             let temporaryMessage = res.data.data['items'];
-            // 成功生成送货单后,更新该订单产品出库数量
+            // 成功生成送货单后,更新该订单产品出库数量和输入框默认数量
             temporaryMessage.forEach((item,index) => {
               for (const [innerIndex, innerItem] of this.materialList.entries()) {
                 if (innerItem['id'] == item.id) {
                   this.$set(this.materialList[innerIndex],'outCount',item['outCount']);
+                  this.$set(this.materialList[innerIndex],'inputCount',Number(item['count'])-Number(item['outCount']));
                   break
                 }
               }
-            })
+            });
+            // 还有产品剩余需求数不为0时，则可以继续生成送货单
+            if (this.materialList.every((item) => { return item.count == item.outCount })) {
+              this.deviceReturn('/suppliesOrderList')
+            } else {
+              this.createDeliveryOrderModalShow = true
+            }
           } else {
             this.$dialog.alert({
               message: `${res.data.msg}`,
@@ -495,9 +507,9 @@ export default {
                 let [item1,item2] = res;
                 if (item1) {
                   this.orderMessage = item1;
-                  this.materialList = this.orderMessage['items'];
+                  this.materialList = _.cloneDeep(this.orderMessage['items']);
                   this.materialList.forEach((item,index) => {
-                    this.$set(this.materialList[index],'inputCount',0);
+                    this.$set(this.materialList[index],'inputCount',Number(item['count'])-Number(item['outCount']));
                   });
                   this.getArrivalDate()
                 };
@@ -592,7 +604,7 @@ export default {
                        margin: 20px 0;
                        word-break: break-all;
                        >span {
-                        font-size: 14px;
+                        font-size: 12px;
                         color: #989999;
                         &:nth-child(2) {
                           margin-left: 4px;
@@ -600,9 +612,15 @@ export default {
                         }
                        }
                      };
+                     .modal-center-other {
+                        margin-bottom: 20px;
+                        word-break: break-all;
+                       font-size: 12px;
+                       color: #989999;
+                     };
                      .modal-center-info {
                        word-break: break-all;
-                       font-size: 14px;
+                       font-size: 12px;
                        color: #989999;
                      }
                   };
@@ -708,21 +726,24 @@ export default {
 				 };
 				 .product-center {
 					 flex: 1;
-					 .no-wrap;
+					 overflow-x: auto;
+					 white-space: nowrap;
+           margin-right: 4px;
 					 .product-name {
-						 .no-wrap;
+						 overflow-x: auto;
+						 white-space: nowrap;
 						 margin-bottom: 10px;
 						 >span {
 							 width: 100%;
 							 display: inline-block;
-							 .no-wrap;
 							 font-size: 14px;
 							 color: #3B9DF9;
 						 }
 					 };
 					 .product-specification {
-						 display: flex;
-						 .no-wrap;
+             display: flex;
+						 overflow-x: auto;
+						 white-space: nowrap;
 						 .product-specification-left {
 							 >span {
 								 font-size: 12px;

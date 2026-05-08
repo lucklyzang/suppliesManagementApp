@@ -83,16 +83,16 @@
 					</div>
 					<div class="order-list-bottom">
 						<div class="order-list-btn">
-							<div class="delete-left" v-show="item.status == 30 && userPermissionInfo['permissions'].indexOf('erp:sale-out:update-status') != -1" @click.stop="revocationSureEvent(item,index)">
+							<div class="delete-left" v-show="item.status == 30 && hasIntersection(['erp:dept-order:confirm','erp:sale-out:update-status'],userPermissionInfo['permissions'])" @click.stop="revocationSureEvent(item,index)">
 								<span>撤销确认</span>
 							</div>
-							<div class="delete-left" v-show="item.status == 20 && userPermissionInfo['permissions'].indexOf('erp:sale-out:update-status') != -1"  @click.stop="refuseEvent(item,index)">
+							<div class="delete-left" v-show="item.status == 20 && hasIntersection(['erp:dept-order:confirm','erp:sale-out:update-status'],userPermissionInfo['permissions'])"  @click.stop="refuseEvent(item,index)">
 								<span>拒绝订单</span>
 							</div>
-							<div class="edit-right" v-show="item.status == 30 && userPermissionInfo['permissions'].indexOf('erp:sale-out:create') != -1" @click.stop="createDeliveryOrderEvent(item,index)">
+							<div class="edit-right" v-show="item.status == 30 && hasIntersection(['erp:sale-out:create'],userPermissionInfo['permissions'])" @click.stop="createDeliveryOrderEvent(item,index)">
 								<span>生成送货单</span>
 							</div>
-							<div class="edit-right" v-show="item.status == 20 && userPermissionInfo['permissions'].indexOf('erp:dept-order:confirm') != -1" @click.stop="sureEvent(item,index)">
+							<div class="edit-right" v-show="item.status == 20 && hasIntersection(['erp:sale-out:update-status','erp:dept-order:confirm'],userPermissionInfo['permissions'])" @click.stop="sureEvent(item,index)">
 								<span>确认订单</span>
 							</div>
 						</div>
@@ -174,6 +174,7 @@
 <script>
 import NavBar from "@/components/NavBar"
 import { mapGetters, mapMutations } from "vuex"
+import { hasIntersection } from '@/common/js/utils'
 import { mixinsDeviceReturn } from '@/mixins/deviceReturnFunction'
 import { getPlanOrderPage, checkOrder } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
 import SOtime from '@/common/js/SOtime.js'
@@ -332,6 +333,8 @@ export default {
   methods: {
     ...mapMutations([]),
 
+    hasIntersection,
+
     onClickLeft () {
         this.$router.push({path: '/suppliesHome'})
     },
@@ -449,7 +452,6 @@ export default {
     
     // 拒绝弹提交事件
     refuseModalSubmitEvent () {
-        this.refuseModalShow = false;
         if (this.refuseReasonValue === '') {
             this.$toast({
                 type: 'fail',
@@ -457,6 +459,7 @@ export default {
             });
             return
         };
+        this.refuseModalShow = false;
         this.checkOrderEvent({
             id: this.currentOrderId ,
             status: 31,
@@ -694,6 +697,7 @@ export default {
     refuseEvent(item,index) {
         this.currentOrderIndex = index;
         this.currentOrderId = item['id'];
+        this.refuseReasonValue = '';
         this.refuseModalShow = true 
     },
 

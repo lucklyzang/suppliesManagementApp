@@ -4,7 +4,7 @@
     <div class="nav">
         <van-nav-bar title="盘点" left-text="返回" left-arrow @click-left="onClickLeft" @click-right="enterTakeStockRecordEvent" :border="false">
             <template #right>
-              <span v-if="userPermissionInfo['permissions'].indexOf('erp:stock-check:query') != -1" class="history-span">盘点记录</span>
+              <span v-if="hasIntersection(['erp:stock-check:query'],userPermissionInfo['permissions'])" class="history-span">盘点记录</span>
             </template>
         </van-nav-bar>
     </div>
@@ -172,6 +172,7 @@
 <script>
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
+import { hasIntersection } from '@/common/js/utils'
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
 import { getwarehouseInfo, getStockPage, createStockCheck } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
 import SOtime from '@/common/js/SOtime.js'
@@ -268,6 +269,8 @@ export default {
 
   methods: {
     ...mapMutations(['changeTakeStockOrderMessage']),
+
+    hasIntersection,
 
     onClickLeft () {
       this.$router.push({path: '/suppliesHome'})
@@ -458,6 +461,13 @@ export default {
 
     // 盘点弹框提交事件
     takeStockModalSubmitEvent () {
+      if (this.stockDialogMessage['practicalTakeStockValue'] === '') {
+        this.$toast({
+          type: 'fail',
+          message: '请输入实盘数!'
+        });
+        return
+      };
       this.takeStockModalShow = false;
       this.$set(this.fullStockProductList[this.takeStockIndex],'practicalTakeStockValue',this.stockDialogMessage['practicalTakeStockValue']);
       this.$set(this.fullStockProductList[this.takeStockIndex],'breakEvenexplainValue',this.stockDialogMessage['breakEvenexplainValue']);

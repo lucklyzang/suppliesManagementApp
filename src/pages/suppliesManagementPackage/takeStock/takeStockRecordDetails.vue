@@ -81,7 +81,7 @@
 				</div>
 			</div> 
         </div>
-        <div class="btn-box" v-show="orderMessage['status'] == 10">
+        <div class="btn-box" v-show="orderMessage['status'] == 10 && hasIntersection(['erp:stock-check:update-status'],userPermissionInfo['permissions'])">
             <div class="btn-center" @click.stop="auditEvent()">
                 <span>审核</span>
             </div>
@@ -117,6 +117,7 @@
 <script>
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
+import { hasIntersection } from '@/common/js/utils'
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
 import { getStockCheckRecord, updateStockCheckStatus } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
 import SOtime from '@/common/js/SOtime.js'
@@ -184,6 +185,8 @@ export default {
   methods: {
     ...mapMutations([]),
 
+    hasIntersection,
+    
     onClickLeft () {
         this.$router.push({path: '/suppliesTakeStockRecord'})
     },
