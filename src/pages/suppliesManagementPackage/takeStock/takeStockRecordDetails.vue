@@ -413,6 +413,7 @@ export default {
     display: flex;
     flex-direction: column;
     position: relative;
+    height: 0;
     /deep/ .van-popover {
         background: #fff !important;
         .van-popover__content {

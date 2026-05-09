@@ -214,7 +214,6 @@ export default {
   watch: { 
       materialList: {
         handler(newVal, oldVal) {
-          console.log('12',newVal[0]);
           if (newVal.length > 0) {
             if (Number(newVal[0]['inputCount']) > Number(newVal[0]['count']) - Number(newVal[0]['outCount'])) {
               this.isExceedStockQuantity = true;
@@ -225,6 +224,16 @@ export default {
         },
         deep: true,
         immediate: true
+    },
+    remarkValue: {
+      handler(newVal) {
+          this.$nextTick(() => {
+              // 如果新值包含空格，则重新赋值为去除空格后的字符串
+              if (/\s/g.test(newVal)) {
+                  this.remarkValue = newVal.replace(/\s/g, '')
+              }
+          })
+      }
     }
   },
 
@@ -365,7 +374,7 @@ export default {
           this.loadingShow = false;
           this.infoText = '';
           if ( res && res.data.code == 0) {
-            this.deviceReturn('/suppliesOrderList');
+            this.quitEvent();
             // this.getPlanOrderEventNext(); 
             // this.newDeliveryNote = res.data.data;
           } else {
@@ -406,7 +415,7 @@ export default {
             });
             // 还有产品剩余需求数不为0时，则可以继续生成送货单
             if (this.materialList.every((item) => { return item.count == item.outCount })) {
-              this.deviceReturn('/suppliesOrderList')
+              this.quitEvent();
             } else {
               this.createDeliveryOrderModalShow = true
             }

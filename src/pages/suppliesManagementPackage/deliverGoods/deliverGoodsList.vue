@@ -1218,6 +1218,7 @@ export default {
     display: flex;
     flex-direction: column;
     position: relative;
+    height: 0;
     .content-box {
         flex: 1;
         box-sizing: border-box;
@@ -1300,7 +1301,9 @@ export default {
         };
         .order-list-box {
             flex: 1;
-            overflow: auto;
+            overflow-y: auto;
+            min-height: 0;
+            -webkit-overflow-scrolling: touch;
             padding-bottom: 10px;
             padding-left: 1px;
             padding-right: 1px;

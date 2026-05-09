@@ -215,7 +215,18 @@ export default {
     next() 
   },
 
-  watch: {},
+  watch: {
+    'stockDialogMessage.remark': {
+        handler(newVal) {
+            this.$nextTick(() => {
+                // 如果新值包含空格，则重新赋值为去除空格后的字符串
+                if (/\s/g.test(newVal)) {
+                  this.stockDialogMessage['remark'] = newVal.replace(/\s/g, '')
+                }
+            })
+        }
+    }
+},
 
   computed: {
     ...mapGetters(["userInfo","takeStockEditOrderMessage"]),
@@ -667,6 +678,7 @@ export default {
     display: flex;
     flex-direction: column;
     position: relative;
+    height: 0;
     .content-box {
         flex: 1;
         box-sizing: border-box;
