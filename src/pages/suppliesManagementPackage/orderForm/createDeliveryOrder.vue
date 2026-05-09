@@ -276,7 +276,7 @@ export default {
     
     // 初始化送货日期
     getArrivalDate() {
-      this.arrivalDate = SOtime.time8(new Date(this.orderMessage['confirmTime']).getTime());
+      this.arrivalDate = SOtime.time8(new Date(this.orderMessage['confirmTime']).getTime(),true);
       this.currentDate = new Date(this.orderMessage['confirmTime'])
     },
 
@@ -327,7 +327,7 @@ export default {
       };
       this.createSaleOutEvent({
         orderId: Number(this.orderId), //销售订单编号
-        requestTime: new Date(this.arrivalDate ).getTime(), //出库时间
+        requestTime: new Date(this.arrivalDate).getTime(), //出库时间
         remark: this.remarkValue, //备注
         items: deliveryOrderList
       })

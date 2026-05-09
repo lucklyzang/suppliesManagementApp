@@ -92,6 +92,7 @@ service.interceptors.request.use(
                             // 清空store和localStorage
                             store.dispatch('resetLoginState');
                             store.dispatch('resetSuppliesManagementState');
+                            store.dispatch('resetCommitState');
                             removeAllLocalStorage();
                             if(store.getters.suppliesHomeGlobalTimer) {window.clearInterval(store.getters.suppliesHomeGlobalTimer)};
                         }
@@ -100,6 +101,7 @@ service.interceptors.request.use(
                         // 清空store和localStorage
                         store.dispatch('resetLoginState');
                         store.dispatch('resetSuppliesManagementState');
+                        store.dispatch('resetCommitState');
                         removeAllLocalStorage();
                         if(store.getters.suppliesHomeGlobalTimer) {window.clearInterval(store.getters.suppliesHomeGlobalTimer)};
                         isRefreshing = true
@@ -143,6 +145,7 @@ service.interceptors.response.use(
                     if (error.response.status === 401) {
                         store.dispatch('resetLoginState');
                         store.dispatch('resetSuppliesManagementState');
+                        store.dispatch('resetCommitState');
                         removeAllLocalStorage();
                         if(store.getters.suppliesHomeGlobalTimer) {window.clearInterval(store.getters.suppliesHomeGlobalTimer)};
                         if (!store.getters.overDueWay) { 

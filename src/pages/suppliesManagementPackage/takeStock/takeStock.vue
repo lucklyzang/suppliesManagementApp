@@ -287,19 +287,6 @@ export default {
       this.$router.push({path: '/suppliesHome'})
     },
 
-    // 巡查任务点击事件
-    patrolTaskEvent (item, index) {
-      if (item.name == '设备巡检') {
-        this.$router.push({path: '/equipmentPatrolDetails'})
-      } else if (item.name == '设备点检') {
-        this.$router.push({path: '/equipmentSpotCheck'})
-      } else if (item.name == '设备管理') {
-        this.$router.push({path: '/equipmentList'})
-      } else if (item.name == '调度管理') {
-        this.$router.push({path: '/equipmentSpotList'}) 
-      }
-    },
-
     // 扫描二维码方法
     scanQRCode () {
       try {
@@ -316,7 +303,16 @@ export default {
     scanQRcodeCallback(code) {
       if (code) {
         try {
-          this.productCodeValue = code
+          this.productCodeValue = code;
+          // 清空暂存的盘点信息
+          this.changeTakeStockOrderMessage({});
+          this.currentPageNum = 1;
+          this.getStockPageEvent({
+            pageNo: this.currentPageNum,
+            pageSize: this.pageSize,
+            productCode: this.productCodeValue, // 产品编号
+            warehouseId: this.currentShipmentWarehouseValue //仓库编号
+          },true)
         } catch (err) {
           this.$toast({
             message: `${err}`,

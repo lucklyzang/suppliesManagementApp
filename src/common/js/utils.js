@@ -821,13 +821,17 @@ export const removeAllLocalStorage = () => {
   // removeStore('userName');
   // removeStore('userPassword');
   removeStore('userInfo');
+  removeStore('userTokenInfo');
   removeStore('isLogin');
   removeStore('token');
   removeStore('isLogin');
   removeStore('timeMessage');
   removeStore('ossMessage');
   removeStore('chooseHospitalArea');
-  removeStore('appPermission');
+  removeStore('userPermissionInfo');
+  removeStore('statusBarHeight');
+  removeStore('navigationBarHeight');
+  removeStore('capsuleMessage');
 }
 
 /*

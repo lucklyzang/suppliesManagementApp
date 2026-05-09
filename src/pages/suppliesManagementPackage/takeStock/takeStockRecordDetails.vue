@@ -158,7 +158,7 @@ export default {
   watch: {},
 
   computed: {
-    ...mapGetters(["userInfo"]),
+    ...mapGetters(["userInfo","userPermissionInfo"]),
         userName() {
             return this.userInfo['nickname']
         },

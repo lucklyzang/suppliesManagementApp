@@ -201,6 +201,7 @@
 							removeAllLocalStorage();
 							store.dispatch('resetLoginState');
 							store.dispatch('resetSuppliesManagementState');
+							store.dispatch('resetCommitState');
 							if(store.getters.suppliesHomeGlobalTimer) {window.clearInterval(store.getters.suppliesHomeGlobalTimer)};
 							this.$Alert({message:"修改成功!",type:'success'})
 						} else {

@@ -138,6 +138,7 @@
 						removeAllLocalStorage();
 						store.dispatch('resetLoginState');
 						store.dispatch('resetSuppliesManagementState');
+						store.dispatch('resetCommitState');
 						if(store.getters.suppliesHomeGlobalTimer) {window.clearInterval(store.getters.suppliesHomeGlobalTimer)};
 						this.$router.push({path: "/"});
 					} else {
