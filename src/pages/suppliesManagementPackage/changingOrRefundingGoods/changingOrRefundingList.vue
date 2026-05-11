@@ -73,10 +73,10 @@
 					</div>
 					<div class="order-list-bottom">
 						<div class="order-list-btn">
-							<div class="delete-left" v-if="hasIntersection(['erp:sale-return:update-status'],userPermissionInfo['permissions'])" @click.stop="refuseEvent(item,index)">
+							<div class="delete-left" v-if="item.status == 10 && hasIntersection(['erp:sale-return:update-status'],userPermissionInfo['permissions'])" @click.stop="refuseEvent(item,index)">
 								<span>拒绝</span>
 							</div>
-							<div class="edit-right" v-if="hasIntersection(['erp:sale-return:update-status'],userPermissionInfo['permissions'])" @click.stop="sureEvent(item,index)">
+							<div class="edit-right" v-if="item.status == 10 && hasIntersection(['erp:sale-return:update-status'],userPermissionInfo['permissions'])" @click.stop="sureEvent(item,index)">
 								<span>确认</span>
 							</div>
 						</div>
@@ -479,7 +479,7 @@ export default {
                         type: 'success',
                         message: '提交成功'
                     });
-                    this.fullOrderList.splice(this.currentOrderIndex,1);
+                    this.$set(this.fullOrderList[this.currentOrderIndex],'status',status);
                 } else {
                     this.$dialog.alert({
                         message: `${res.data.msg}`,

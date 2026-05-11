@@ -289,6 +289,13 @@ export default {
 
     // 扫描二维码方法
     scanQRCode () {
+      if (this.currentShipmentWarehouseValue === '') {
+        this.$toast({
+          message: '请选择对应仓库',
+          type: 'fail'
+        });
+        return
+      };
       try {
         window.android.scanQRcode()
       } catch (err) {
@@ -908,6 +915,7 @@ export default {
               color: #101010;
               flex: 1;
               word-break: break-all;
+              text-align: right;
             }
           }
         };

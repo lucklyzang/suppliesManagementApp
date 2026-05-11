@@ -195,10 +195,6 @@
 				this.hasAuthSystemsList = [];
 				if (this.userPermissionInfo.hasOwnProperty('permissions')) {
 					this.serviceList.map((value,index,arr) => {
-                        // 查看评价列表没有设置权限
-                        if (value['text'] == '评价') {
-                            this.hasAuthSystemsList.push(value)
-                        };
 						if (hasIntersection(value['value'],this.userPermissionInfo['permissions'])) {
 							this.hasAuthSystemsList.push(value)
 						}

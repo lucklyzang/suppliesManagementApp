@@ -237,6 +237,10 @@ export default {
 
     // 拍照点击
     issueClickEvent() {
+      if (this.resultImgList.length >= 5) {
+        this.$toast('最多只能上传5张图片')
+        return
+      };
       this.photoBox = true;
       this.overlayShow = true;
     },

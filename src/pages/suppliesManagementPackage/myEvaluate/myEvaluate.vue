@@ -24,7 +24,7 @@
 				<div class="order-list" v-for="(item,index) in fullOrderList" :key="index">
 					<div class="evaluate-date">
                         <div class="evaluate-date-left">
-                            无
+                            {{ item['customerName'] ?  item['customerName'] : '无'}}
                         </div>
                         <div class="evaluate-date-right">
                             <span>评价日期:</span>

@@ -168,7 +168,7 @@
         </van-dialog>
     </div>
     <!-- 日历 --> 
-    <van-calendar color="#3B9DF9" :allow-same-day="true" v-model="showCalendar" :min-date="minDate" :max-date="maxDate" :default-date="defaultDateArr" type="range" @confirm="calendarConfirm" />
+    <van-calendar color="#3B9DF9" :allow-same-day="true" v-model="showCalendar" :min-date="minDate" :max-date="maxDate" :default-date="defaultDateArr" type="range" :formatter="formatter" @confirm="calendarConfirm" />
   </div>
 </template>
 <script>
@@ -345,6 +345,15 @@ export default {
     ...mapMutations([]),
 
     hasIntersection,
+    
+    // 自定义日期格子的显示内容
+    formatter(day) {
+      // 为范围选择的开始和结束日期添加自定义类名
+      if (day.type === 'start' || day.type === 'end') {
+        day.className = 'my-custom-range-day';
+      }
+      return day;
+    },
 
     onClickLeft () {
         this.$router.push({path: '/suppliesHome'})
@@ -730,6 +739,25 @@ export default {
 @import "~@/common/stylus/modifyUi.less";
 .page-box {
   .content-wrapper();
+  /* 增加自定义类名的日期单元格高度 */
+    .my-custom-range-day {
+    height: 70px; /* 默认是64px，增加高度以容纳更多文字 */
+    }
+
+    /* 调整单元格内所有内容的垂直居中 */
+    .my-custom-range-day .van-calendar__month-mark,
+    .my-custom-range-day .van-calendar__day-text {
+    top: 50%;
+    transform: translateY(-50%);
+    }
+
+    /* 专门调整底部信息的位置，使其不重叠 */
+    .my-custom-range-day .van-calendar__bottom-info {
+    top: 65%; /* 将其位置向下移动 */
+    transform: translateY(-50%);
+    font-size: 10px; /* 可以适当调小字体 */
+    line-height: 1;  /* 调整行高 */
+    };
    .refuse-modal {
         /deep/ .van-dialog {
             border-top-left-radius: 4px !important;

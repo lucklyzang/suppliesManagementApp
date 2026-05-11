@@ -15,7 +15,7 @@
                 <van-field v-model="productCodeValue" placeholder="请输入" />
               </div>
             </div>
-            <div class="scan-code">
+            <div class="scan-code" @click="scanQRCode">
               <van-icon name="scan" color="#3B9DF9" size="26" />
             </div>
           </div>
@@ -198,6 +198,14 @@ export default {
   },
 
   mounted() {
+    // 二维码回调方法绑定到window下面,提供给外部调用
+    let me = this;
+    window['scanQRcodeCallback'] = (code) => {
+      me.scanQRcodeCallback(code);
+    };
+    window['scanQRcodeCallbackCanceled'] = () => {
+      me.scanQRcodeCallbackCanceled();
+    };
     // 控制设备物理返回按键
     this.deviceReturn('/suppliesTakeStockRecord');
     this.orderId = this.$route.query.orderId;
@@ -258,6 +266,43 @@ export default {
 
     onClickLeft () {
       this.$router.push({path: '/suppliesTakeStockRecord'})
+    },
+
+    // 扫描二维码方法
+    scanQRCode () {
+      try {
+        window.android.scanQRcode()
+      } catch (err) {
+        this.$dialog.alert({
+          message: err
+        }).then(() => {
+        })
+      }
+    },
+
+     // 摄像头扫码后的回调
+    scanQRcodeCallback(code) {
+      if (code) {
+        try {
+          const temporaryItems = _.cloneDeep(this.orderMessage['items']);
+          this.orderMessage['items'] = temporaryItems.filter((item) => { return item['productBarCode'] === code });
+        } catch (err) {
+          this.$toast({
+            message: `${err}`,
+            type: 'fail'
+          })
+        }  
+      } else {
+        this.$dialog.alert({
+          message: '当前没有扫描到任何信息,请重新扫描'
+        }).then(() => {
+          this.scanQRCode()
+        })
+      }
+    },
+
+    // 摄像头取消扫码后的回调
+    scanQRcodeCallbackCanceled () {
     },
 
     // popover打开事件
@@ -800,6 +845,7 @@ export default {
               color: #101010;
               flex: 1;
               word-break: break-all;
+              text-align: right;
             }
           }
         };

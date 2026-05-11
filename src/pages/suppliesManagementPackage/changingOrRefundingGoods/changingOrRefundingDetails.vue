@@ -281,7 +281,7 @@ export default {
                     this.orderMessage['deliveryTime'] = this.orderMessage['deliveryTime'] ? SOtime.time3(this.orderMessage['deliveryTime']) : '';
                     this.orderMessage['returnTime'] = this.orderMessage['returnTime'] ? SOtime.time8(this.orderMessage['returnTime']) : '';
                     this.orderMessage['outTime'] = this.orderMessage['outTime'] ? SOtime.time3(this.orderMessage['outTime']) : '';
-                    this.orderMessage['checkTime'] = this.orderMessage['checkTime'] ? SOtime.time3(this.orderMessage['checkTime']) : '';
+                    this.orderMessage['checkTime'] = this.orderMessage['checkTime'] ? SOtime.time8(this.orderMessage['checkTime']) : '';
                 }
             }
         })

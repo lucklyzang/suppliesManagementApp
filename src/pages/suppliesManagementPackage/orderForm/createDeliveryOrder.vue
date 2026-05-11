@@ -413,6 +413,7 @@ export default {
                 }
               }
             });
+            this.reduceTotal();
             // 还有产品剩余需求数不为0时，则可以继续生成送货单
             if (this.materialList.every((item) => { return item.count == item.outCount })) {
               this.quitEvent();
@@ -520,6 +521,7 @@ export default {
                   this.materialList.forEach((item,index) => {
                     this.$set(this.materialList[index],'inputCount',Number(item['count'])-Number(item['outCount']));
                   });
+                  this.reduceTotal();
                   this.getArrivalDate()
                 };
                 if (item2) {
