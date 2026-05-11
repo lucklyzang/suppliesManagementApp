@@ -71,7 +71,7 @@
     }
   },false)
 </script>
-<style lang="less" scoped>
+<style lang="less">
  html,body{
       height: 100%;
       overflow-y: hidden;
@@ -116,5 +116,11 @@
     transition: all 0.5s ease;
     -webkit-transform: translate3d(-100%, 0, 0);
     transform: translate3d(-100%, 0, 0);
+  };
+  .van-calendar__bottom-info {
+    font-size: 8px !important;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
   }
 </style>
