@@ -395,7 +395,6 @@ export default {
             },false)
           };
           this.eventTime = 0;
-          console.log('事件列表滚动了',boxBackScroll.scrollTop, boxBackScroll.offsetHeight, boxBackScroll.scrollHeight)
         },300)
       }
     },
@@ -596,7 +595,7 @@ export default {
                     this.isShowNoMoreData = true;
                 } else {
                     this.isShowNoMoreData = false;
-                }	
+                }
             }
         })
         .catch((err) => {

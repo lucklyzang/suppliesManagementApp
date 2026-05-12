@@ -381,7 +381,7 @@ export default {
             width: 99%;
             padding: 0 10px;
             box-sizing: border-box;
-            height: 460px;
+            max-height: 564px;
             margin: 0 auto;
             border-radius: 6px;
             background: #F0F2FE;

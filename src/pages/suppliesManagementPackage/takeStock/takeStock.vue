@@ -559,14 +559,15 @@ export default {
           if (flag) {
             this.loadingShow = false;
             this.infoText = '';
-          };
-          this.bottomLoadingShow = false;
-          let totalPage = Math.ceil(this.totalCount/this.pageSize);
-          if (this.currentPageNum >= totalPage) {
-            this.isShowNoMoreData = true;
           } else {
-            this.isShowNoMoreData = false;
-          }	
+            this.bottomLoadingShow = false;
+            let totalPage = Math.ceil(this.totalCount/this.pageSize);
+            if (this.currentPageNum >= totalPage) {
+              this.isShowNoMoreData = true;
+            } else {
+              this.isShowNoMoreData = false;
+            }	
+          }
       })
       .catch((err) => {
         if (flag) {
