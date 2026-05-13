@@ -296,6 +296,7 @@ export default {
         });
         return
       };
+      this.productCodeValue = '';
       try {
         window.android.scanQRcode()
       } catch (err) {
@@ -313,6 +314,8 @@ export default {
           this.productCodeValue = code;
           // 清空暂存的盘点信息
           this.changeTakeStockOrderMessage({});
+          this.fullStockProductList = [];
+          this.stockProductList = [];
           this.currentPageNum = 1;
           this.getStockPageEvent({
             pageNo: this.currentPageNum,

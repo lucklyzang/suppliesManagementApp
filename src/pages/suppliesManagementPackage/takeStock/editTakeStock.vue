@@ -193,7 +193,8 @@ export default {
         items: []
       },
       takeStockIndex: '',
-      stockDialogMessage: {}
+      stockDialogMessage: {},
+      temporaryItems: {}
     }
   },
 
@@ -233,6 +234,15 @@ export default {
                 }
             })
         }
+    },
+    productCodeValue : {
+      handler(newVal) {
+       if (newVal === '') {
+          this.orderMessage['items'] = this.temporaryItems
+       } else {
+         this.orderMessage['items'] = this.temporaryItems.filter((item) => { return item['productBarCode'] === newVal });
+       }
+      }
     }
 },
 
@@ -270,6 +280,7 @@ export default {
 
     // 扫描二维码方法
     scanQRCode () {
+      this.productCodeValue = '';
       try {
         window.android.scanQRcode()
       } catch (err) {
@@ -284,8 +295,8 @@ export default {
     scanQRcodeCallback(code) {
       if (code) {
         try {
-          const temporaryItems = _.cloneDeep(this.orderMessage['items']);
-          this.orderMessage['items'] = temporaryItems.filter((item) => { return item['productBarCode'] === code });
+          this.productCodeValue = code;
+          this.orderMessage['items'] = this.temporaryItems.filter((item) => { return item['productBarCode'] === code });
         } catch (err) {
           this.$toast({
             message: `${err}`,
@@ -406,6 +417,7 @@ export default {
                 if (item2) {
                   // 回显盘点产品列表信息
                   this.orderMessage = item2;
+                  this.temporaryItems = _.cloneDeep(this.orderMessage['items']);
                   this.orderMessage['checkTime'] = this.orderMessage['checkTime'] ? SOtime.time8(this.orderMessage['checkTime'],true) : '';
                   // 回显库房信息
                   this.currentShipmentWarehouseValue = this.orderMessage['warehouseId'];

@@ -2,7 +2,7 @@
   <div class="page-box" ref="wrapper">
     <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">{{ infoText }}</van-loading>
     <div class="nav">
-        <van-nav-bar title="生成送货单" left-span="返回" left-arrow @click-left="onClickLeft"  :border="false">
+        <van-nav-bar title="生成送货单" left-text="返回" left-arrow @click-left="onClickLeft"  :border="false">
         </van-nav-bar>
     </div>
     <div class="content">
@@ -565,21 +565,21 @@ export default {
     width: 100%;
     background: #3B9DF9;
     /deep/ .van-nav-bar {
-        background: transparent !important;
-        .van-nav-bar__left {
-            .van-nav-bar__text {
-              color: #fff !important;
-              margin-left: 8px !important;
-            };
-            .van-icon {
-              color: #fff !important;
-            }
-        };
-        .van-nav-bar__title {
-          color: #fff !important;
-          font-size: 16px !important;
-        }
-    }
+      background: transparent !important;
+      .van-nav-bar__left {
+          .van-nav-bar__text {
+            color: #fff !important;
+            margin-left: 8px !important;
+          };
+          .van-icon {
+            color: #fff !important;
+          }
+      };
+      .van-nav-bar__title {
+        color: #fff !important;
+        font-size: 16px !important;
+      }
+  }
   };
    .create-delivery-order-modal {
       /deep/ .van-dialog {
@@ -686,6 +686,7 @@ export default {
     display: flex;
     flex-direction: column;
     position: relative;
+    height: 0;
     .content-box {
         flex: 1;
         box-sizing: border-box;
@@ -694,6 +695,7 @@ export default {
         flex-direction: column;
         padding:  0 6px;
         overflow: auto;
+        height: 0;
       .content-top {
 			 height: 40px;
 			 padding: 0 4px;

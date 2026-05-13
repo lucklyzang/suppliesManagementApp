@@ -148,10 +148,10 @@
 								'alreadyDeliverStyle' : item.status == 40,
 								'afterSaleIngStyle' : item.status == 41,
 								'alreadyCompletedStyle' : item.status == 50,
-								'alreadyevaluatedStyle' : item.status == 51
+								'alreadyevaluatedStyle' : item.status == 100
 								}"
 							>
-								<span>{{ stateTransfer(item.status) }}</span>
+								<span>{{ operationLogStateTransfer(item.status) }}</span>
 							</div>
 							<div class="commom-view operation-time">
 								<span>操作时间:</span>
@@ -173,12 +173,8 @@
 								<span>退货原因:</span>
 								<span>{{ item.content }}</span>
 							</div>
-							<div class="commom-view score-box" v-show="item.status == 51">
-								<span>评分:</span>
-								<span>{{ item.content }}</span>
-							</div>
-							<div class="commom-view evaluate-box" v-show="item.status == 51">
-								<span>评价:</span>
+							<div class="commom-view score-box" v-show="item.status == 100">
+								<span></span>
 								<span>{{ item.content }}</span>
 							</div>
 						</div>
@@ -305,6 +301,39 @@ export default {
                     break;
             case 50:
                     return '已完成'
+                    break
+        } 
+    },
+
+    //任务状态转换(操作记录)
+    operationLogStateTransfer (num) {
+        switch(num) {
+            case 10:
+                return '待审核'
+                break;
+            case 20:
+                    return '审核通过'
+                    break;
+            case 21:
+                    return '审核未通过'
+                    break;
+            case 30:
+                    return '待发货'
+                    break;
+            case 31:
+                    return '已拒绝'
+                    break;
+            case 40:
+                    return '已发货'
+                    break;
+            case 41:
+                    return '售后中'
+                    break;
+            case 50:
+                    return '已完成'
+                    break;
+            case 100:
+                    return '已评价'
                     break;
         } 
     },
@@ -336,7 +365,7 @@ export default {
         } 
     },
 
-    // 进入历史退换货详情事件
+    // 进入送货单详情事件
     enterChangingOrRefundingDetailsEvent (item,index) {
          this.$router.push({
             path: '/suppliesHistoryDeliveryNote', 
