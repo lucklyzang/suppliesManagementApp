@@ -83,13 +83,13 @@
 					</div>
 					<div class="order-list-bottom">
 						<div class="order-list-btn">
-							<div class="delete-left" v-show="item.status == 30 && hasIntersection(['erp:dept-order:confirm','erp:sale-out:update-status'],userPermissionInfo['permissions'])" @click.stop="revocationSureEvent(item,index)">
+							<div class="delete-left" :class="{'btnStyle': item['outCount'] == item['totalCount']}" v-show="item.status == 30 && hasIntersection(['erp:dept-order:confirm','erp:sale-out:update-status'],userPermissionInfo['permissions'])" @click.stop="revocationSureEvent(item,index)">
 								<span>撤销确认</span>
 							</div>
 							<div class="delete-left" v-show="item.status == 20 && hasIntersection(['erp:dept-order:confirm','erp:sale-out:update-status'],userPermissionInfo['permissions'])"  @click.stop="refuseEvent(item,index)">
 								<span>拒绝订单</span>
 							</div>
-							<div class="edit-right" v-show="item.status == 30 && hasIntersection(['erp:sale-out:create'],userPermissionInfo['permissions'])" @click.stop="createDeliveryOrderEvent(item,index)">
+							<div class="edit-right" :class="{'btnStyle': item['outCount'] == item['totalCount']}" v-show="item.status == 30 && hasIntersection(['erp:sale-out:create'],userPermissionInfo['permissions'])" @click.stop="createDeliveryOrderEvent(item,index)">
 								<span>生成送货单</span>
 							</div>
 							<div class="edit-right" v-show="item.status == 20 && hasIntersection(['erp:sale-out:update-status','erp:dept-order:confirm'],userPermissionInfo['permissions'])" @click.stop="sureEvent(item,index)">
@@ -257,7 +257,13 @@ export default {
                 top: this.scrollTop,
                 behavior: 'smooth'
             })
-        })
+        });
+        // 所有需求数都出货完毕后，就不允许撤销确认和生成送货单了
+        if (this.$route.query.outCount) {
+            if (this.$route.query.outCount == this.$route.query.totalCount) {
+                this.$set(this.fullOrderList[this.currentOrderIndex],'outCount',this.$route.query.outCount)
+            }
+        }
     // 从其它页面进入    
     } else {
         if (this.$route.query.status) {
@@ -688,6 +694,9 @@ export default {
     
     // 撤销确认订单事件
     revocationSureEvent(item,index) {
+        if (item['outCount'] == item['totalCount']) {
+            return
+        };
         this.currentOrderIndex = index;
         this.currentOrderId = item['id'];
         this.revocationDeliveryOrderModalShow = true;
@@ -695,6 +704,11 @@ export default {
     
     // 生成送货单事件
     createDeliveryOrderEvent(item,index) {
+        if (item['outCount'] == item['totalCount']) {
+            return
+        };
+        this.currentOrderIndex = index;
+        this.currentOrderId = item['id'];
         this.$router.push({
             path: '/suppliesCreateDeliveryOrder', 
             query: {
@@ -1192,6 +1206,9 @@ export default {
                                     font-size: 12px;
                                     color: #fff
                                 }
+                        };
+                        .btnStyle {
+                            opacity: .5 !important;
                         }
                     }
                 }

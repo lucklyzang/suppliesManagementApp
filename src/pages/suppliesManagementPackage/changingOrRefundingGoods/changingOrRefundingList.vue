@@ -82,7 +82,7 @@
 						</div>
 					</div>
 				</div>
-                <van-empty description="您还没有相关退换货单" v-show="isShowNoData" />
+                <van-empty description="您还没有相关退换货订单" v-show="isShowNoData" />
                 <div v-show="bottomLoadingShow" class="bottom-loading-show">
                     加载中...
                 </div>
@@ -266,7 +266,7 @@ export default {
         this.getSaleReturnBarterPageEvent({
             pageNo: this.currentPageNum,
             pageSize: this.pageSize,
-            status: '',
+            status: 10,
             returnTime: [`${this.startDate}`,`${this.endDate}`],
             creator: ''// this.userAccount
         },true)
@@ -349,7 +349,7 @@ export default {
             this.getSaleReturnBarterPageEvent({
                 pageNo: this.currentPageNum,
                 pageSize: this.pageSize,
-                status: '',
+                status: 10,
                 returnTime: [`${this.startDate}`,`${this.endDate}`],
                 creator: '' // this.userAccount
             },false)
@@ -423,7 +423,7 @@ export default {
         this.getSaleReturnBarterPageEvent({
             pageNo: this.currentPageNum,
             pageSize: this.pageSize,
-            status: '',
+            status: 10,
             returnTime: [`${this.startDate}`,`${this.endDate}`],
             creator: '' // this.userAccount
         },true)
@@ -480,6 +480,12 @@ export default {
                         message: '提交成功'
                     });
                     this.$set(this.fullOrderList[this.currentOrderIndex],'status',status);
+                    this.fullOrderList.splice(this.currentOrderIndex,1);
+                    if (this.fullOrderList.length == 0) {
+                        this.isShowNoData = true
+                    } else {
+                        this.isShowNoData = false
+                    }
                 } else {
                     this.$dialog.alert({
                         message: `${res.data.msg}`,
@@ -562,7 +568,7 @@ export default {
                     this.isShowNoData = true
                 } else {
                     this.isShowNoData = false
-                };
+                }
             } else {
                 this.$dialog.alert({
                     message: `${res.data.msg}`,

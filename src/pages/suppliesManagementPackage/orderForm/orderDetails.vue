@@ -169,8 +169,8 @@
 								<span>拒绝理由:</span>
 								<span>{{ item.content }}</span>
 							</div>
-							<div class="commom-view sales-return-reason" v-show="item.status == 41 || item.status == 50">
-								<span>退货原因:</span>
+							<div class="commom-view sales-return-reason" v-show="(item.status == 41 || item.status == 50) && item.content !== ''">
+								<span></span>
 								<span>{{ item.content }}</span>
 							</div>
 							<div class="commom-view score-box" v-show="item.status == 100">

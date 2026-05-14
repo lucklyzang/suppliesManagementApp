@@ -121,7 +121,6 @@
                      <span>
                       订单号不变，选中的物品生成新的送货单,
                      </span>
-                     <!-- <span>{{ newDeliveryNote }}</span> -->
                    </div>
                    <div class="modal-center-other">
                     您可以在“送货”列表中查看该送货单。
@@ -173,7 +172,6 @@ export default {
       infoText: '生成中···',
       allCount: 0,
       createDeliveryOrderModalShow: false,
-      newDeliveryNote: '',
       minDate: new Date(),
       isExceedStockQuantity: false,
       shipmentWarehouseListShow: false,
@@ -266,12 +264,9 @@ export default {
     ...mapMutations([]),
 
     onClickLeft () {
-      this.$router.push({path: '/suppliesOrderList'})
-    },
-
-    // 重置数据
-    resetData () {
-      this.newDeliveryNote = '';
+      this.$router.push({
+        path: '/suppliesOrderList'
+      })
     },
     
     // 初始化送货日期
@@ -335,7 +330,7 @@ export default {
 
     // 退出事件
     quitEvent() {
-      this.$router.push({path: '/suppliesOrderList'});
+      this.onClickLeft()
     },
 
     // 提交事件
@@ -374,9 +369,7 @@ export default {
           this.loadingShow = false;
           this.infoText = '';
           if ( res && res.data.code == 0) {
-            this.quitEvent();
-            // this.getPlanOrderEventNext(); 
-            // this.newDeliveryNote = res.data.data;
+            this.getPlanOrderEventNext()
           } else {
               this.$dialog.alert({
                 message: `${res.data.msg}`,
@@ -414,12 +407,14 @@ export default {
               }
             });
             this.reduceTotal();
-            // 还有产品剩余需求数不为0时，则可以继续生成送货单
-            if (this.materialList.every((item) => { return item.count == item.outCount })) {
-              this.quitEvent();
-            } else {
-              this.createDeliveryOrderModalShow = true
-            }
+            // 传递当前出货量和总需求量
+            this.$router.push({
+              path: '/suppliesOrderList', 
+              query: {
+                outCount: res.data.data['outCount'],
+                totalCount: res.data.data['totalCount']
+              }
+            })
           } else {
             this.$dialog.alert({
               message: `${res.data.msg}`,
@@ -435,28 +430,6 @@ export default {
           closeOnPopstate: true
         }).then(() => {})
       })
-    },
-
-    // 查询订单详情
-    getPlanOrderEvent() {
-        return new Promise((resolve,reject) => {
-            getPlanOrder(this.orderId).then((res) => {
-                this.loadingShow = false;
-                this.infoText = '';
-                if ( res && res.data.code == 0) {
-                    resolve(res.data.data);
-                } else {
-                    reject(res.data.msg);
-                    this.$dialog.alert({
-                      message: `${res.data.msg}`,
-                      closeOnPopstate: true
-                    }).then(() => {})
-                }
-            })
-            .catch((err) => {
-                reject(err)
-            })
-        })
     },
 
     // 查询订单详情
@@ -517,6 +490,8 @@ export default {
                 let [item1,item2] = res;
                 if (item1) {
                   this.orderMessage = item1;
+                  this.outCount =  this.orderMessage['outCount'];
+                  this.totalCount =  this.orderMessage['totalCount'];
                   this.materialList = _.cloneDeep(this.orderMessage['items']);
                   this.materialList.forEach((item,index) => {
                     this.$set(this.materialList[index],'inputCount',Number(item['count'])-Number(item['outCount']));
