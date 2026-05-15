@@ -385,7 +385,13 @@ export default {
 
     // 重置数据事件
     resetDataEvent () {
-      if (this.fullStockProductList.length == 0) { return };
+      if (this.fullStockProductList.length == 0) {
+        this.$toast({
+          type: 'success',
+          message: '盘点产品不能为空'
+        })
+        return
+      };
       this.fullStockProductList.forEach((item,index)=>{
         this.$set(this.fullStockProductList[index],'practicalTakeStockValue',item['count']);
         this.$set(this.fullStockProductList[index],'breakEvenexplainValue','')
@@ -407,7 +413,13 @@ export default {
 
     // 保存数据事件(暂存)
     saveDataEvent () {
-      if (this.fullStockProductList.length == 0) { return };
+      if (this.fullStockProductList.length == 0) {
+        this.$toast({
+          type: 'success',
+          message: '盘点产品不能为空'
+        })
+        return
+      };
       this.changeTakeStockOrderMessage({
         currentWarehouseName: this.currentWarehouseName,
         currentShipmentWarehouseValue: this.currentShipmentWarehouseValue,
@@ -428,7 +440,13 @@ export default {
 
     // 提交数据事件(待审核)
     submitDataEvent () {
-      if (this.fullStockProductList.length == 0) { return };
+      if (this.fullStockProductList.length == 0) {
+        this.$toast({
+          type: 'success',
+          message: '盘点产品不能为空'
+        })
+        return
+      };
       // 只需要提交账面数与实盘数不一致的产品
       let temporaryList = this.fullStockProductList.filter((item) => { return Number(item['count']) !== Number(item['practicalTakeStockValue'])});
       if (temporaryList.length == 0) {
@@ -540,37 +558,40 @@ export default {
           this.bottomLoadingShow = true;
       };
       getStockPage(data).then((res) => {
-          if ( res && res.data.code == 0) {
-            this.stockProductList = res.data.data.list;
-            this.totalCount = res.data.data.total;
-            this.stockProductList.forEach((item,index)=>{
-              this.$set(this.stockProductList[index],'practicalTakeStockValue',item['count']);
-              this.$set(this.stockProductList[index],'breakEvenexplainValue','')
-            });
-            this.fullStockProductList = this.fullStockProductList.concat(this.stockProductList);
-            if (this.fullStockProductList.length == 0) {
-              this.isShowNoData = true
-            } else {
-              this.isShowNoData = false
-            }
+        if (flag) {
+          this.fullStockProductList = [];
+        };
+        if ( res && res.data.code == 0) {
+          this.stockProductList = res.data.data.list;
+          this.totalCount = res.data.data.total;
+          this.stockProductList.forEach((item,index)=>{
+            this.$set(this.stockProductList[index],'practicalTakeStockValue',item['count']);
+            this.$set(this.stockProductList[index],'breakEvenexplainValue','')
+          });
+          this.fullStockProductList = this.fullStockProductList.concat(this.stockProductList);
+          if (this.fullStockProductList.length == 0) {
+            this.isShowNoData = true
           } else {
-            this.$dialog.alert({
-              message: `${res.data.msg}`,
-              closeOnPopstate: true
-            }).then(() => {})
-          };
-          if (flag) {
-            this.loadingShow = false;
-            this.infoText = '';
-          } else {
-            this.bottomLoadingShow = false;
-            let totalPage = Math.ceil(this.totalCount/this.pageSize);
-            if (this.currentPageNum >= totalPage) {
-              this.isShowNoMoreData = true;
-            } else {
-              this.isShowNoMoreData = false;
-            }	
+            this.isShowNoData = false
           }
+        } else {
+          this.$dialog.alert({
+            message: `${res.data.msg}`,
+            closeOnPopstate: true
+          }).then(() => {})
+        };
+        if (flag) {
+          this.loadingShow = false;
+          this.infoText = '';
+        } else {
+          this.bottomLoadingShow = false;
+          let totalPage = Math.ceil(this.totalCount/this.pageSize);
+          if (this.currentPageNum >= totalPage) {
+            this.isShowNoMoreData = true;
+          } else {
+            this.isShowNoMoreData = false;
+          }	
+        }
       })
       .catch((err) => {
         if (flag) {

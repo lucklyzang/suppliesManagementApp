@@ -14,7 +14,8 @@
             </div>
             <div class="user-message">
                 <div class="user-name">
-                    {{ userName }}
+                    <span>{{ userName }}</span>
+                    <span v-show="positionName">{{ `(${positionName})` }}</span>
                 </div>
                 <div class="account-name">
                     {{ loginDate }}
@@ -175,6 +176,9 @@
 			depName() {
 				return ''
 			},
+            positionName() {
+                return this.userInfo['postNames'] ? this.userInfo['postNames'].join('、') : ''
+            },
             loginDate() {
                 return SOtime.time8(this.userInfo['loginDate'],true)
             }
@@ -342,15 +346,20 @@
                     flex-direction: column;
                     justify-content: center;
                     z-index: 100;
-                    color: #101010;
                     height: 48px;
                     flex: 1;
-                    font-size: 13px;
                     .user-name {
                         width: 98%;
+                        line-height: 16px;
                         word-break: break-all;
+                        >span {
+                            font-size: 13px;
+                            color: #101010;
+                            font-weight: bold;
+                        }
                     }
                     .account-name {
+                        font-weight: bold;
                         font-size: 12px;
                         width: 98%;
                         word-break: break-all;

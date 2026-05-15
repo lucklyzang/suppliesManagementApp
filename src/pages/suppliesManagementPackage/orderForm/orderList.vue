@@ -1208,7 +1208,7 @@ export default {
                                 }
                         };
                         .btnStyle {
-                            opacity: .5 !important;
+                            display: none !important;
                         }
                     }
                 }

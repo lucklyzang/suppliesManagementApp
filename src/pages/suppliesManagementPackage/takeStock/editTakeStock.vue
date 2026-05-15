@@ -217,7 +217,7 @@ export default {
 				this.warehouseListShow = false;
 			}
 		}, false);
-    this.parallelFunction()
+    this.parallelFunction(true)
   },
 
   beforeRouteEnter(to, from, next) {
@@ -321,8 +321,14 @@ export default {
 
     // 重置数据事件
     resetDataEvent () {
-      if (this.orderMessage['items'].length == 0) { return };
-      this.parallelFunction()
+      if (this.orderMessage['items'].length == 0) {
+        this.$toast({
+          type: 'success',
+          message: '盘点产品不能为空'
+        })
+        return
+      };
+      this.parallelFunction(false)
     },
 
     // 库房下拉框点击事件
@@ -398,7 +404,7 @@ export default {
     },
 
     // 并行查询仓库信息、盘点单详情
-	  parallelFunction () {
+	  parallelFunction (flag) {
         this.loadingShow = false;
         this.infoText = '加载中···';
         Promise.all([this.getWarehouseInfoEvent(),this.getStockCheckRecordEvent()])
@@ -423,7 +429,9 @@ export default {
                   this.currentShipmentWarehouseValue = this.orderMessage['warehouseId'];
                   this.currentWarehouseName = this.orderMessage['warehouseName'] ? this.orderMessage['warehouseName'] : this.shipmentWarehouseList.filter((item) => { return item.id == this.currentShipmentWarehouseValue})[0]['name'];
                   this.currentWarehouseIndex = this.shipmentWarehouseList.findIndex((item) => { return item.id == this.currentShipmentWarehouseValue});
-                  this.echoStorageTakeStockMessage()
+                  if (flag) {
+                    this.echoStorageTakeStockMessage()
+                  }
                 }
             }
         })
@@ -449,13 +457,20 @@ export default {
             this.currentShipmentWarehouseValue = this.orderMessage['currentShipmentWarehouseValue'];
             this.currentWarehouseName = this.orderMessage['currentWarehouseName'];
             this.currentWarehouseIndex = this.orderMessage['currentWarehouseIndex'];
+            this.productCodeValue = this.orderMessage['productCodeValue']
         }
       }
     },
 
     // 保存数据事件(暂存)
     saveDataEvent () {
-      if (this.orderMessage['items'].length == 0) { return };
+      if (this.orderMessage['items'].length == 0) {
+        this.$toast({
+          type: 'success',
+          message: '盘点产品不能为空'
+        })
+        return
+      };
       let temporaryTakeStockEditOrderMessage = _.cloneDeep(this.takeStockEditOrderMessage);
       // 存储保存的编辑盘点信息
       if (this.takeStockEditOrderMessage.length > 0 ) {
@@ -469,6 +484,7 @@ export default {
               currentShipmentWarehouseValue: this.currentShipmentWarehouseValue,
               currentWarehouseName: this.currentWarehouseName,
               currentWarehouseIndex: this.currentWarehouseIndex,
+              productCodeValue: this.productCodeValue,
               checkTime: this.orderMessage['checkTime'],
               items: this.orderMessage['items']
             }
@@ -481,13 +497,13 @@ export default {
               currentShipmentWarehouseValue: this.currentShipmentWarehouseValue,
               currentWarehouseName: this.currentWarehouseName,
               currentWarehouseIndex: this.currentWarehouseIndex,
+              productCodeValue: this.productCodeValue,
               checkTime: this.orderMessage['checkTime'],
               items: this.orderMessage['items']
             }
           )
       };
       this.changeTakeStockEditOrderMessage(temporaryTakeStockEditOrderMessage);
-      console.log('sas',this.takeStockEditOrderMessage);
       this.$toast({
         type: 'success',
         message: '暂存成功'
@@ -499,7 +515,13 @@ export default {
 
     // 提交数据
     submmitDataEvent () {
-      if (this.orderMessage['items'].length == 0) { return };
+      if (this.orderMessage['items'].length == 0) {
+        this.$toast({
+          type: 'success',
+          message: '盘点产品不能为空'
+        })
+        return
+      };
       let temporaryList = this.orderMessage['items'];
       let needItems = [];
       for (let item of temporaryList) {
