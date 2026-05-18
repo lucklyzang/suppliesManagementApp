@@ -7,9 +7,59 @@
     </div>
     <div class="content">
       <div class="content-box">
-        <div class="content-top">
+        <div class="relevance-order-box">
+          <div class="relevance-order-left">
+            <span>*</span>
+            <span>关联订单:</span>
+          </div>
+          <div class="relevance-order-center">
+            请选择
+          </div>
+          <div class="relevance-order-right" @click="searchEvent">
+            <van-icon name="search" color="#fff" size="22" />
+          </div>
+        </div>
+        <div class="shipment-warehouse-box">
+          <div class="shipment-warehouse-left">
+            <span>*</span>
+            <span>出货仓库:</span>
+          </div>
+          <div class="shipment-warehouse-right" ref="myElement">
+            <div class="shipment-warehouse-span" @click="shipmentWarehouseListShow = !shipmentWarehouseListShow">
+              <span>{{ currentShipmentWarehouseText }}</span>
+              <van-icon :name="shipmentWarehouseListShow ? 'arrow-down' : 'arrow-up'" color="#101010" size="16" />
+            </div>
+            <div class="shipment-warehouse-list-box" v-show="shipmentWarehouseListShow">
+              <div class="shipment-warehouse-list" v-for="(item,index) in shipmentWarehouseListList" @click="shipmentWarehouseListEvent(item,index)" :key="index">
+                <span :class="{'shipmentWarehouseSpanStyle': index === currentShipmentWarehouseIndex }">{{ item.name }}</span>
+              </div>
+            </div>
+				  </div>
+        </div>
+        <div class="arrival-date-box">
+          <div class="arrival-date-left">
+            <span>要求到货日期:</span>
+          </div>
+          <div class="arrival-date-right" @click="arrivalDateShow = !arrivalDateShow">
+            <span>{{ arrivalDate }}</span>
+            <van-icon name="notes-o" color="#CACACA" size="20" />
+          </div>
+        </div>
+        <div class="remark-box">
+          <div class="remark-span">
+              <span>备注:</span>
+          </div>
+          <div class="remark-content">
+              <van-field
+                v-model="remarkValue"
+                type="textarea"
+                placeholder="请输入"
+              />
+          </div>
+        </div>
+         <div class="content-top">
           <div class="content-top-left">
-            <span>生成送货单</span>
+            <span>产品清单</span>
           </div>
 			  </div>
         <div class="content-center">
@@ -57,48 +107,10 @@
             <span>{{ `${allCount}` }}</span>
           </div>
         </div>
-        <div class="shipment-warehouse-box">
-          <div class="shipment-warehouse-left">
-            <span>*</span>
-            <span>出货仓库</span>
-          </div>
-          <div class="shipment-warehouse-right" ref="myElement">
-            <div class="shipment-warehouse-span" @click="shipmentWarehouseListShow = !shipmentWarehouseListShow">
-              <span>{{ currentShipmentWarehouseText }}</span>
-              <van-icon :name="shipmentWarehouseListShow ? 'arrow-down' : 'arrow-up'" color="#101010" size="16" />
-            </div>
-            <div class="shipment-warehouse-list-box" v-show="shipmentWarehouseListShow">
-              <div class="shipment-warehouse-list" v-for="(item,index) in shipmentWarehouseListList" @click="shipmentWarehouseListEvent(item,index)" :key="index">
-                <span :class="{'shipmentWarehouseSpanStyle': index === currentShipmentWarehouseIndex }">{{ item.name }}</span>
-              </div>
-            </div>
-				  </div>
-        </div>
-        <div class="arrival-date-box">
-          <div class="arrival-date-left">
-            <span>要求到货日期:</span>
-          </div>
-          <div class="arrival-date-right" @click="arrivalDateShow = !arrivalDateShow">
-            <span>{{ arrivalDate }}</span>
-            <van-icon name="notes-o" color="#CACACA" size="20" />
-          </div>
-        </div>
-        <div class="remark-box">
-          <div class="remark-span">
-              <span>备注:</span>
-          </div>
-          <div class="remark-content">
-              <van-field
-                v-model="remarkValue"
-                type="textarea"
-                placeholder="请输入"
-              />
-          </div>
-        </div>
       </div>
       <div class="btn-box">
             <div class="btn-left" @click="quitEvent">
-                <span>退出</span>
+                <span>取消</span>
             </div>
             <div class="btn-right" @click="submitEvent">
                 <span>提交</span>
@@ -142,6 +154,33 @@
             </div>
         </van-dialog>
     </div>
+    <!-- 选择产品弹框 -->
+    <div class="choose-product-box">
+      <van-popup v-model="chooseProductShow" round position="bottom" :style="{ height: '55%' }">
+        <div class="content-box">
+          <div class="content-top">
+            <div class="input-box">
+              <van-field v-model="orderValue" placeholder="请输入订单号" />
+              <div class="search-box">
+                <van-icon name="search" color="#bbbbbb" size="24" />
+              </div>
+            </div>
+            <div class="close-box">
+              <van-icon name="cross" color="#101010" size="24" />
+            </div>
+          </div>
+          <div class="content-center"></div>
+          <div class="content-bottom">
+            <div class="btn-left">
+                <span>取消</span>
+            </div>
+            <div class="btn-right">
+                <span>确定</span>
+            </div>
+          </div>
+        </div>
+      </van-popup>
+    </div>
     <!-- 到货日期选择器 -->
     <van-popup v-model="arrivalDateShow" position="bottom" :style="{ height: '40%' }">
        <van-datetime-picker
@@ -161,7 +200,7 @@ import { getPlanOrder, getwarehouseInfo, createSaleOut } from '@/api/suppliesMan
 import SOtime from '@/common/js/SOtime.js'
 import _ from 'lodash'
 export default {
-  name: "suppliesCreateDeliveryOrder",
+  name: "suppliesAddDeliveryOrder",
   components: {
     NavBar
   },
@@ -170,7 +209,9 @@ export default {
     return {
       loadingShow: false,
       infoText: '生成中···',
+      orderValue: '',
       allCount: 0,
+      chooseProductShow: true,
       createDeliveryOrderModalShow: false,
       minDate: new Date(),
       isExceedStockQuantity: false,
@@ -193,9 +234,8 @@ export default {
 
   mounted() {
     // 控制设备物理返回按键
-    this.deviceReturn('/suppliesOrderList');
-    this.orderId = this.$route.query.orderId;
-    this.parallelFunction();
+    this.deviceReturn('/suppliesDeliverGoodsList');
+    // this.parallelFunction();
     const el = this.$refs.myElement;
     //点击状态栏区域以外的地方时，库房列表收起
     document.addEventListener('click', (event) => {
@@ -265,7 +305,7 @@ export default {
 
     onClickLeft () {
       this.$router.push({
-        path: '/suppliesOrderList'
+        path: '/suppliesDeliverGoodsList'
       })
     },
     
@@ -274,6 +314,9 @@ export default {
       this.arrivalDate = SOtime.time8(new Date(this.orderMessage['confirmTime']).getTime(),true);
       this.currentDate = new Date(this.orderMessage['confirmTime'])
     },
+
+    // 搜索事件
+    searchEvent () {},
 
     // 求和函数(计算所有添加产品总数量)
     reduceTotal() {
@@ -328,7 +371,7 @@ export default {
       })
     },
 
-    // 退出事件
+    // 取消事件
     quitEvent() {
       this.onClickLeft()
     },
@@ -364,17 +407,17 @@ export default {
     // 生成送货单事件
     createSaleOutEvent(data) {
       this.loadingShow = true;
-      this.infoText = '生成中···';
+      this.infoText = '提交中···';
       createSaleOut(data).then((res) => {
           this.loadingShow = false;
           this.infoText = '';
           if ( res && res.data.code == 0) {
-            this.getPlanOrderEventNext()
+            this.quitEvent()
           } else {
-              this.$dialog.alert({
-                message: `${res.data.msg}`,
-                closeOnPopstate: true
-              }).then(() => {})
+            this.$dialog.alert({
+              message: `${res.data.msg}`,
+              closeOnPopstate: true
+            }).then(() => {})
           }
       })
       .catch((err) => {
@@ -387,34 +430,24 @@ export default {
       })
     },
 
-    // 查询订单详情(生成送货单后查询使用)
-    getPlanOrderEventNext() {
+    // 查询订单详情
+    getPlanOrderEvent() {
       this.loadingShow = false;
-      this.infoText = '加载中···';
+      this.infoText = '查询中···';
+      this.orderMessage = {};
       getPlanOrder(this.orderId).then((res) => {
           this.loadingShow = false;
           this.infoText = '';
           if ( res && res.data.code == 0) {
-            let temporaryMessage = res.data.data['items'];
-            // 成功生成送货单后,更新该订单产品出库数量和输入框默认数量
-            temporaryMessage.forEach((item,index) => {
-              for (const [innerIndex, innerItem] of this.materialList.entries()) {
-                if (innerItem['id'] == item.id) {
-                  this.$set(this.materialList[innerIndex],'outCount',item['outCount']);
-                  this.$set(this.materialList[innerIndex],'inputCount',Number(item['count'])-Number(item['outCount']));
-                  break
-                }
-              }
-            });
-            this.reduceTotal();
-            // 传递当前出货量和总需求量
-            this.$router.push({
-              path: '/suppliesOrderList', 
-              query: {
-                outCount: res.data.data['outCount'],
-                totalCount: res.data.data['totalCount']
-              }
-            })
+              this.orderMessage = res.data.data;
+              this.outCount =  this.orderMessage['outCount'];
+              this.totalCount =  this.orderMessage['totalCount'];
+              this.materialList = _.cloneDeep(this.orderMessage['items']);
+              this.materialList.forEach((item,index) => {
+                this.$set(this.materialList[index],'inputCount',Number(item['count'])-Number(item['outCount']));
+              });
+              this.reduceTotal();
+              this.getArrivalDate()
           } else {
             this.$dialog.alert({
               message: `${res.data.msg}`,
@@ -423,8 +456,6 @@ export default {
           }
       })
       .catch((err) => {
-        this.loadingShow = false;
-        this.infoText = '';
         this.$dialog.alert({
           message: `${err}`,
           closeOnPopstate: true
@@ -432,55 +463,56 @@ export default {
       })
     },
 
-    // 查询订单详情
-    getPlanOrderEvent() {
-        return new Promise((resolve,reject) => {
-            getPlanOrder(this.orderId).then((res) => {
-                this.loadingShow = false;
-                this.infoText = '';
-                if ( res && res.data.code == 0) {
-                    resolve(res.data.data);
-                } else {
-                    reject(res.data.msg);
-                    this.$dialog.alert({
-                      message: `${res.data.msg}`,
-                      closeOnPopstate: true
-                    }).then(() => {})
-                }
-            })
-            .catch((err) => {
-                reject(err)
-            })
+    // 查询订单列表
+    getOrderListEvent() {
+      return new Promise((resolve,reject) => {
+        getwarehouseInfo().then((res) => {
+            this.loadingShow = false;
+            this.infoText = '';
+            if ( res && res.data.code == 0) {
+              resolve(res.data.data);
+            } else {
+              reject(res.data.msg);
+              this.$dialog.alert({
+                message: `${res.data.msg}`,
+                closeOnPopstate: true
+              }).then(() => {})
+            }
         })
+        .catch((err) => {
+          reject(err)
+        })
+      })
     },
 
-    // 查询仓库信息
+    // 查询仓库列表
     getWarehouseInfoEvent() {
-        return new Promise((resolve,reject) => {
-            getwarehouseInfo().then((res) => {
-                this.loadingShow = false;
-                this.infoText = '';
-                if ( res && res.data.code == 0) {
-                    resolve(res.data.data);
-                } else {
-                    reject(res.data.msg);
-                    this.$dialog.alert({
-                      message: `${res.data.msg}`,
-                      closeOnPopstate: true
-                    }).then(() => {})
-                }
-            })
-            .catch((err) => {
-              reject(err)
-            })
+      return new Promise((resolve,reject) => {
+        getwarehouseInfo().then((res) => {
+            this.loadingShow = false;
+            this.infoText = '';
+            if ( res && res.data.code == 0) {
+              resolve(res.data.data);
+            } else {
+              reject(res.data.msg);
+              this.$dialog.alert({
+                message: `${res.data.msg}`,
+                closeOnPopstate: true
+              }).then(() => {})
+            }
         })
+        .catch((err) => {
+          reject(err)
+        })
+      })
     },
 
-    // 并行查询订单详情
+
+    // 并行查询订单列表、仓库列表
 	  parallelFunction () {
         this.loadingShow = false;
         this.infoText = '加载中···';
-        Promise.all([this.getPlanOrderEvent(),this.getWarehouseInfoEvent()])
+        Promise.all([this.getOrderListEvent(),this.getWarehouseInfoEvent()])
         .then((res) => {
             this.loadingShow = false;
             this.infoText = '';
@@ -489,15 +521,6 @@ export default {
                 this.shipmentWarehouseListList = [];
                 let [item1,item2] = res;
                 if (item1) {
-                  this.orderMessage = item1;
-                  this.outCount =  this.orderMessage['outCount'];
-                  this.totalCount =  this.orderMessage['totalCount'];
-                  this.materialList = _.cloneDeep(this.orderMessage['items']);
-                  this.materialList.forEach((item,index) => {
-                    this.$set(this.materialList[index],'inputCount',Number(item['count'])-Number(item['outCount']));
-                  });
-                  this.reduceTotal();
-                  this.getArrivalDate()
                 };
                 if (item2) {
                   this.shipmentWarehouseListList = item2;
@@ -536,6 +559,86 @@ export default {
 @import "~@/common/stylus/modifyUi.less";
 .page-box {
   .content-wrapper();
+  .choose-product-box {
+    /deep/ .van-popup {
+      .content-box {
+        height: 100%;
+        padding: 14px 14px 20px 14px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        .content-top {
+          height: 40px;
+          position: relative;
+          .input-box {
+            width: 85%;
+            display: flex;
+            height: 40px;
+            border-radius: 4px;
+            border: 1px solid #BBBBBB;
+           .van-cell {
+            flex: 1;
+            font-size: 14px;
+            color: #101010;
+           };
+            .search-box {
+              width: 55px;
+              height: 40px;
+              display: flex;
+              align-items: center;
+              border-left: 2px solid #BBBBBB;
+              justify-content: center
+            }
+          };
+          .close-box {
+            position: absolute;
+            top: 0;
+            right: 0;
+          }
+        };
+        .content-center {
+          flex: 1;
+          height: 0;
+          display: flex;
+          flex-direction: column;
+        };
+        .content-bottom {
+          height: 60px;
+          padding: 0 14px;
+          box-sizing: border-box;
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          .btn-left {
+            width: 40%;
+            height: 32px;
+            border: 1px solid #3B9DF9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            >span {
+            font-size: 12px;
+            color: #3B9DF9;
+            }
+          };
+          .btn-right {
+            width: 40%;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            background: #3B9DF9;
+            >span {
+              font-size: 12px;
+              color: #fff;
+            }
+          }
+        }
+      }
+    }
+  }
   .nav {
     width: 100%;
     background: #3B9DF9;
@@ -673,7 +776,7 @@ export default {
         height: 0;
       .content-top {
 			 height: 40px;
-			 padding: 0 4px;
+			 padding: 0 10px;
 			 box-sizing: border-box;
 			 display: flex;
 			 align-items: center;
@@ -825,11 +928,50 @@ export default {
 				} 
 			 }
 		 };
+     .relevance-order-box {
+      display: flex;
+      align-items: center;
+      margin: 10px 0;
+      .relevance-order-left {
+         width: 110px;
+         margin-right: 10px;
+         >span {
+           &:first-child {
+            color: red;
+           };
+           &:last-child {
+            font-size: 14px;
+            color: #101010;
+           }
+         }
+       };
+       .relevance-order-center {
+          flex: 1;
+          height: 30px;
+          line-height: 30px;
+          border-radius: 3px;
+          background: #F1F1F1;
+          font-size: 14px;
+          color: #101010;
+          padding: 0 10px;
+          box-sizing: border-box;
+          margin-right: 4px;
+       };
+       .relevance-order-right {
+        width: 58px;
+        height: 30px;
+        border-radius: 4px;
+        background: #409EFF;
+        display: flex;
+        align-items: center;
+        justify-content: center
+       }
+     };
      .shipment-warehouse-box {
        display: flex;
        align-items: center;
        .shipment-warehouse-left {
-         width: 120px;
+         width: 110px;
          margin-right: 10px;
          >span {
            &:first-child {
@@ -896,7 +1038,7 @@ export default {
         display: flex;
         align-items: center;
        .arrival-date-left {
-         width: 120px;
+         width: 110px;
          margin-left: 10px;
          >span {
             font-size: 14px;
@@ -917,9 +1059,8 @@ export default {
      };
     .remark-box {
         display: flex;
-        margin-bottom: 10px;
         .remark-span {
-          width: 120px;
+          width: 110px;
           margin-left: 10px;
             >span {
               font-size: 14px;
@@ -928,9 +1069,9 @@ export default {
         };
         .remark-content {
             flex: 1;
-            border: 1px solid #888888;
+            border: 1px solid #bbbbbb;
             .van-cell {
-                padding: 6px 10px !important;
+              padding: 6px 10px !important;
             }
         }
       }

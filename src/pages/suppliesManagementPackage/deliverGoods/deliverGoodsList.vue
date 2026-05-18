@@ -10,6 +10,9 @@
         </van-nav-bar>
     </div>
     <div class="content">
+        <div class="add-deliver-box" @click="addDeliverGoodsEvent">
+             <img :src="addDeliverImage" />
+        </div>
         <div class="content-box">
           <div class="status-date-box">
 				<div class="status-box" ref="myElement">
@@ -266,6 +269,7 @@ export default {
       currentdeliveryPerson: '请选择',
       currentdeliveryPersonValue: '',
       deliveryPersonShow: false,
+      addDeliverImage: require('@/common/images/home/add-deliver.png'),
       revocationInfoImage: require('@/common/images/home/revocation-info-icon.png'),
       defaultDateArr: [],
       startDate: '',
@@ -440,6 +444,11 @@ export default {
 
     enterHistoryOrderEvent () {
         this.$router.push({path: '/suppliesDeliverHistoryGoodsList'})
+    },
+
+    // 增加送货单事件
+    addDeliverGoodsEvent () {
+        this.$router.push({path: '/suppliesAddDeliveryOrder'})
     },
 
     // 重置状态
@@ -1219,6 +1228,18 @@ export default {
     flex-direction: column;
     position: relative;
     height: 0;
+    .add-deliver-box {
+        width: 53px;
+        height: 53px;
+        position: absolute;
+        bottom: 80px;
+        left: 8px;
+        z-index: 100;
+        >img {
+            width: 100%;
+            height: 100%;
+        }
+    }
     .content-box {
         flex: 1;
         box-sizing: border-box;

@@ -21,6 +21,8 @@ const SuppliesDeliverGoodsList= () =>
     import ('@/pages/suppliesManagementPackage/deliverGoods/deliverGoodsList')
 const SuppliesDeliverHistoryGoodsList= () =>
     import ('@/pages/suppliesManagementPackage/deliverGoods/deliverHistoryGoodsList')
+const SuppliesAddDeliveryOrder= () =>
+    import ('@/pages/suppliesManagementPackage/deliverGoods/addDeliveryOrder')
 const SuppliesDeliverGoodsDetails= () =>
     import ('@/pages/suppliesManagementPackage/deliverGoods/deliverGoodsDetails')
 const SuppliesDelivery= () =>
@@ -110,6 +112,14 @@ let baseRoute = [{
       index: 3,
       keepAlive: true,
       isBack:false
+    }
+  },
+  {
+    path: '/suppliesAddDeliveryOrder',
+    name: 'suppliesAddDeliveryOrder',
+    component: SuppliesAddDeliveryOrder,
+    meta: { 
+      index: 4
     }
   },
   {
