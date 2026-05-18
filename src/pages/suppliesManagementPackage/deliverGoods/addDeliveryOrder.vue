@@ -12,7 +12,7 @@
             <span>*</span>
             <span>关联订单:</span>
           </div>
-          <div class="relevance-order-center">
+          <div class="relevance-order-center" @click="chooseProductShow = true">
             请选择
           </div>
           <div class="relevance-order-right" @click="searchEvent">
@@ -165,13 +165,24 @@
                 <van-icon name="search" color="#bbbbbb" size="24" />
               </div>
             </div>
-            <div class="close-box">
+            <div class="close-box" @click="chooseProductShow = false">
               <van-icon name="cross" color="#101010" size="24" />
             </div>
           </div>
-          <div class="content-center"></div>
+          <div class="content-center"> 
+            <div class="product-title">
+              <div class="order-number">
+                订单号
+              </div>
+              <div class="product-message">
+                产品信息
+              </div>
+            </div>
+            <div class="product-list-box">
+            </div>
+          </div>
           <div class="content-bottom">
-            <div class="btn-left">
+            <div class="btn-left" @click="chooseProductShow = false">
                 <span>取消</span>
             </div>
             <div class="btn-right">
@@ -211,7 +222,7 @@ export default {
       infoText: '生成中···',
       orderValue: '',
       allCount: 0,
-      chooseProductShow: true,
+      chooseProductShow: false,
       createDeliveryOrderModalShow: false,
       minDate: new Date(),
       isExceedStockQuantity: false,
@@ -568,19 +579,38 @@ export default {
         display: flex;
         flex-direction: column;
         .content-top {
-          height: 40px;
+          height: 54px;
           position: relative;
+          border-bottom: 1px solid #BBBBBB;
           .input-box {
             width: 85%;
             display: flex;
             height: 40px;
             border-radius: 4px;
             border: 1px solid #BBBBBB;
-           .van-cell {
+          .van-cell {
             flex: 1;
-            font-size: 14px;
-            color: #101010;
+            font-size: 14px !important;
+            color: #101010 !important;
            };
+          .van-field__control {
+              &::-webkit-input-placeholder {
+                color: #101010 !important;
+                font-size: 14px !important;
+              }
+              &::-moz-placeholder {
+                color: #101010 !important;
+                font-size: 14px !important;
+              }
+              &:-ms-input-placeholder {
+                color: #101010 !important;
+                font-size: 14px !important;
+              }
+              &::placeholder {
+                color: #101010 !important;
+                font-size: 14px !important;
+              }
+            }
             .search-box {
               width: 55px;
               height: 40px;
@@ -601,13 +631,32 @@ export default {
           height: 0;
           display: flex;
           flex-direction: column;
+          .product-title {
+            height: 30px;
+            padding-left: 20px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #101010;
+            .order-number {
+              width: 30%;
+            };
+            .product-message {
+              flex: 1;
+            }
+          };
+          .product-list-box {
+            flex: 1;
+            overflow: auto;
+          }
         };
         .content-bottom {
           height: 60px;
           padding: 0 14px;
           box-sizing: border-box;
           display: flex;
-          align-items: flex-start;
+          align-items: center;
           justify-content: space-between;
           .btn-left {
             width: 40%;
