@@ -12,8 +12,8 @@
             <span>*</span>
             <span>关联订单:</span>
           </div>
-          <div class="relevance-order-center" @click="chooseProductShow = true">
-            请选择
+          <div class="relevance-order-center" @click="openProductPopupEvent">
+            {{ orderNo === '' ? '请选择' : orderNo }}
           </div>
           <div class="relevance-order-right" @click="searchEvent">
             <van-icon name="search" color="#fff" size="22" />
@@ -84,20 +84,23 @@
                 </div>
               </div>
             </div>
+            <div class="product-number-message">
+              <div class="product-count-number">
+                <span>原数量:</span>
+                <span>{{ item.count }}</span>
+              </div>
+              <div class="product-out-count-number">
+                <span>已送数量:</span>
+                <span>{{ item.outCount }}</span>
+              </div>
+            </div>
             <div class="product-right">
               <div class="product-number-box">
                 <van-stepper v-model="item.inputCount" @change="function(val){productNumberBoxChange(item,index,val)}" integer min="0" :max="Number(item['count'])-Number(item['outCount'])" />
               </div>
-              <div class="product-total-price">
-                <div class="total-demand">
-                  <span>总需求数</span>
-                  <span>{{ item.count }}</span>
-                </div>
-                <div class="surplus-demand">
-                  <span>剩余需求数</span>
-                  <span>{{ item.count - item.outCount }}</span>
-                </div>
-              </div>
+            </div>
+            <div class="product-unit-name">
+              <span>{{ item.productUnitName }}</span>
             </div>
           </div>
         </div>
@@ -161,7 +164,7 @@
           <div class="content-top">
             <div class="input-box">
               <van-field v-model="orderValue" placeholder="请输入订单号" />
-              <div class="search-box">
+              <div class="search-box" @click="orderValueChangeEvent">
                 <van-icon name="search" color="#bbbbbb" size="24" />
               </div>
             </div>
@@ -178,14 +181,30 @@
                 产品信息
               </div>
             </div>
-            <div class="product-list-box">
+            <div class="product-list-box" ref="scrollBacklogTask">
+              <div class="order-list" v-for="(item,index) in fullOrderList" :key="index" @click="orderItemEvent(item,index)">
+                <div class="image-box">
+                  <img :src="item['id'] === selectedValue ? defaultPersonPng : productDefaultImage" />
+                </div>
+                <div class="order-number">
+                  {{ item.no }}
+                </div>
+                <div class="product-message">
+                  {{ extractProductInventoryMessage(item['items']) }}
+                </div>
+              </div>
+              <van-empty description="您还没有相关订单" v-show="isShowNoData" />
+              <div v-show="bottomLoadingShow" class="bottom-loading-show">
+                  加载中...
+              </div>
+              <div class="no-more-data" v-show="isShowNoMoreData && !loadingShow && !isShowNoData">没有更多数据了!</div>
             </div>
           </div>
           <div class="content-bottom">
             <div class="btn-left" @click="chooseProductShow = false">
                 <span>取消</span>
             </div>
-            <div class="btn-right">
+            <div class="btn-right" @click="chooseProductSureEvent">
                 <span>确定</span>
             </div>
           </div>
@@ -207,7 +226,7 @@
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
-import { getPlanOrder, getwarehouseInfo, createSaleOut } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
+import { getPlanOrder, getwarehouseInfo, getPlanOrderPage, createSaleOut } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
 import SOtime from '@/common/js/SOtime.js'
 import _ from 'lodash'
 export default {
@@ -220,6 +239,11 @@ export default {
     return {
       loadingShow: false,
       infoText: '生成中···',
+      bottomLoadingShow: false,
+      isShowNoData: false,
+      isShowNoMoreData: false,
+      currentPageNum: 1,
+      pageSize: 20,
       orderValue: '',
       allCount: 0,
       chooseProductShow: false,
@@ -236,14 +260,33 @@ export default {
       shipmentWarehouseListList:[],
       remarkValue: '',
       productDefaultImage: require('@/common/images/home/revocation-info-icon.png'),
+      defaultPersonPng: require("@/common/images/home/supplies-default-person.png"),
       orderId: '',
+      orderNo: '',
+      temporaryOrderNo: '',
+      temporaryOrderId: '',
       chooseMaterialList: [],
       orderMessage: {},
-      materialList: []
+      materialList: [],
+      eventTime: 0,
+      selectedValue: '',
+      orderList: [],
+      fullOrderList: [],
+      temporaryFullOrderList: []
     }
   },
 
   mounted() {
+    this.parallelFunction();
+    this.getPlanOrderPageEvent({
+      pageNo: this.currentPageNum,
+      pageSize: this.pageSize,
+      status: '',
+      statusList: [20,30],
+      orderTime: [],
+      creator: '',
+      departmentId: this.depId
+    },true);
     // 控制设备物理返回按键
     this.deviceReturn('/suppliesDeliverGoodsList');
     // this.parallelFunction();
@@ -280,6 +323,16 @@ export default {
               // 如果新值包含空格，则重新赋值为去除空格后的字符串
               if (/\s/g.test(newVal)) {
                   this.remarkValue = newVal.replace(/\s/g, '')
+              }
+          })
+      }
+    },
+    orderValue: {
+      handler(newVal) {
+          this.$nextTick(() => {
+              // 如果新值包含空格，则重新赋值为去除空格后的字符串
+              if (/\s/g.test(newVal)) {
+                  this.orderValue = newVal.replace(/\s/g, '')
               }
           })
       }
@@ -327,7 +380,35 @@ export default {
     },
 
     // 搜索事件
-    searchEvent () {},
+    searchEvent () {
+      if (this.orderNo === '') {
+        this.$toast({
+          type: 'fail',
+          message: '请选择关联订单!'
+        });
+        return 
+      };
+      this.getPlanOrderEvent()
+    },
+
+    // 订单号输入框值变化事件
+    orderValueChangeEvent () {
+      if (this.orderValue === '') {
+        this.fullOrderList = this.temporaryFullOrderList;
+        if (this.fullOrderList.length == 0) {
+          this.isShowNoData = true
+        } else {
+          this.isShowNoData = false
+        }
+        return;
+      };  
+      this.fullOrderList = this.temporaryFullOrderList.filter((item) => { return item.no.indexOf(this.orderValue) != -1});
+      if (this.fullOrderList.length == 0) {
+        this.isShowNoData = true
+      } else {
+        this.isShowNoData = false
+      }
+    },
 
     // 求和函数(计算所有添加产品总数量)
     reduceTotal() {
@@ -346,10 +427,83 @@ export default {
         return value.toFixed(2);
     },
 
+    // 提取产品清单信息
+    extractProductInventoryMessage (items) {
+        if (items.length == 0) {
+            return ''
+        };
+        let temporaryArray = [];
+        for (let item of items) {
+            temporaryArray.push(item.productName);
+        };
+        return temporaryArray.join("、")
+    },
+
+     // 事件列表注册滚动事件
+     initScrollChange () {
+      let boxBackScroll = this.$refs['scrollBacklogTask'];
+      boxBackScroll.addEventListener('scroll',this.eventListLoadMore,true)
+    },
+
+    // 产品项点击事件
+    orderItemEvent (item,index) {
+      this.selectedValue = item.id;
+      this.temporaryOrderNo = item.no;
+      this.temporaryOrderId = item.id;
+    },
+
+    // 事件列表加载事件
+    eventListLoadMore () {
+      let boxBackScroll = this.$refs['scrollBacklogTask'];
+      this.scrollTop = boxBackScroll.scrollTop;
+      if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
+        // 点击筛选确定后，不加载数据
+        if (this.eventTime) {return};
+        this.eventTime = 1;
+        this.timeTwo = setTimeout(() => {
+          let totalPage = Math.ceil(this.totalCount/this.pageSize);
+          if (this.currentPageNum >= totalPage) {
+           this.isShowNoMoreData = true;
+          } else {
+            this.isShowNoMoreData = false;
+            this.currentPageNum = this.currentPageNum + 1;
+            this.getPlanOrderPageEvent({
+                pageNo: this.currentPageNum,
+                pageSize: this.pageSize,
+                status: '',
+                statusList: [20,30],
+                orderTime: [],
+                creator: '',
+                departmentId: this.depId
+            },false)
+          };
+          this.eventTime = 0;
+        },300)
+      }
+    },
+
+    // 打开产品弹框事件
+    openProductPopupEvent () {
+      this.orderValue = '';
+      this.selectedValue = this.orderId;
+      this.fullOrderList = this.temporaryFullOrderList;
+      this.chooseProductShow = true;
+      this.$nextTick(()=> {
+        this.initScrollChange()
+      })
+    },
+
+    // 选择产品弹框确定事件
+    chooseProductSureEvent () {
+      this.orderNo = this.temporaryOrderNo;
+      this.orderId = this.temporaryOrderId;
+      this.chooseProductShow = false;
+    },
+
     // 产品步进器change事件
     productNumberBoxChange(item,index,val) {
-        this.$set(this.materialList[index],'inputCount',val);
-        this.reduceTotal();
+      this.$set(this.materialList[index],'inputCount',val);
+      this.reduceTotal();
     },
 
     // 确定生成送货单弹框取消事件
@@ -389,9 +543,23 @@ export default {
 
     // 提交事件
     submitEvent() {
+      if (this.orderNo == '') {
+        this.$toast({
+          type: 'fail',
+          message: '请选择关联订单!'
+        });
+        return 
+      };
+      if (this.currentShipmentWarehouseText == '请选择') {
+        this.$toast({
+          type: 'fail',
+          message: '请选择出货仓库!'
+        });
+        return 
+      };
       // 所有产品提交数量都为0时，禁止提交
       let isCanSubmit = this.materialList.every((item)=>{ return item.inputCount == 0 });
-       if (isCanSubmit) {
+      if (isCanSubmit) {
         this.$toast({
           type: 'fail',
           message: '送货数量不能为0!'
@@ -402,13 +570,6 @@ export default {
         this.$toast({
           type: 'fail',
           message: '送货数量不能超过剩余需求数量!'
-        });
-        return 
-      };
-      if (this.currentShipmentWarehouseText == '请选择') {
-        this.$toast({
-          type: 'fail',
-          message: '请选择出货仓库!'
         });
         return 
       };
@@ -439,6 +600,69 @@ export default {
             closeOnPopstate: true
           }).then(() => {})
       })
+    },
+
+    // 查询订单列表
+    getPlanOrderPageEvent(data,flag) {
+        this.orderList = [];
+        this.isShowNoData = false;
+        if (flag) {
+            this.fullOrderList = [];
+            this.temporaryFullOrderList = [];
+            this.loadingShow = true;
+            this.infoText = '加载中···';
+            this.bottomLoadingShow = false;
+        } else {
+            this.loadingShow = false;
+            this.infoText = '';
+            this.bottomLoadingShow = true;
+        };
+        getPlanOrderPage(data).then((res) => {
+            if ( res && res.data.code == 0) {
+                this.orderList = res.data.data.list;
+                this.totalCount = res.data.data.total;
+                this.orderList.forEach((item)=>{
+                    item.createTime = item.createTime ? SOtime.time3(item.createTime) : '';
+                    item.orderTime = item.orderTime ? SOtime.time8(item.orderTime) : ''
+                });
+                this.fullOrderList = this.fullOrderList.concat(this.orderList);
+                this.temporaryFullOrderList = this.fullOrderList;
+                if (this.fullOrderList.length == 0) {
+                    this.isShowNoData = true
+                } else {
+                    this.isShowNoData = false
+                }
+            } else {
+                this.$dialog.alert({
+                    message: `${res.data.msg}`,
+                    closeOnPopstate: true
+                }).then(() => {})
+            };
+            if (flag) {
+                this.loadingShow = false;
+                this.infoText = '';
+            } else {
+                this.bottomLoadingShow = false;
+                let totalPage = Math.ceil(this.totalCount/this.pageSize);
+                if (this.currentPageNum >= totalPage) {
+                    this.isShowNoMoreData = true;
+                } else {
+                    this.isShowNoMoreData = false;
+                }
+            }
+        })
+        .catch((err) => {
+            if (flag) {
+                this.loadingShow = false;
+                this.infoText = '';
+            } else {
+                this.bottomLoadingShow = false;
+            };
+            this.$dialog.alert({
+                message: `${err}`,
+                closeOnPopstate: true
+            }).then(() => {})
+        })
     },
 
     // 查询订单详情
@@ -519,22 +743,20 @@ export default {
     },
 
 
-    // 并行查询订单列表、仓库列表
+    // 并行查询仓库列表
 	  parallelFunction () {
         this.loadingShow = false;
         this.infoText = '加载中···';
-        Promise.all([this.getOrderListEvent(),this.getWarehouseInfoEvent()])
+        Promise.all([this.getWarehouseInfoEvent()])
         .then((res) => {
             this.loadingShow = false;
             this.infoText = '';
             if (res && res.length > 0) {
                 this.orderMessage = {};
                 this.shipmentWarehouseListList = [];
-                let [item1,item2] = res;
+                let [item1] = res;
                 if (item1) {
-                };
-                if (item2) {
-                  this.shipmentWarehouseListList = item2;
+                  this.shipmentWarehouseListList = item1;
                 }
             }
         })
@@ -574,12 +796,14 @@ export default {
     /deep/ .van-popup {
       .content-box {
         height: 100%;
-        padding: 14px 14px 20px 14px;
+        padding: 14px 8px 20px 8px;
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
         .content-top {
           height: 54px;
+          width: 98%;
+          margin: 0 auto;
           position: relative;
           border-bottom: 1px solid #BBBBBB;
           .input-box {
@@ -639,8 +863,10 @@ export default {
             align-items: center;
             font-size: 14px;
             color: #101010;
+            margin-bottom: 10px;
             .order-number {
               width: 30%;
+              margin-right: 10px;
             };
             .product-message {
               flex: 1;
@@ -649,6 +875,63 @@ export default {
           .product-list-box {
             flex: 1;
             overflow: auto;
+            .order-list {
+              display: flex;
+              align-items: center;
+              font-size: 14px;
+              color: #101010;
+              margin-bottom: 20px;
+              padding-left: 20px;
+              box-sizing: border-box;
+              position: relative;
+              .image-box {
+                width: 14px;
+                height: 14px;
+                position: absolute;
+                left: 0;
+                top: 50%;
+                transform: translateY(-50%);
+                >img {
+                  width: 100%;
+                  height: 100%;
+                }
+              }
+              .order-number {
+                width: 30%;
+                margin-right: 6px;
+                overflow-x: auto;
+					      white-space: nowrap;
+              };
+              .product-message {
+                flex: 1;
+                overflow-x: auto;
+					      white-space: nowrap;
+              };
+              &:last-child {
+                margin-bottom: 0 !important
+              }
+            };
+            .bottom-loading-show {
+              font-size: 12px;
+              color: #BEC7D1;
+              width: 100%;
+              text-align: center;
+              line-height: 30px
+            };
+            .no-more-data {
+              font-size: 12px;
+              color: #BEC7D1;
+              width: 100%;
+              text-align: center;
+              line-height: 30px
+          };
+          /deep/ .van-empty {
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              width: 100%;
+          }
           }
         };
         .content-bottom {
@@ -838,7 +1121,7 @@ export default {
 			 }
 		 };
 		 .content-center {
-			 width: 99%;
+			 width: 100%;
 			 flex: 1;
 			 margin: 0 auto;
 			 border-radius: 6px;
@@ -852,7 +1135,9 @@ export default {
         transform: translate(-50%,-50%)
       };
 			 .product-list {
-				 padding: 10px 4px;
+				 padding: 10px 0;
+         width: 98%;
+         margin: 0 auto;
 				 box-sizing: border-box;
 				 border-bottom: 1px solid #BBBBBB;
 				 display: flex;
@@ -869,6 +1154,10 @@ export default {
 					 overflow-x: auto;
 					 white-space: nowrap;
            margin-right: 4px;
+           height: 40px;
+           display: flex;
+           flex-direction: column;
+           justify-content: space-between;
 					 .product-name {
 						 overflow-x: auto;
 						 white-space: nowrap;
@@ -892,17 +1181,47 @@ export default {
 						 }
 					 }
 				 };
+         .product-number-message {
+          width: 75px;
+          margin-right: 4px;
+          height: 40px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          .product-count-number {
+            overflow-x: auto;
+						white-space: nowrap;
+					  margin-bottom: 10px;
+            >span {
+              font-size: 12px;
+							color: #101010;
+              &:first-child {
+                margin-right: 2px;
+              }
+            }
+          };
+          .product-out-count-number {
+            overflow-x: auto;
+						white-space: nowrap;
+            >span {
+              font-size: 12px;
+							color: #101010;
+              &:first-child {
+                margin-right: 2px;
+              }
+            }
+          }
+         }
 				 .product-right {
 					 display: flex;
 					 flex-direction: column;
 					 justify-content: center;
-					 width: 180px;
+					 width: 110px;
 					 .product-number-box {
-						 margin-bottom: 4px;
              display: flex;
              justify-content: flex-end;
 						 /deep/ .van-stepper{
-                width: 70%;
+                width: 100%;
                 display: flex;
 							 .van-stepper__minus {
 								 background: transparent !important;
@@ -932,32 +1251,20 @@ export default {
                  width: 2px;
                };
 						 }
-					 };
-					 .product-total-price {
-             display: flex;
-             align-items: center;
-             .total-demand {
-               flex: 1;
-               >span {
-                font-size: 10px;
-                color: #777575;
-                &:nth-child(1) {
-                  margin-right: 4px;
-                }
-               }
-             };
-             .surplus-demand {
-               flex: 1;
-                >span {
-                font-size: 10px;
-                color: #777575;
-                &:nth-child(1) {
-                  margin-right: 4px;
-                }
-               }
-             }
 					 }
-				 }
+				 };
+         .product-unit-name {
+          width: 24px;
+          margin-left: 4px;
+          overflow-x: auto;
+					white-space: nowrap;
+          >span {
+            width: 100%;
+            display: inline-block;
+            font-size: 14px;
+            color: #101010;
+          }
+         }
 			 }
 		 };
 		 .total-prices {
@@ -1104,6 +1411,10 @@ export default {
           justify-content: space-between;
           padding: 0 10px;
           box-sizing: border-box;
+          >span {
+            font-size: 14px;
+            color: #101010;
+         }
        }
      };
     .remark-box {
