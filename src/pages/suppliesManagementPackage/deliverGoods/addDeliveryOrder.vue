@@ -2,7 +2,7 @@
   <div class="page-box" ref="wrapper">
     <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">{{ infoText }}</van-loading>
     <div class="nav">
-        <van-nav-bar title="生成送货单" left-text="返回" left-arrow @click-left="onClickLeft"  :border="false">
+        <van-nav-bar title="新增送货单" left-text="返回" left-arrow @click-left="onClickLeft"  :border="false">
         </van-nav-bar>
     </div>
     <div class="content">
@@ -38,7 +38,7 @@
         </div>
         <div class="arrival-date-box">
           <div class="arrival-date-left">
-            <span>要求到货日期:</span>
+            <span>要求送货日期:</span>
           </div>
           <div class="arrival-date-right" @click="arrivalDateShow = !arrivalDateShow">
             <span>{{ arrivalDate }}</span>
@@ -64,7 +64,7 @@
 			  </div>
         <div class="content-center">
           <div class="empty-info" v-if="materialList.length == 0">
-            <van-empty description="暂无产品" />
+            <van-empty description="暂无可送货产品" />
           </div>
           <div class="product-list" v-for="(item,index) in materialList" :key="item.productName">
             <div class="product-left">
@@ -184,7 +184,7 @@
             <div class="product-list-box" ref="scrollBacklogTask">
               <div class="order-list" v-for="(item,index) in fullOrderList" :key="index" @click="orderItemEvent(item,index)">
                 <div class="image-box">
-                  <img :src="item['id'] === selectedValue ? defaultPersonPng : productDefaultImage" />
+                  <img :src="item['id'] === selectedValue ? selectedImage : noSelectedImage" />
                 </div>
                 <div class="order-number">
                   {{ item.no }}
@@ -246,6 +246,7 @@ export default {
       pageSize: 20,
       orderValue: '',
       allCount: 0,
+      totalCount: 0,
       chooseProductShow: false,
       createDeliveryOrderModalShow: false,
       minDate: new Date(),
@@ -259,8 +260,8 @@ export default {
       currentShipmentWarehouseValue: '',
       shipmentWarehouseListList:[],
       remarkValue: '',
-      productDefaultImage: require('@/common/images/home/revocation-info-icon.png'),
-      defaultPersonPng: require("@/common/images/home/supplies-default-person.png"),
+      noSelectedImage: require('@/common/images/home/no-selected.png'),
+      selectedImage: require("@/common/images/home/selected.png"),
       orderId: '',
       orderNo: '',
       temporaryOrderNo: '',
@@ -497,6 +498,12 @@ export default {
     chooseProductSureEvent () {
       this.orderNo = this.temporaryOrderNo;
       this.orderId = this.temporaryOrderId;
+      // 重置之前关联订单下的送货产品列表
+      this.orderMessage = {};
+      this.materialList = [];
+      this.arrivalDate = SOtime.time8(new Date().getTime(),true);
+      this.remarkValue = '';
+      this.reduceTotal();
       this.chooseProductShow = false;
     },
 
@@ -667,7 +674,7 @@ export default {
 
     // 查询订单详情
     getPlanOrderEvent() {
-      this.loadingShow = false;
+      this.loadingShow = true;
       this.infoText = '查询中···';
       this.orderMessage = {};
       getPlanOrder(this.orderId).then((res) => {
@@ -675,14 +682,16 @@ export default {
           this.infoText = '';
           if ( res && res.data.code == 0) {
               this.orderMessage = res.data.data;
-              this.outCount =  this.orderMessage['outCount'];
-              this.totalCount =  this.orderMessage['totalCount'];
-              this.materialList = _.cloneDeep(this.orderMessage['items']);
+              // 只展示剩余出货量不为0的产品
+              this.materialList = _.cloneDeep(this.orderMessage['items'].filter((item) => { return Number(item['count']) - Number(item['outCount']) > 0 }));
               this.materialList.forEach((item,index) => {
                 this.$set(this.materialList[index],'inputCount',Number(item['count'])-Number(item['outCount']));
               });
               this.reduceTotal();
-              this.getArrivalDate()
+              if (this.materialList.length > 0) {
+                this.remarkValue = this.orderMessage['remark'] ? this.orderMessage['remark'] : '';
+                this.getArrivalDate()
+              }
           } else {
             this.$dialog.alert({
               message: `${res.data.msg}`,
@@ -691,6 +700,8 @@ export default {
           }
       })
       .catch((err) => {
+        this.loadingShow = false;
+        this.infoText = '';
         this.$dialog.alert({
           message: `${err}`,
           closeOnPopstate: true
@@ -857,7 +868,7 @@ export default {
           flex-direction: column;
           .product-title {
             height: 30px;
-            padding-left: 20px;
+            padding-left: 26px;
             box-sizing: border-box;
             display: flex;
             align-items: center;
@@ -885,8 +896,8 @@ export default {
               box-sizing: border-box;
               position: relative;
               .image-box {
-                width: 14px;
-                height: 14px;
+                width: 15px;
+                height: 15px;
                 position: absolute;
                 left: 0;
                 top: 50%;
@@ -898,7 +909,7 @@ export default {
               }
               .order-number {
                 width: 30%;
-                margin-right: 6px;
+                margin: 0 6px;
                 overflow-x: auto;
 					      white-space: nowrap;
               };
@@ -926,11 +937,11 @@ export default {
               line-height: 30px
           };
           /deep/ .van-empty {
-              position: absolute;
-              top: 50%;
-              left: 50%;
-              transform: translate(-50%, -50%);
-              width: 100%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
           }
           }
         };
@@ -1129,6 +1140,7 @@ export default {
 			 overflow: auto;
 			 position: relative;
       /deep/ .van-empty {
+        width: 100%;
         position: absolute;
         top: 50%;
         left: 50%;
@@ -1193,7 +1205,7 @@ export default {
 						white-space: nowrap;
 					  margin-bottom: 10px;
             >span {
-              font-size: 12px;
+              font-size: 10px;
 							color: #101010;
               &:first-child {
                 margin-right: 2px;
@@ -1204,7 +1216,7 @@ export default {
             overflow-x: auto;
 						white-space: nowrap;
             >span {
-              font-size: 12px;
+              font-size: 10px;
 							color: #101010;
               &:first-child {
                 margin-right: 2px;
