@@ -1233,7 +1233,7 @@ export default {
         height: 53px;
         position: absolute;
         bottom: 80px;
-        left: 8px;
+        left: 4px;
         z-index: 100;
         >img {
             width: 100%;

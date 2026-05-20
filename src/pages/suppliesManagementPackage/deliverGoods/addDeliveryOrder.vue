@@ -502,6 +502,7 @@ export default {
       this.orderMessage = {};
       this.materialList = [];
       this.arrivalDate = SOtime.time8(new Date().getTime(),true);
+      this.currentDate = new Date();
       this.remarkValue = '';
       this.reduceTotal();
       this.chooseProductShow = false;
