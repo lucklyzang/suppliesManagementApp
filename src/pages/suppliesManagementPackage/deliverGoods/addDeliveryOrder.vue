@@ -282,11 +282,10 @@ export default {
     this.getPlanOrderPageEvent({
       pageNo: this.currentPageNum,
       pageSize: this.pageSize,
-      status: '',
-      statusList: [20,30],
       orderTime: [],
       creator: '',
-      departmentId: this.depId
+      departmentId: this.depId,
+      outEnable: true
     },true);
     // 控制设备物理返回按键
     this.deviceReturn('/suppliesDeliverGoodsList');
@@ -471,11 +470,10 @@ export default {
             this.getPlanOrderPageEvent({
                 pageNo: this.currentPageNum,
                 pageSize: this.pageSize,
-                status: '',
-                statusList: [20,30],
                 orderTime: [],
                 creator: '',
-                departmentId: this.depId
+                departmentId: this.depId,
+                outEnable: true
             },false)
           };
           this.eventTime = 0;
