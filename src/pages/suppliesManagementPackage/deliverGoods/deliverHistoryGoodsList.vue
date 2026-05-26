@@ -114,6 +114,7 @@ export default {
       minDate: new Date('2025-03-16'),
       maxDate: new Date('2030-03-16'),
       eventTime: 0,
+      continueQuest: true,
       orderList: [],
       fullOrderList: []
     }
@@ -133,6 +134,7 @@ export default {
     this.$nextTick(()=> {
         this.initScrollChange()
     });
+    this.resetDataStatusEvent();
     // 从详情页面返回
     if (this.$route.meta.isBack) {
         this.$route.meta.isBack = false;
@@ -197,6 +199,13 @@ export default {
         this.$router.push({path: '/suppliesDeliverGoodsList'})
     },
 
+    // 重置数据状态
+    resetDataStatusEvent () {
+        this.continueQuest = true;
+        this.eventTime = 0;
+        this.currentPageNum = 1;
+    },
+
     // 提取产品清单信息
     extractProductInventoryMessage (items) {
         if (items.length == 0) {
@@ -220,10 +229,12 @@ export default {
       let boxBackScroll = this.$refs['scrollBacklogTask'];
       this.scrollTop = boxBackScroll.scrollTop;
       if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
-        // 点击筛选确定后，不加载数据
+        // 点击筛选确定和日期确定后，不加载数据
+        if (!this.continueQuest) { return };
+        // 防止请求过快
         if (this.eventTime) {return};
         this.eventTime = 1;
-        this.timeTwo = setTimeout(() => {
+        const timeTwo = setTimeout(() => {
           let totalPage = Math.ceil(this.totalCount/this.pageSize);
           if (this.currentPageNum >= totalPage) {
            this.isShowNoMoreData = true;
@@ -239,7 +250,6 @@ export default {
             },false)
           };
           this.eventTime = 0;
-          console.log('事件列表滚动了',boxBackScroll.scrollTop, boxBackScroll.offsetHeight, boxBackScroll.scrollHeight)
         },300)
       }
     },
@@ -259,6 +269,7 @@ export default {
             this.bottomLoadingShow = true;
         };
         getSaleOutPage(data).then((res) => {
+            this.continueQuest = true;
             if ( res && res.data.code == 0) {
                 this.orderList = res.data.data.list;
                 this.totalCount = res.data.data.total;
@@ -292,6 +303,7 @@ export default {
             }
         })
         .catch((err) => {
+            this.continueQuest = true;
             if (flag) {
                 this.loadingShow = false;
                 this.infoText = '';
@@ -327,6 +339,7 @@ export default {
         this.startDate = SOtime.time8(new Date(e[0]).getTime(),true);
         this.endDate = SOtime.time8(new Date(e[e.length-1]).getTime(),true);
         this.currentPageNum = 1;
+        this.continueQuest = false;
         this.getSaleOutPageEvent({
             pageNo: this.currentPageNum,
             pageSize: this.pageSize,

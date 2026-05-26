@@ -207,7 +207,9 @@ export default {
       breakEvenexplainValue: '',
       takeStockDate: '',
       takeStockIndex: '',
-      stockDialogMessage: {}
+      stockDialogMessage: {},
+      continueQuest: true,
+      eventTime: 0
     }
   },
 
@@ -317,6 +319,7 @@ export default {
           this.fullStockProductList = [];
           this.stockProductList = [];
           this.currentPageNum = 1;
+          this.continueQuest = false;
           this.getStockPageEvent({
             pageNo: this.currentPageNum,
             pageSize: this.pageSize,
@@ -353,6 +356,11 @@ export default {
       let boxBackScroll = this.$refs['scrollBacklogTask'];
       this.scrollTop = boxBackScroll.scrollTop;
       if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
+        // 点击仓库后，不加载数据
+        if (!this.continueQuest) { return };
+        // 防止请求过快
+        if (this.eventTime) {return};
+        this.eventTime = 1;
         // 判断是否有暂存的盘点信息
         if (JSON.stringify(this.takeStockOrderMessage) != '{}') {
           // 判断保存前该仓库产品列表信息是否加载完,没加载完，上滑继续加载后面数据
@@ -360,7 +368,7 @@ export default {
             return
           }
         };
-        this.timeTwo = setTimeout(() => {
+        const timeTwo = setTimeout(() => {
           let totalPage = Math.ceil(this.totalCount/this.pageSize);
           if (this.currentPageNum >= totalPage) {
             this.isShowNoMoreData = true;
@@ -481,6 +489,7 @@ export default {
       this.currentWarehouseIndex = index;
       this.warehouseListShow = false;
       this.currentPageNum = 1;
+      this.continueQuest = false;
       this.getStockPageEvent({
         pageNo: this.currentPageNum,
         pageSize: this.pageSize,
@@ -558,6 +567,7 @@ export default {
           this.bottomLoadingShow = true;
       };
       getStockPage(data).then((res) => {
+        this.continueQuest = true;
         if (flag) {
           this.fullStockProductList = [];
         };
@@ -594,6 +604,7 @@ export default {
         }
       })
       .catch((err) => {
+        this.continueQuest = true;
         if (flag) {
           this.loadingShow = false;
           this.infoText = '';

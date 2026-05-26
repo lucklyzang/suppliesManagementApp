@@ -92,6 +92,7 @@ export default {
       maxDate: new Date('2030-03-16'),
       orderList: [],
       eventTime: 0,
+      continueQuest: true,
       fullOrderList: []
     }
   },
@@ -147,13 +148,14 @@ export default {
     onClickLeft () {
         this.$router.push({path: '/suppliesHome'})
     },
-    
+
     // 日历日期选择确认事件
     calendarConfirm(e) {
         this.showCalendar = false;
         this.startDate = SOtime.time8(new Date(e[0]).getTime(),true);
         this.endDate = SOtime.time8(new Date(e[e.length-1]).getTime(),true);
         this.currentPageNum = 1;
+        this.continueQuest = false;
         this.getEvaluatePageEvent({
             pageNo: this.currentPageNum,
             pageSize: this.pageSize,
@@ -198,10 +200,12 @@ export default {
     eventListLoadMore () {
       let boxBackScroll = this.$refs['scrollBacklogTask'];
       if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
-        // 点击筛选确定后，不加载数据
+        // 点击日期确定后，不加载数据
+        if (!this.continueQuest) { return };
+        // 防止请求过快
         if (this.eventTime) {return};
         this.eventTime = 1;
-        this.timeTwo = setTimeout(() => {
+        const timeTwo = setTimeout(() => {
           let totalPage = Math.ceil(this.totalCount/this.pageSize);
           if (this.currentPageNum >= totalPage) {
            this.isShowNoMoreData = true;
@@ -215,7 +219,6 @@ export default {
             },false)
           };
           this.eventTime = 0;
-          console.log('事件列表滚动了',boxBackScroll.scrollTop, boxBackScroll.offsetHeight, boxBackScroll.scrollHeight)
         },300)
       }
     },
@@ -235,6 +238,7 @@ export default {
             this.bottomLoadingShow = true;
         };
         getEvaluatePage(data).then((res) => {
+            this.continueQuest = true;
             if ( res && res.data.code == 0) {
                 this.orderList = res.data.data.list;
                 this.totalCount = res.data.data.total;
@@ -267,6 +271,7 @@ export default {
             }
         })
         .catch((err) => {
+            this.continueQuest = true;
             if (flag) {
                 this.loadingShow = false;
                 this.infoText = '';

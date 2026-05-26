@@ -16,6 +16,7 @@
                     :class="{
                     'staySureStyle ' : orderMessage.status == 20, 
                     'stayDeliveryStyle' : orderMessage.status == 30,
+                    'hasDeliveryStyle' : orderMessage.status == 40,
                     'stayCompleteStyle' : orderMessage.status == 50
                     }"
                 >
@@ -294,7 +295,7 @@ export default {
                     return '已拒绝'
                     break;
             case 40:
-                    return '已发货'
+                    return '送货中'
                     break;
             case 41:
                     return '售后中'
@@ -582,6 +583,10 @@ export default {
             .stayDeliveryStyle {
                 background: #E7F3FE !important;
                 color: #3B9DF9 !important;
+            };
+            .hasDeliveryStyle {
+                background: #E6E9FA !important;
+                color: #8D97E7 !important;
             };
             .stayCompleteStyle {
                 color: #101010 !important;

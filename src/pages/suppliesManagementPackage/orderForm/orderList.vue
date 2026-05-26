@@ -46,6 +46,7 @@
 						:class="{
 							'staySureStyle ' : item.status == 20, 
 							'stayDeliveryStyle' : item.status == 30,
+                            'hasDeliveryStyle' : item.status == 40
 							}"
 						>
 							<span>{{ stateTransfer(item.status) }}</span>
@@ -89,7 +90,7 @@
 							<div class="delete-left" v-show="item.status == 20 && hasIntersection(['erp:dept-order:confirm','erp:sale-out:update-status'],userPermissionInfo['permissions'])"  @click.stop="refuseEvent(item,index)">
 								<span>拒绝订单</span>
 							</div>
-							<div class="edit-right" :class="{'btnStyle': item['outCount'] == item['totalCount']}" v-show="item.status == 30 && hasIntersection(['erp:sale-out:create'],userPermissionInfo['permissions'])" @click.stop="createDeliveryOrderEvent(item,index)">
+							<div class="edit-right" :class="{'btnStyle': item['outCount'] == item['totalCount']}" v-show="(item.status == 30 || item.status == 40) && hasIntersection(['erp:sale-out:create'],userPermissionInfo['permissions'])" @click.stop="createDeliveryOrderEvent(item,index)">
 								<span>生成送货单</span>
 							</div>
 							<div class="edit-right" v-show="item.status == 20 && hasIntersection(['erp:sale-out:update-status','erp:dept-order:confirm'],userPermissionInfo['permissions'])" @click.stop="sureEvent(item,index)">
@@ -207,7 +208,7 @@ export default {
       currentStatusText: '全部状态',
       currentStatusIndex: 0,
       currentStatusValue: '',
-      needQueryStatusList: [20,30],
+      needQueryStatusList: [20,30,40],
       orderStatusListShow: false,
       refuseReasonValue: '',
       currentOrderIndex: '',
@@ -225,8 +226,13 @@ export default {
         {
             value: 30,
             text: '待送货'
+        },
+        {
+            value: 40,
+            text: '送货中'
         }
       ],
+      continueQuest: true,
       eventTime: 0,
       orderList: [],
       fullOrderList: []
@@ -247,6 +253,7 @@ export default {
     this.$nextTick(()=> {
         this.initScrollChange()
     });
+    this.resetDataStatusEvent();
     // 从详情页面或生成送货单页面返回
     if (this.$route.meta.isBack) {
         this.$route.meta.isBack = false;
@@ -300,7 +307,8 @@ export default {
     }
    },
 
-  mounted() {},
+  mounted() {
+  },
 
   beforeRouteEnter(to, from, next) {
     next(vm=>{
@@ -356,9 +364,16 @@ export default {
         this.$router.push({path: '/suppliesHome'})
     },
 
-    // 重置状态
+    // 重置数据状态
+    resetDataStatusEvent () {
+        this.continueQuest = true;
+        this.eventTime = 0;
+        this.currentPageNum = 1;
+    },
+
+    // 重置订单状态
     resetStatusEvent () {
-        this.needQueryStatusList = [20,30];
+        this.needQueryStatusList = [20,30,40];
         this.currentStatusText = '全部状态';
         this.currentStatusValue = '';
         this.currentStatusIndex = 0;
@@ -380,10 +395,12 @@ export default {
       let boxBackScroll = this.$refs['scrollBacklogTask'];
       this.scrollTop = boxBackScroll.scrollTop;
       if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
-        // 点击筛选确定后，不加载数据
+        // 点击筛选确定和日期确定后，不加载数据
+        if (!this.continueQuest) { return };
+        // 防止请求过快
         if (this.eventTime) {return};
         this.eventTime = 1;
-        this.timeTwo = setTimeout(() => {
+        const timeTwo = setTimeout(() => {
           let totalPage = Math.ceil(this.totalCount/this.pageSize);
           if (this.currentPageNum >= totalPage) {
            this.isShowNoMoreData = true;
@@ -424,7 +441,7 @@ export default {
                     return '已拒绝'
                     break;
             case 40:
-                    return '已发货'
+                    return '送货中'
                     break;
             case 41:
                     return '售后中'
@@ -572,6 +589,7 @@ export default {
             this.bottomLoadingShow = true;
         };
         getPlanOrderPage(data).then((res) => {
+            this.continueQuest = true;
             if ( res && res.data.code == 0) {
                 this.orderList = res.data.data.list;
                 this.totalCount = res.data.data.total;
@@ -605,6 +623,7 @@ export default {
             }
         })
         .catch((err) => {
+            this.continueQuest = true;
             if (flag) {
                 this.loadingShow = false;
                 this.infoText = '';
@@ -625,6 +644,7 @@ export default {
         this.startDate = SOtime.time8(new Date(e[0]).getTime(),true);
         this.endDate = SOtime.time8(new Date(e[e.length-1]).getTime(),true);
         this.currentPageNum = 1;
+        this.continueQuest = false;
         this.getPlanOrderPageEvent({
             pageNo: this.currentPageNum,
             pageSize: this.pageSize,
@@ -670,7 +690,8 @@ export default {
         this.currentStatusIndex = index;
         this.orderStatusListShow = false;
         this.currentPageNum = 1;
-        this.needQueryStatusList = [20,30];
+        this.needQueryStatusList = [20,30,40];
+        this.continueQuest = false;
         this.getPlanOrderPageEvent({
             pageNo: this.currentPageNum,
             pageSize: this.pageSize,
@@ -1087,6 +1108,10 @@ export default {
                         background: #E7F3FE !important;
                         color: #3B9DF9 !important;
                     };
+                    .hasDeliveryStyle {
+                        background: #E6E9FA !important;
+                        color: #8D97E7 !important;
+                    }
                 };
                 .order-list-center {
                     margin: 10px 0;

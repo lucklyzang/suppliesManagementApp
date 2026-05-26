@@ -231,6 +231,7 @@ export default {
       scrollTop: 0,
       orderList: [],
       eventTime: 0,
+      continueQuest: true,
       fullOrderList: []
     }
   },
@@ -249,6 +250,7 @@ export default {
     this.$nextTick(()=> {
         this.initScrollChange()
     });
+    this.resetDataStatusEvent();
     // 从详情页面返回
     if (this.$route.meta.isBack) {
         this.$route.meta.isBack = false;
@@ -325,6 +327,13 @@ export default {
         this.$router.push({path: '/suppliesHome'})
     },
 
+    // 重置数据状态
+    resetDataStatusEvent () {
+        this.continueQuest = true;
+        this.eventTime = 0;
+        this.currentPageNum = 1;
+    },
+
     // 事件列表注册滚动事件
     initScrollChange () {
       let boxBackScroll = this.$refs['scrollBacklogTask'];
@@ -336,10 +345,12 @@ export default {
       let boxBackScroll = this.$refs['scrollBacklogTask'];
       this.scrollTop = boxBackScroll.scrollTop;
       if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
-        // 点击筛选确定后，不加载数据
+        // 点击筛选确定和日期确定后，不加载数据
+        if (!this.continueQuest) { return };
+        // 防止请求过快
         if (this.eventTime) {return};
         this.eventTime = 1;
-        this.timeTwo = setTimeout(() => {
+        const timeTwo = setTimeout(() => {
           let totalPage = Math.ceil(this.totalCount/this.pageSize);
           if (this.currentPageNum >= totalPage) {
            this.isShowNoMoreData = true;
@@ -420,6 +431,7 @@ export default {
         this.startDate = SOtime.time8(new Date(e[0]).getTime(),true);
         this.endDate = SOtime.time8(new Date(e[e.length-1]).getTime(),true);
         this.currentPageNum = 1;
+        this.continueQuest = false;
         this.getSaleReturnBarterPageEvent({
             pageNo: this.currentPageNum,
             pageSize: this.pageSize,
@@ -555,6 +567,7 @@ export default {
             this.bottomLoadingShow = true;
         };
         getSaleReturnBarterPage(data).then((res) => {
+            this.continueQuest = true;
             if ( res && res.data.code == 0) {
                 this.orderList = res.data.data.list;
                 this.totalCount = res.data.data.total;
@@ -589,6 +602,7 @@ export default {
             }
         })
         .catch((err) => {
+            this.continueQuest = true;
             if (flag) {
                 this.loadingShow = false;
                 this.infoText = '';
