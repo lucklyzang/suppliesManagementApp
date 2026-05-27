@@ -283,7 +283,7 @@ export default {
 
     // 并行查询订单详情
 	parallelFunction () {
-        this.loadingShow = false;
+        this.loadingShow = true;
         this.infoText = '加载中···';
         Promise.all([this.getSaleReturnEvent()])
         .then((res) => {

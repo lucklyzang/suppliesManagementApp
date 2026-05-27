@@ -454,7 +454,7 @@ export default {
 
     // 并行查询订单详情、订单操作记录、出货单列表
 	parallelFunction () {
-        this.loadingShow = false;
+        this.loadingShow = true;
         this.infoText = '加载中···';
         Promise.all([this.getPlanOrderEvent(),this.queryorderOperationLogEvent(),this.getSaleReturnPageEvent()])
         .then((res) => {

@@ -87,7 +87,7 @@
               <div v-show="bottomLoadingShow" class="bottom-loading-show">
                   加载中...
               </div>
-              <div class="no-more-data" v-show="isShowNoMoreData && !loadingShow && !isShowNoData">没有更多数据了!</div>
+              <div class="no-more-data" v-show="isShowNoMoreData && !loadingShow && !isShowNoData && !bottomLoadingShow">没有更多数据了!</div>
             </div>
           </div>
           <div class="btn-box">
@@ -172,7 +172,7 @@
 <script>
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
-import { hasIntersection } from '@/common/js/utils'
+import { hasIntersection, throttle } from '@/common/js/utils'
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
 import { getwarehouseInfo, getStockPage, createStockCheck } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
 import SOtime from '@/common/js/SOtime.js'
@@ -209,7 +209,7 @@ export default {
       takeStockIndex: '',
       stockDialogMessage: {},
       continueQuest: true,
-      eventTime: 0
+      throttledScrollHandler: null
     }
   },
 
@@ -238,8 +238,10 @@ export default {
     this.getWarehouseInfoEvent()
   },
 
-  beforeRouteEnter(to, from, next) {
-    next() 
+ beforeRouteLeave(to,from,next) {
+    // 移除滚动监听器
+    this.removeScrollListener();
+    next()
   },
 
   watch: {
@@ -345,22 +347,22 @@ export default {
     scanQRcodeCallbackCanceled () {
     },
 
-    // 事件列表注册滚动事件
-    initScrollChange () {
-      let boxBackScroll = this.$refs['scrollBacklogTask'];
-      boxBackScroll.addEventListener('scroll',this.eventListLoadMore,true)
-    },
-
-    // 事件列表加载事件
-    eventListLoadMore () {
-      let boxBackScroll = this.$refs['scrollBacklogTask'];
+    /**
+     * 滚动事件的原始处理逻辑
+     * 检查是否滚动到底部并决定是否加载更多
+     */
+    _rawEventListLoadMore() {
+      const boxBackScroll = this.$refs.scrollBacklogTask;
+      if (!boxBackScroll) {
+        return;
+      };
+      // 更新滚动位置
       this.scrollTop = boxBackScroll.scrollTop;
-      if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
-        // 点击仓库后，不加载数据
+      // 判断是否滚动到底部
+      const isAtBottom = Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight;
+      if (isAtBottom) {
+        // 扫码和点击仓库后，不加载数据
         if (!this.continueQuest) { return };
-        // 防止请求过快
-        if (this.eventTime) {return};
-        this.eventTime = 1;
         // 判断是否有暂存的盘点信息
         if (JSON.stringify(this.takeStockOrderMessage) != '{}') {
           // 判断保存前该仓库产品列表信息是否加载完,没加载完，上滑继续加载后面数据
@@ -368,21 +370,50 @@ export default {
             return
           }
         };
-        const timeTwo = setTimeout(() => {
-          let totalPage = Math.ceil(this.totalCount/this.pageSize);
-          if (this.currentPageNum >= totalPage) {
+        // 检查是否还有更多页可以加载
+        const totalPage = Math.ceil(this.totalCount / this.pageSize);
+        if (this.currentPageNum >= totalPage) {
+            // 已经是最后一页
             this.isShowNoMoreData = true;
-          } else {
+        } else {
+            // 还有更多页，加载下一页
             this.isShowNoMoreData = false;
-            this.currentPageNum = this.currentPageNum + 1;
+            this.currentPageNum++;
             this.getStockPageEvent({
               pageNo: this.currentPageNum,
               pageSize: this.pageSize,
               productCode: this.productCodeValue, // 产品编号
               warehouseId: this.currentShipmentWarehouseValue //仓库编号
             },false)
-          }
-        },300)
+        }
+      }
+    },
+
+    /**
+     * 初始化滚动事件监听器
+     * 使用节流函数优化性能
+     */
+    initScrollChange() {
+        const boxBackScroll = this.$refs.scrollBacklogTask;
+        if (!boxBackScroll) {
+            return;
+        };
+        // 创建一个节流后的事件处理函数
+        // 将滚动检查逻辑限制在 200ms 内最多执行一次
+        this.throttledScrollHandler = throttle(this._rawEventListLoadMore, 200);
+        // 添加事件监听器
+        boxBackScroll.addEventListener('scroll', this.throttledScrollHandler, true);
+    },
+
+    /**
+     * 移除滚动事件监听器
+     * 在组件销毁前必须执行，防止内存泄漏
+    */
+    removeScrollListener() {
+      const boxBackScroll = this.$refs.scrollBacklogTask;
+      if (boxBackScroll && this.throttledScrollHandler) {
+        boxBackScroll.removeEventListener('scroll', this.throttledScrollHandler, true)
+        this.throttledScrollHandler = null;
       }
     },
 
@@ -592,6 +623,7 @@ export default {
         };
         if (flag) {
           this.loadingShow = false;
+          this.isShowNoMoreData = true;
           this.infoText = '';
         } else {
           this.bottomLoadingShow = false;
@@ -607,6 +639,7 @@ export default {
         this.continueQuest = true;
         if (flag) {
           this.loadingShow = false;
+          this.isShowNoMoreData = false;
           this.infoText = '';
         } else {
           this.bottomLoadingShow = false;

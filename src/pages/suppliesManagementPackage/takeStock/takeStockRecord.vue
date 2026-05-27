@@ -72,7 +72,7 @@
                 <div v-show="bottomLoadingShow" class="bottom-loading-show">
                     加载中...
                 </div>
-                <div class="no-more-data" v-show="isShowNoMoreData && !loadingShow && !isShowNoData">没有更多数据了!</div>
+                <div class="no-more-data" v-show="isShowNoMoreData && !loadingShow && !isShowNoData && !bottomLoadingShow">没有更多数据了!</div>
 			</div>
         </div>
     </div>
@@ -134,7 +134,7 @@
 import NavBar from "@/components/NavBar";
 import { mapGetters, mapMutations } from "vuex";
 import {mixinsDeviceReturn} from '@/mixins/deviceReturnFunction'
-import { hasIntersection } from '@/common/js/utils'
+import { hasIntersection, throttle } from '@/common/js/utils'
 import { getStockCheckRecordsPage, updateStockCheckStatus, deleteStockCheckStatus } from '@/api/suppliesManagement/materialApplicationOrderForm.js'
 import SOtime from '@/common/js/SOtime.js'
 export default {
@@ -168,7 +168,7 @@ export default {
       scrollTop: 0,
       deleteOrderModalShow: false,
       continueQuest: true,
-      eventTime: 0,
+      throttledScrollHandler: null,
       orderList: [],
       fullOrderList: []
     }
@@ -180,6 +180,8 @@ export default {
     } else {
         from.meta.isBack = false
     };
+    // 移除滚动监听器
+    this.removeScrollListener();
     next()
   },
 
@@ -188,7 +190,6 @@ export default {
     this.$nextTick(()=> {
         this.initScrollChange()
     });
-    this.resetDataStatusEvent();
     // 从详情页面或编辑页面返回
     if (this.$route.meta.isBack) {
         this.$route.meta.isBack = false;
@@ -212,6 +213,7 @@ export default {
         })
     // 从其它页面进入    
     } else {
+        this.resetDataStatusEvent();
         this.getDateRange();
         this.getStockCheckRecordsPageEvent({
             pageNo: this.currentPageNum,
@@ -271,33 +273,37 @@ export default {
      // 重置数据状态
     resetDataStatusEvent () {
         this.continueQuest = true;
-        this.eventTime = 0;
         this.currentPageNum = 1;
+        this.throttledScrollHandler = null
     },
 
-    // 事件列表注册滚动事件
-    initScrollChange () {
-      let boxBackScroll = this.$refs['scrollBacklogTask'];
-      boxBackScroll.addEventListener('scroll',this.eventListLoadMore,true)
-    },
-
-    // 事件列表加载事件
-    eventListLoadMore () {
-      let boxBackScroll = this.$refs['scrollBacklogTask'];
+    /**
+     * 滚动事件的原始处理逻辑
+     * 检查是否滚动到底部并决定是否加载更多
+     */
+    _rawEventListLoadMore() {
+      const boxBackScroll = this.$refs.scrollBacklogTask;
+      if (!boxBackScroll) {
+        return;
+      };
+      // 更新滚动位置
       this.scrollTop = boxBackScroll.scrollTop;
-      if (Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight) {
-        // 点击筛选确定和日期确定后，不加载数据
-        if (!this.continueQuest) { return };
-        // 防止请求过快
-        if (this.eventTime) {return};
-        this.eventTime = 1;
-        const timeTwo = setTimeout(() => {
-          let totalPage = Math.ceil(this.totalCount/this.pageSize);
-          if (this.currentPageNum >= totalPage) {
-           this.isShowNoMoreData = true;
-          } else {
+      // 判断是否滚动到底部
+      const isAtBottom = Math.ceil(boxBackScroll.scrollTop) + boxBackScroll.offsetHeight >= boxBackScroll.scrollHeight;
+      if (isAtBottom) {
+        // 检查是否允许继续请求
+        if (!this.continueQuest) {
+            return;
+        };
+        // 检查是否还有更多页可以加载
+        const totalPage = Math.ceil(this.totalCount / this.pageSize);
+        if (this.currentPageNum >= totalPage) {
+            // 已经是最后一页
+            this.isShowNoMoreData = true;
+        } else {
+            // 还有更多页，加载下一页
             this.isShowNoMoreData = false;
-            this.currentPageNum = this.currentPageNum + 1;
+            this.currentPageNum++;
             this.getStockCheckRecordsPageEvent({
                 pageNo: this.currentPageNum,
                 pageSize: this.pageSize,
@@ -305,9 +311,35 @@ export default {
                 checkTime: [`${this.startDate}`,`${this.endDate}`],
                 creator: ''// this.userAccount
             },false)
-          };
-          this.eventTime = 0
-        },300)
+        }
+      }
+    },
+
+    /**
+     * 初始化滚动事件监听器
+     * 使用节流函数优化性能
+     */
+    initScrollChange() {
+        const boxBackScroll = this.$refs.scrollBacklogTask;
+        if (!boxBackScroll) {
+            return;
+        };
+        // 创建一个节流后的事件处理函数
+        // 将滚动检查逻辑限制在 200ms 内最多执行一次
+        this.throttledScrollHandler = throttle(this._rawEventListLoadMore, 200);
+        // 添加事件监听器
+        boxBackScroll.addEventListener('scroll', this.throttledScrollHandler, true);
+    },
+
+    /**
+     * 移除滚动事件监听器
+     * 在组件销毁前必须执行，防止内存泄漏
+    */
+    removeScrollListener() {
+      const boxBackScroll = this.$refs.scrollBacklogTask;
+      if (boxBackScroll && this.throttledScrollHandler) {
+        boxBackScroll.removeEventListener('scroll', this.throttledScrollHandler, true)
+        this.throttledScrollHandler = null;
       }
     },
 
@@ -347,6 +379,7 @@ export default {
             };
             if (flag) {
                 this.loadingShow = false;
+                this.isShowNoMoreData = true;
                 this.infoText = '';
             } else {
                 this.bottomLoadingShow = false;
@@ -362,6 +395,7 @@ export default {
             this.continueQuest = true;
             if (flag) {
                 this.loadingShow = false;
+                this.isShowNoMoreData = false;
                 this.infoText = '';
             } else {
                 this.bottomLoadingShow = false;

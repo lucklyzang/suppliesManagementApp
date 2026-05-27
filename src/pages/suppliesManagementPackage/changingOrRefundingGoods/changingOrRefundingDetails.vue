@@ -263,7 +263,7 @@ export default {
 
     // 并行查询退换货单详情
 	parallelFunction () {
-        this.loadingShow = false;
+        this.loadingShow = true;
         this.infoText = '加载中···';
         Promise.all([this.getSaleReturnBarterEvent()])
         .then((res) => {
