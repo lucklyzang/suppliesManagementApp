@@ -57,7 +57,7 @@
         mapGetters,
         mapMutations
     } from 'vuex'
-    let windowTimer;
+    let windowTimer = null;
     export default {
         name: 'suppliesHome',
         components: {
@@ -128,12 +128,14 @@
             // 获取任务数量
             if (!this.suppliesHomeGlobalTimer) {
                 windowTimer = window.setInterval(() => {
-                if (this.isTimeoutContinue) {
-                    setTimeout(this.getSaleStatisticsStatusSummaryEvent());
-                    this.changeSuppliesHomeGlobalTimer(windowTimer)
-                } else {
-                    this.changeSuppliesHomeGlobalTimer(null)
-                }
+                    if (this.isTimeoutContinue) {
+                        setTimeout(() => {
+                            this.getSaleStatisticsStatusSummaryEvent()
+                        },0);
+                        this.changeSuppliesHomeGlobalTimer(windowTimer)
+                    } else {
+                        this.changeSuppliesHomeGlobalTimer(null)
+                    }
                 }, 2000)
             };
             this.controlServiceManageModuleShowEvent()
