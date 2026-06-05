@@ -448,6 +448,7 @@ export default {
     
     // 重置数据状态
     resetDataStatusEvent () {
+        this.isShowNoMoreData = false;
         this.continueQuest = true;
         this.currentPageNum = 1;
         this.throttledScrollHandler = null;
@@ -464,6 +465,7 @@ export default {
 
     // 重置状态
     resetStatusEvent () {
+        this.isShowNoMoreData = false;
         this.needQueryStatusList = [10,20,21];
         this.currentStatusText = '全部状态';
         this.currentStatusValue = '';

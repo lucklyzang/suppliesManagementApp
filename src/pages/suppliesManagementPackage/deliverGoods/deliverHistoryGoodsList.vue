@@ -204,6 +204,7 @@ export default {
 
     // 重置数据状态
     resetDataStatusEvent () {
+        this.isShowNoMoreData = false;
         this.continueQuest = true;
         this.currentPageNum = 1;
         this.throttledScrollHandler = null;
