@@ -194,7 +194,6 @@
                 'changeOverDueWay',
                 'changeSuppliesHomeGlobalTimer'
             ]),
-            
 
             // 控制服务管理模块显示隐藏
 			controlServiceManageModuleShowEvent () {
