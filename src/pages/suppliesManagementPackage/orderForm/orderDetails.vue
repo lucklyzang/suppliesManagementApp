@@ -378,7 +378,7 @@ export default {
         })
     },
 
-    // 价格保留三位小数，返回数字类型，修复精度问题
+    // 金额保留三位小数，返回数字类型，修复精度问题
     formatPrice(num) {
         if (typeof num !== 'number' || isNaN(num)) return "0.000";
             const value = Math.round(num * 1000) / 1000;
@@ -387,7 +387,7 @@ export default {
 
     // 数量保留二位小数，返回数字类型，修复精度问题
     formatCount(num) {
-        if (typeof num !== 'number' || isNaN(num)) return "0.000";
+        if (typeof num !== 'number' || isNaN(num)) return "0.00";
             const value = Math.round(num * 100) / 100;
             return value.toFixed(2);
     },
