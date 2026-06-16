@@ -87,11 +87,11 @@
             <div class="product-number-message">
               <div class="product-count-number">
                 <span>原数量:</span>
-                <span>{{ item.count }}</span>
+                <span>{{ formatCount(item.count) }}</span>
               </div>
               <div class="product-out-count-number">
                 <span>已送数量:</span>
-                <span>{{ item.outCount }}</span>
+                <span>{{ formatCount(item.outCount) }}</span>
               </div>
             </div>
             <div class="product-right">
@@ -107,7 +107,7 @@
         <div class="total-prices">
           <div class="total-prices-right">
             <span>总数量:</span>
-            <span>{{ `${allCount}` }}</span>
+            <span>{{ `${formatCount(allCount)}` }}</span>
           </div>
         </div>
       </div>
@@ -420,11 +420,18 @@ export default {
         }, 0)
     },
 
-    // 保留两位小数，返回数字类型，修复精度问题
+    // 金额保留三位小数，返回数字类型，修复精度问题
     formatPrice(num) {
+        if (typeof num !== 'number' || isNaN(num)) return "0.000";
+            const value = Math.round(num * 1000) / 1000;
+            return value.toFixed(3);
+    },
+
+    // 数量保留二位小数，返回数字类型，修复精度问题
+    formatCount(num) {
         if (typeof num !== 'number' || isNaN(num)) return "0.00";
-        const value = Math.round(num * 100) / 100;
-        return value.toFixed(2);
+            const value = Math.round(num * 100) / 100;
+            return value.toFixed(2);
     },
 
     // 提取产品清单信息

@@ -51,7 +51,7 @@
 					<div class="product-right">
 						<div class="product-number-box">
 							<span>数量:</span>
-							<span>{{ item.count }}</span>
+							<span>{{ formatCount(item.count) }}</span>
 						</div>
 						<div class="product-total-price">
 							<span>总额:</span>
@@ -232,8 +232,15 @@ export default {
         this.$router.push({path: this.sourcePath})
     },
 
-    // 保留两位小数，返回数字类型，修复精度问题
+    // 金额保留三位小数，返回数字类型，修复精度问题
     formatPrice(num) {
+        if (typeof num !== 'number' || isNaN(num)) return "0.000";
+            const value = Math.round(num * 1000) / 1000;
+            return value.toFixed(3);
+    },
+
+    // 数量保留二位小数，返回数字类型，修复精度问题
+    formatCount(num) {
         if (typeof num !== 'number' || isNaN(num)) return "0.00";
             const value = Math.round(num * 100) / 100;
             return value.toFixed(2);

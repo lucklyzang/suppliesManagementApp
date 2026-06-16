@@ -41,11 +41,11 @@
               <div class="product-total-price">
                 <div class="total-demand">
                   <span>总需求数</span>
-                  <span>{{ item.count }}</span>
+                  <span>{{ formatCount(item.count) }}</span>
                 </div>
                 <div class="surplus-demand">
                   <span>剩余需求数</span>
-                  <span>{{ item.count - item.outCount }}</span>
+                  <span>{{ formatCount(Number(item.count) - Number(item.outCount)) }}</span>
                 </div>
               </div>
             </div>
@@ -54,7 +54,7 @@
         <div class="total-prices">
           <div class="total-prices-right">
             <span>总数量:</span>
-            <span>{{ `${allCount}` }}</span>
+            <span>{{ `${formatCount(allCount)}` }}</span>
           </div>
         </div>
         <div class="shipment-warehouse-box">
@@ -285,11 +285,18 @@ export default {
         }, 0)
     },
 
-    // 保留两位小数，返回数字类型，修复精度问题
+    // 金额保留三位小数，返回数字类型，修复精度问题
     formatPrice(num) {
+        if (typeof num !== 'number' || isNaN(num)) return "0.000";
+            const value = Math.round(num * 1000) / 1000;
+            return value.toFixed(3);
+    },
+
+    // 数量保留二位小数，返回数字类型，修复精度问题
+    formatCount(num) {
         if (typeof num !== 'number' || isNaN(num)) return "0.00";
-        const value = Math.round(num * 100) / 100;
-        return value.toFixed(2);
+            const value = Math.round(num * 100) / 100;
+            return value.toFixed(2);
     },
 
     // 产品步进器change事件
