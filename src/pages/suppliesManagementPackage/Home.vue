@@ -96,7 +96,7 @@
                         value: ['erp:sale-out:query']
 					},
                     {
-						text: '退换货',
+						text: '退货',
 						url: require('@/common/images/home/supplies-barter-icon.png'),
                         value: ['erp:sale-return:query']
 					},
@@ -282,7 +282,7 @@
                     this.$router.push({path: '/suppliesOrderList'})
                 } else if(item.text == '送货') {
                     this.$router.push({path: '/suppliesDeliverGoodsList'})
-                } else if(item.text == '退换货') {
+                } else if(item.text == '退货') {
                     this.$router.push({path: '/suppliesChangingOrRefundingList'})
                 } else if(item.text == '评价') {
                     this.$router.push({path: '/suppliesMyEvaluate'})

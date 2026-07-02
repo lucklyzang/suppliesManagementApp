@@ -147,7 +147,7 @@
             </div>
             <div class="changing-refunding-message">
                 <div class="changing-refunding-reason">
-                    <span>退换原因:</span>
+                    <span>退货原因:</span>
                     <span>{{ orderMessage['remark'] }}</span>
                 </div>
                 <div class="changing-refunding-date">

@@ -2,7 +2,7 @@
   <div class="page-box" ref="wrapper">
     <van-loading size="35px" vertical color="#e6e6e6" v-show="loadingShow">加载中...</van-loading>
     <div class="nav">
-        <van-nav-bar title="退换货" left-text="返回" left-arrow @click-left="onClickLeft"  :border="false">
+        <van-nav-bar title="退货" left-text="返回" left-arrow @click-left="onClickLeft"  :border="false">
         </van-nav-bar>
     </div>
     <div class="content">
@@ -67,7 +67,7 @@
 							</div>
 						</div>
 						<div class="remark-box">
-							<span>退换原因:</span>
+							<span>退货原因:</span>
 							<span>{{ item.remark }}</span>
 						</div>
 					</div>
@@ -82,7 +82,7 @@
 						</div>
 					</div>
 				</div>
-                <van-empty description="您还没有相关退换货订单" v-show="isShowNoData" />
+                <van-empty description="您还没有相关退货订单" v-show="isShowNoData" />
                 <div v-show="bottomLoadingShow" class="bottom-loading-show">
                     加载中...
                 </div>
@@ -95,7 +95,7 @@
         <van-dialog v-model="refuseModalShow" :showConfirmButton="false">
             <div class="evaluate-model-content">
                 <div class="evaluate-modal-top">
-                    <span>拒绝退换</span>
+                    <span>拒绝退货</span>
                     <van-icon name="cross" color="#101010" size="20" @click="refuseModalShow = false" />
                 </div>
                 <div class="evaluate-modal-center">
